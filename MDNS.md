@@ -37,6 +37,50 @@ ATAK Data Package 的 `caCert.p12` 包含 Root CA 與作用中的中繼 CA。ATA
 
 mDNS 只解決名稱解析與 SAN 比對，不會建立 CA 信任，也不會取代 TLS、Mumble password、防火牆或路由設定。
 
+## ATAK Vx 驗證 Mumble Server 憑證流程圖
+
+```mermaid
+flowchart TB
+    ROOT["TAK Root CA"] --> ICA["TAK Issuing Intermediate CA"]
+
+    ICA --> TAKCERT["TAK Server 葉憑證<br/>獨立私鑰與 SAN"]
+    ICA --> MUMCERT["Mumble Server 葉憑證<br/>serverAuth、CA:FALSE<br/>DNS SAN: takbox.local"]
+
+    TAKCERT --> TAKSERVER["TAK Server<br/>8089 / 8443"]
+    MUMCERT --> MUMBLE["Mumble Server<br/>64400 TCP + UDP"]
+
+    ROOT -.-> CAP12["ATAK Data Package<br/>caCert.p12<br/>Root + Intermediate CA"]
+    ICA -.-> CAP12
+    CAP12 --> ATAK["ATAK / Vx<br/>匯入 CA 信任鏈"]
+
+    MDNS["mDNS responder<br/>takbox.local → 192.168.137.1"] --> ADDRESS["Vx Address<br/>takbox.local:64400"]
+    ATAK --> ADDRESS
+    ADDRESS -->|"TLS 連線"| MUMBLE
+
+    MUMBLE -->|"送出 Mumble 葉憑證與中繼鏈"| CHAIN{"簽發 CA<br/>是否受 ATAK 信任？"}
+    ATAK -->|"已匯入的 trust context"| CHAIN
+    CHAIN -->|"是"| SAN{"Vx Address 是否符合<br/>DNS / IP SAN？"}
+    ADDRESS --> SAN
+    SAN -->|"是"| PASS["TLS 驗證成功<br/>再使用 Mumble password 登入"]
+
+    CHAIN -->|"否"| FAILCA["拒絕連線<br/>unknown issuer / import certificate"]
+    SAN -->|"否"| FAILSAN["拒絕連線<br/>hostname / IP mismatch"]
+
+    classDef ca fill:#e8f1ff,stroke:#2563a8,stroke-width:2px,color:#10243e;
+    classDef server fill:#eaf8ef,stroke:#2f855a,stroke-width:2px,color:#153d2b;
+    classDef client fill:#fff7df,stroke:#b7791f,stroke-width:2px,color:#4b3512;
+    classDef success fill:#ddf7e7,stroke:#16803c,stroke-width:2px,color:#103c21;
+    classDef failure fill:#ffe8e8,stroke:#c53030,stroke-width:2px,color:#5b1717;
+
+    class ROOT,ICA,CAP12 ca;
+    class TAKCERT,MUMCERT,TAKSERVER,MUMBLE,MDNS server;
+    class ATAK,ADDRESS,CHAIN,SAN client;
+    class PASS success;
+    class FAILCA,FAILSAN failure;
+```
+
+圖中的「相同 CA」是指 ATAK 已信任簽發 Mumble 葉憑證的 Root／中繼 CA。TAK Server 與 Mumble Server 不共用葉憑證或 private key。mDNS 也不會把名稱自動寫入憑證；簽發 Mumble 憑證時仍必須明確加入 `DNS:takbox.local` SAN，Vx 的 Address 也必須輸入相同名稱。
+
 ## 安裝
 
 以系統管理員身分開啟 Windows PowerShell，從專案目錄執行：
