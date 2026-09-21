@@ -123,6 +123,8 @@ Root CA 只簽發中繼 CA；TAK、ATAK、管理端與 Mumble 各自使用不同
 
 Vx 除了驗證 CA chain，也會比對連線 Address 與 Mumble 憑證 SAN。使用 `takbox.local` 可避免本機 IP 變動時頻繁重簽憑證；Windows mDNS responder 負責讓 Android 在同一網段把這個名稱解析到 Docker host。mDNS 只提供名稱解析，完整設計理由與 Linux／Router 遷移方式請見 [Windows mDNS 設定](../MDNS.md#為什麼這個架構需要-mdns)。
 
+CA 信任、Mumble TLS、SAN 與 mDNS 的完整關係請見 [ATAK Vx 驗證 Mumble Server 憑證流程圖](../MDNS.md#atak-vx-驗證-mumble-server-憑證流程圖)。
+
 腳本也會：
 
 1. 產生 Root CA 與中繼 CA 的 CRL，並在 `CoreConfig.xml` 啟用撤銷檢查。
