@@ -2,20 +2,15 @@
 param(
     [string]$Address = '192.168.137.1',
     [string]$Hostname = 'takbox.local',
-    [int]$MumblePort = 64400,
+    [int]$MumblePort = 40000,
     [int]$TakPort = 8089,
     [string]$RemoteSubnet = '192.168.137.0/24',
-    [string]$TaskName = 'TAK-mDNS-Responder'
+    [string]$TaskName = 'TAK-mDNS-Responder',
+    [string]$ElevationRequestPath
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
-
-$identity = [Security.Principal.WindowsIdentity]::GetCurrent()
-$principal = [Security.Principal.WindowsPrincipal]::new($identity)
-if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-    throw 'Run this script from an elevated Windows PowerShell session.'
-}
 
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $requirements = Join-Path $projectRoot 'mdns\requirements.txt'
@@ -37,6 +32,75 @@ trap {
     exit 1
 }
 
+if ($ElevationRequestPath) {
+    if (-not (Test-Path -LiteralPath $ElevationRequestPath)) {
+        throw "The elevation request file was not found: $ElevationRequestPath"
+    }
+
+    $elevationRequest = Import-Clixml -LiteralPath $ElevationRequestPath
+    Remove-Item -LiteralPath $ElevationRequestPath -Force -ErrorAction SilentlyContinue
+    $Address = [string]$elevationRequest.Address
+    $Hostname = [string]$elevationRequest.Hostname
+    $MumblePort = [int]$elevationRequest.MumblePort
+    $TakPort = [int]$elevationRequest.TakPort
+    $RemoteSubnet = [string]$elevationRequest.RemoteSubnet
+    $TaskName = [string]$elevationRequest.TaskName
+}
+
+$identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+$principal = [Security.Principal.WindowsPrincipal]::new($identity)
+if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+    if (-not $PSCommandPath) {
+        throw 'This script must be executed from a .ps1 file before it can request administrator access.'
+    }
+
+    $requestFile = New-TemporaryFile
+    [pscustomobject]@{
+        Address      = $Address
+        Hostname     = $Hostname
+        MumblePort   = $MumblePort
+        TakPort      = $TakPort
+        RemoteSubnet = $RemoteSubnet
+        TaskName     = $TaskName
+    } | Export-Clixml -LiteralPath $requestFile.FullName
+
+    $powerShellExecutable = if ($PSVersionTable.PSEdition -eq 'Core') {
+        Join-Path $PSHOME 'pwsh.exe'
+    } else {
+        Join-Path $PSHOME 'powershell.exe'
+    }
+    $elevatedArguments = @(
+        '-NoProfile'
+        '-ExecutionPolicy'
+        'Bypass'
+        '-File'
+        ('"{0}"' -f $PSCommandPath)
+        '-ElevationRequestPath'
+        ('"{0}"' -f $requestFile.FullName)
+    )
+
+    Write-Output 'Administrator access is required. Approve the Windows UAC prompt to continue.'
+    try {
+        $elevatedProcess = Start-Process `
+            -FilePath $powerShellExecutable `
+            -Verb RunAs `
+            -ArgumentList $elevatedArguments `
+            -Wait `
+            -PassThru
+    } catch {
+        throw 'Administrator approval was cancelled or the elevated process could not be started.'
+    } finally {
+        Remove-Item -LiteralPath $requestFile.FullName -Force -ErrorAction SilentlyContinue
+    }
+
+    if ($elevatedProcess.ExitCode -ne 0) {
+        throw "The elevated mDNS installation failed with exit code $($elevatedProcess.ExitCode)."
+    }
+
+    Write-Output 'The elevated mDNS installation completed successfully.'
+    return
+}
+
 if ($Hostname -notmatch '^[A-Za-z0-9][A-Za-z0-9-]{0,62}\.local\.?$') {
     throw 'Hostname must be a single valid mDNS label ending in .local.'
 }
@@ -47,20 +111,48 @@ if (-not (Get-NetIPAddress -AddressFamily IPv4 -IPAddress $Address -ErrorAction 
 
 New-Item -ItemType Directory -Path $runtimeDir -Force | Out-Null
 
-if (-not (Test-Path -LiteralPath $venvPython)) {
-    $pythonInterpreter = 'C:\Python314\python.exe'
-    if (-not (Test-Path -LiteralPath $pythonInterpreter)) {
-        throw "Python 3.14 was not found at $pythonInterpreter."
+$pythonInterpreter = 'C:\Python314\python.exe'
+if (-not (Test-Path -LiteralPath $pythonInterpreter)) {
+    throw "Python 3.14 was not found at $pythonInterpreter."
+}
+
+$venvNeedsRebuild = -not (Test-Path -LiteralPath $venvPython)
+if (-not $venvNeedsRebuild) {
+    & $venvPython -c 'import pip' *> $null
+    $venvNeedsRebuild = $LASTEXITCODE -ne 0
+}
+
+if ($venvNeedsRebuild) {
+    $runtimeFullPath = [IO.Path]::GetFullPath($runtimeDir)
+    $venvFullPath = [IO.Path]::GetFullPath($venvDir)
+    if ((Split-Path -Parent $venvFullPath) -ne $runtimeFullPath) {
+        throw "Refusing to rebuild an unexpected virtual environment path: $venvFullPath"
     }
-    & $pythonInterpreter -m venv $venvDir
+
+    & $pythonInterpreter -m venv --clear $venvFullPath
     if ($LASTEXITCODE -ne 0) {
-        throw 'Failed to create the Python virtual environment.'
+        throw 'Failed to create or repair the Python virtual environment.'
     }
+}
+
+& $venvPython -m ensurepip --upgrade
+if ($LASTEXITCODE -ne 0) {
+    throw 'Failed to bootstrap pip in the mDNS virtual environment.'
 }
 
 & $venvPython -m pip install --disable-pip-version-check --requirement $requirements
 if ($LASTEXITCODE -ne 0) {
     throw 'Failed to install the mDNS responder dependencies.'
+}
+
+& $venvPython -m pip check
+if ($LASTEXITCODE -ne 0) {
+    throw 'The mDNS responder dependency check failed.'
+}
+
+& $venvPython -c 'import ifaddr, zeroconf'
+if ($LASTEXITCODE -ne 0) {
+    throw 'The mDNS responder dependencies could not be imported.'
 }
 
 $config = [ordered]@{

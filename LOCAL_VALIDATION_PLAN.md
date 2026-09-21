@@ -24,7 +24,7 @@
 | Windows／Docker 主機 IP | `192.168.137.1` |
 | TAK CoT TLS | `takbox.local:8089:ssl` |
 | TAK 管理介面 | `https://takbox.local:8443`，只供管理驗證 |
-| Mumble | `takbox.local:64400`，同時發布 TCP 與 UDP；診斷時可使用 `192.168.137.1` |
+| Mumble | `takbox.local:40000`，同時發布 TCP 與 UDP；診斷時可使用 `192.168.137.1` |
 
 本輪 TAK 連線固定使用 `takbox.local`。Windows mDNS responder 已啟用，Android 實機可將名稱解析為 `192.168.137.1`；TAK 與 Mumble server certificate 的 SAN 同時包含 `DNS:takbox.local` 與 `IP:192.168.137.1`。
 
@@ -121,8 +121,8 @@ docker compose ps
 
 1. `tak-db` 為 healthy。
 2. `tak-server` 為 healthy，且沒有 schema、keystore 或資料庫登入錯誤。
-3. Windows 正在 `192.168.137.1` 發布 `8089/TCP`、`8443/TCP`、`64400/TCP` 與 `64400/UDP`。
-4. `openssl s_client -connect 192.168.137.1:64400 -showcerts` 顯示 Mumble 葉憑證及 TAK 中繼 CA。
+3. Windows 正在 `192.168.137.1` 發布 `8089/TCP`、`8443/TCP`、`40000/TCP` 與 `40000/UDP`。
+4. `openssl s_client -connect 192.168.137.1:40000 -showcerts` 顯示 Mumble 葉憑證及 TAK 中繼 CA。
 5. Mumble 日誌沒有私鑰、chain、密碼或資料庫初始化錯誤。
 6. Windows Private profile 防火牆只允許測試子網路連入上述必要通訊埠。
 
@@ -133,7 +133,7 @@ docker compose ps
 在尚未匯入 DPK、且 Android 使用者 CA store 沒有 TAK Root CA 時，使用 Vx 嘗試連到：
 
 ```text
-192.168.137.1:64400
+192.168.137.1:40000
 ```
 
 預期結果是 Mumble TLS 不受信任。記錄操作時間與 Vx 顯示的錯誤文字；這是確認後續成功來源的對照，不修改 TLS 安全設定。
@@ -167,7 +167,7 @@ docker compose ps
 | 欄位 | 值 |
 | --- | --- |
 | Address | `192.168.137.1` |
-| Port | `64400` |
+| Port | `40000` |
 | Password | Mumble ordinary client server password |
 | P 主要 Channel | `Primary`，由 `scripts/provision_mumble_channel.py` 預先建立 |
 | A 次要 Channel | `Alternate`，由 `scripts/provision_mumble_channel.py` 預先建立 |

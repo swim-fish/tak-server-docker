@@ -12,6 +12,7 @@
 | Android | `16`／API `36` |
 | Python | `3.14.7` |
 | python-zeroconf | `0.151.3` |
+| ifaddr | `0.2.0` |
 
 ## 部署內容
 
@@ -21,7 +22,7 @@ Windows 主機執行專案內的 mDNS responder，未從 Docker 容器直接發�
 
 ```text
 takbox.local. A 192.168.137.1
-ATAK Voice._mumble._tcp.local. SRV takbox.local.:64400
+ATAK Voice._mumble._tcp.local. SRV takbox.local.:40000
 TAK CoT TLS._tak-cot._tcp.local. SRV takbox.local.:8089
 ```
 
@@ -52,7 +53,7 @@ TAK CoT TLS._tak-cot._tcp.local. SRV takbox.local.:8089
 使用專案 `mdns/query.py` 查詢 responder：
 
 ```text
-OK ATAK Voice._mumble._tcp.local. -> takbox.local. 192.168.137.1:64400
+OK ATAK Voice._mumble._tcp.local. -> takbox.local. 192.168.137.1:40000
 OK TAK CoT TLS._tak-cot._tcp.local. -> takbox.local. 192.168.137.1:8089
 ```
 
@@ -80,41 +81,29 @@ PING takbox.local (192.168.137.1)
 從實機執行：
 
 ```powershell
-adb -s <ATAK_DEVICE_ID> shell toybox nc -z -w 3 takbox.local 64400
+adb -s <ATAK_DEVICE_ID> shell toybox nc -z -w 3 takbox.local 40000
 ```
 
-結束狀態碼為 `0`。
-
-結果：通過。裝置可使用 mDNS 名稱連到 Windows 發布的 Mumble TCP 通訊埠。
+通訊埠移轉後的預期結束狀態碼為 `0`。Android 裝置未連接 ADB，因此未直接執行此命令；但 Mumble 已在 `40000` 記錄 Android `Mumla 3.7.3` client 完成驗證並加入具名頻道。Windows host、Docker port publish、TLS 與實際 client TCP 路徑均已通過。
 
 ### TLS 主機名稱
 
-使用現有 Mumble 憑證及 `takbox.local` 驗證：
+使用 TAK Root CA、Mumble 憑證及 `takbox.local` 驗證：
 
 ```text
-subject=CN=192.168.137.1
-issuer=CN=ATAK Local Voice CA
-Verify return code: 62 (hostname mismatch)
+TLS version: TLSv1.3
+subject: C=TW, O=TAK Local, OU=Local Test, CN=takbox.local
+issuer: CN=TAK Local Issuing CA
+SAN: DNS:takbox.local, IP:192.168.137.1
 ```
 
-結果：符合預期。mDNS 網路層已完成，但現有 Mumble 憑證沒有 `DNS:takbox.local` SAN，因此尚不可在 Vx 改用該名稱。
+結果：通過。憑證 chain 由 TAK Root CA 驗證成功，且 `takbox.local` 符合 DNS SAN。
 
 ## 待辦事項
 
-1. 由規劃中的 TAK 中繼 CA 重新簽發 Mumble server certificate。
-2. TAK 與 Mumble server certificate 都加入：
-
-   ```text
-   DNS:takbox.local
-   IP:192.168.137.1
-   ```
-
-3. 使用新憑證重新驗證 chain、`serverAuth`、SAN 及有效期。
-4. 將 DPK 的 `connectString0` 改為 `takbox.local:8089:ssl`。
-5. 將 Vx Mumble Address 改為 `takbox.local`，完成 TLS 與登入測試。
-6. 在一般 Windows 使用者登入、重新啟動電腦及網路介面重連後，重跑 `scripts/Test-WindowsMdns.ps1`。
-
-完成上述項目前，TAK 與 Vx 的核心驗證繼續使用 `192.168.137.1`。
+1. 在 Android 實機重跑 `toybox nc -z -w 3 takbox.local 40000`，補齊直接的 mDNS／TCP 診斷紀錄。
+2. 確認 Mumble 日誌或 Vx diagnostics 顯示 UDP transport。
+3. 使用第二個語音用戶端完成雙向 PTT 驗證。
 
 ## 維運與移除
 
@@ -124,10 +113,17 @@ Verify return code: 62 (hostname mismatch)
 .\scripts\Test-WindowsMdns.ps1
 ```
 
+若測試出現 `ModuleNotFoundError: ifaddr`、`No module named pip` 或 mDNS Python environment 不完整，代表 `runtime/mdns/.venv` 不完整。重新執行下列安裝腳本並核准 Windows UAC；腳本會重建損壞的 virtual environment、重新安裝固定版本相依套件、執行 `pip check`，並重新建立排程工作：
+
+```powershell
+.\scripts\Install-WindowsMdns.ps1
+.\scripts\Test-WindowsMdns.ps1
+```
+
 完整移除排程工作、防火牆規則及 runtime：
 
 ```powershell
 .\scripts\Uninstall-WindowsMdns.ps1 -RemoveRuntime
 ```
 
-移除 mDNS 不會刪除 TAK、Mumble 或其憑證及資料。
+解除安裝腳本可從一般 PowerShell 執行，並在需要時顯示 Windows UAC；提高權限後仍會保留 `-RemoveRuntime`。移除 mDNS 不會刪除 TAK、Mumble 或其憑證及資料。

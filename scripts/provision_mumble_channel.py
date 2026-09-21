@@ -136,7 +136,7 @@ def main() -> int:
     )
     parser.add_argument("--connect-host", default="192.168.137.1")
     parser.add_argument("--server-name", default="takbox.local")
-    parser.add_argument("--port", type=int, default=64400)
+    parser.add_argument("--port", type=int, default=40000)
     args = parser.parse_args()
 
     requested_channels = args.channels or ["Primary", "Alternate"]

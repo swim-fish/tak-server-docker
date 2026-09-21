@@ -1,16 +1,72 @@
 [CmdletBinding()]
 param(
     [string]$TaskName = 'TAK-mDNS-Responder',
-    [switch]$RemoveRuntime
+    [switch]$RemoveRuntime,
+    [string]$ElevationRequestPath
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+if ($ElevationRequestPath) {
+    if (-not (Test-Path -LiteralPath $ElevationRequestPath)) {
+        throw "The elevation request file was not found: $ElevationRequestPath"
+    }
+
+    $elevationRequest = Import-Clixml -LiteralPath $ElevationRequestPath
+    Remove-Item -LiteralPath $ElevationRequestPath -Force -ErrorAction SilentlyContinue
+    $TaskName = [string]$elevationRequest.TaskName
+    $RemoveRuntime = [bool]$elevationRequest.RemoveRuntime
+}
+
 $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
 $principal = [Security.Principal.WindowsPrincipal]::new($identity)
 if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-    throw 'Run this script from an elevated Windows PowerShell session.'
+    if (-not $PSCommandPath) {
+        throw 'This script must be executed from a .ps1 file before it can request administrator access.'
+    }
+
+    $requestFile = New-TemporaryFile
+    [pscustomobject]@{
+        TaskName = $TaskName
+        RemoveRuntime = [bool]$RemoveRuntime
+    } | Export-Clixml -LiteralPath $requestFile.FullName
+
+    $powerShellExecutable = if ($PSVersionTable.PSEdition -eq 'Core') {
+        Join-Path $PSHOME 'pwsh.exe'
+    } else {
+        Join-Path $PSHOME 'powershell.exe'
+    }
+    $elevatedArguments = @(
+        '-NoProfile'
+        '-ExecutionPolicy'
+        'Bypass'
+        '-File'
+        ('"{0}"' -f $PSCommandPath)
+        '-ElevationRequestPath'
+        ('"{0}"' -f $requestFile.FullName)
+    )
+
+    Write-Output 'Administrator access is required. Approve the Windows UAC prompt to continue.'
+    try {
+        $elevatedProcess = Start-Process `
+            -FilePath $powerShellExecutable `
+            -Verb RunAs `
+            -ArgumentList $elevatedArguments `
+            -Wait `
+            -PassThru
+    } catch {
+        throw 'Administrator approval was cancelled or the elevated process could not be started.'
+    } finally {
+        Remove-Item -LiteralPath $requestFile.FullName -Force -ErrorAction SilentlyContinue
+    }
+
+    if ($elevatedProcess.ExitCode -ne 0) {
+        throw "The elevated mDNS removal failed with exit code $($elevatedProcess.ExitCode)."
+    }
+
+    Write-Output 'The elevated mDNS removal completed successfully.'
+    return
 }
 
 $projectRoot = [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))

@@ -10,7 +10,7 @@
 - 啟用 TAK TLS CRL，驗證撤銷前後行為。
 - 建立及持久化 TAK 憑證使用者與群組。
 - 建立 ATAK 5.7 可手動匯入的 Data Package。
-- 從 Android 實機驗證 mDNS、`8089/TCP` 與 Mumble `64400/TCP` 可達性。
+- 從 Android 實機驗證 mDNS、`8089/TCP` 與 Mumble `40000/TCP` 可達性。
 
 Mumble 已加入 Compose 並完成伺服器端與實機網路前置驗證；詳見 `docs/validation/2026-09-21-mumble-server.md`。MediaMTX 與公開 `8446` 尚未啟用。
 
@@ -20,7 +20,7 @@ Mumble 已加入 Compose 並完成伺服器端與實機網路前置驗證；詳�
 | --- | --- | --- | --- |
 | `tak-db` | `takserver-db-hardened:5.8-release-84` | healthy | 無 |
 | `tak-server` | `takserver-hardened:5.8-release-84` | healthy | `192.168.137.1:8089/TCP`、`192.168.137.1:8443/TCP` |
-| `mumble` | `mumblevoip/mumble-server:v1.5.915-1` | healthy | `192.168.137.1:64400/TCP+UDP` |
+| `mumble` | `mumblevoip/mumble-server:v1.5.915-1` | healthy | `192.168.137.1:40000/TCP+UDP` |
 
 資料庫只加入 internal Docker network。Windows 防火牆規則將 `8089` 與 `8443` 限制在本機位址 `192.168.137.1` 與遠端子網路 `192.168.137.0/24`。
 
@@ -195,6 +195,8 @@ ADB 識別到：
 修正版亦已透過 USB 複製到實機 `/sdcard/Download/atak-local-test-v2.dpk`，由使用者在 ATAK Import Manager 手動選取。
 
 目前狀態：v2 DPK 已建立並完成離線結構驗證。實機重新匯入後，使用者已確認 ATAK Server 連線成功；原先的 native Commo 錯誤碼 20 已排除。
+
+最終服務重啟後，`tak-server` 的 `8089/TCP` listener、mTLS healthcheck 與先前 Android subscription 紀錄均正常。本次 55 秒即時監看未觀察到新的持續 `8089` session，因此此紀錄只主張 ATAK app 已完成過連線驗證，不把該監看期間描述為持續在線。Vx／Mumble `40000` 則已有重新啟動後的 Android `ESTABLISHED`、`Authenticated` 與 `Primary` 頻道紀錄。
 
 ## 已知非阻斷訊息
 
