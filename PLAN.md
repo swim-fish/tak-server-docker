@@ -53,7 +53,7 @@ Windows 11
    │  ├─ tak-server      8089/TCP、8443/TCP（必要）
    │  ├─ mediamtx        8554/TCP（RTSP 控制與 TCP media）
    │  │                  8000/UDP（RTP）、8001/UDP（RTCP）
-   │  └─ mumble          host 64400/TCP、64400/UDP → container 64738
+   │  └─ mumble          host 40000/TCP、40000/UDP → container 64738
    │
    └─ tak-backend network（internal）
       ├─ tak-server
@@ -204,7 +204,7 @@ tak-server-docker/
 ### 6.7 `mumble`
 
 - 以現有 `atak-voice` 設計為基礎，使用固定版本 `mumblevoip/mumble-server:v1.5.915-1`，正式定稿時再驗證是否需更新。
-- Container 內使用標準 `64738/TCP+UDP`。因 Windows UDP excluded port range 涵蓋 `64738`，主機以 `192.168.137.1:64400/TCP+UDP` 對外映射。
+- Container 內使用標準 `64738/TCP+UDP`。因 Windows UDP excluded port range 涵蓋 `64738`，主機以 `192.168.137.1:40000/TCP+UDP` 對外映射。
 - Mumble 需要 TLS 伺服器憑證；未設定時 Mumble 會自動建立自簽憑證，但正式部署使用明確管理的獨立憑證，避免用戶端首次信任提示、憑證變更警告及容器重建後識別改變。
 - 設定 `sslCert`、`sslKey`；只有憑證鏈含中繼 CA 時才以 `sslCA` 提供中繼鏈，或將中繼憑證接在葉憑證之後形成 full chain。根 CA 不放入伺服器送出的 chain。
 - 第一階段明確設定 `certrequired=false`，以 Mumble server password 與 channel ACL 管理登入。Vx 仍可能在 TLS handshake 提供它自行產生的 client certificate，但該憑證不作為 TAK 身分或 TAK PKI 用戶端憑證。
@@ -242,8 +242,8 @@ tak-server-docker/
 | MediaMTX | `8554/TCP` | RTSP 控制連線及 TCP media transport | 綁定固定 LAN IP |
 | MediaMTX | `8000/UDP` | RTSP 單播 UDP 的 RTP media | 綁定固定 LAN IP |
 | MediaMTX | `8001/UDP` | RTSP 單播 UDP 的 RTCP control | 綁定固定 LAN IP |
-| Mumble | `64400/TCP` | 控制與 TCP fallback；映射至 container `64738/TCP` | 綁定固定 LAN IP |
-| Mumble | `64400/UDP` | 即時語音；映射至 container `64738/UDP` | 綁定固定 LAN IP |
+| Mumble | `40000/TCP` | 控制與 TCP fallback；映射至 container `64738/TCP` | 綁定固定 LAN IP |
+| Mumble | `40000/UDP` | 即時語音；映射至 container `64738/UDP` | 綁定固定 LAN IP |
 
 ### 7.2 預設不發布
 
@@ -329,11 +329,11 @@ Vx 2.1.0 APK 的 Mumble server certificate 驗證順序如下：
 2. 由 TAK 中繼 CA 簽發獨立的 Mumble server 葉憑證；server 葉憑證設為 `CA:FALSE`，並具 `serverAuth` EKU。
 3. Mumble 掛載加密的 server private key 與「server 葉憑證 → TAK 中繼 CA」full chain；TLS server 不送出 Root，且任何 CA 私鑰都不進容器。
 4. ATAK Data Package 的 `caCert.p12` 同時匯入 TAK Root CA 與作用中的中繼 CA。此配置依 hardened 套件 `makeRootCa.sh` 與 `makeCert.sh ca` 的 truststore 流程建立。
-5. 在 Voice 的 Mumble server 設定輸入 `takbox.local` 或 SAN 內的 `192.168.137.1`，通訊埠使用 Windows 對外映射的 `64400`。先以 `openssl s_client` 驗證 server certificate，再以兩台實際 ATAK 裝置測試登入與雙向 PTT。
+5. 在 Voice 的 Mumble server 設定輸入 `takbox.local` 或 SAN 內的 `192.168.137.1`，通訊埠使用 Windows 對外映射的 `40000`。先以 `openssl s_client` 驗證 server certificate，再以兩台實際 ATAK 裝置測試登入與雙向 PTT。
 
 Vx 的 Mumble client certificate 由外掛自行產生並保存在其內部 PKCS#12，使用 ATAK device UID 作為 `CN`，具 `clientAuth` EKU。它不是 TAK Server 發給裝置的 client certificate，也不需要由 TAK 根 CA 或中繼 CA 簽發。第一階段不以此自簽憑證建立身分授權，Mumble 使用 `certrequired=false`、server password 與 channel ACL。
 
-Mumble 已在 `192.168.137.1:64400` 同時發布 TCP／UDP，實機 TCP 可達。完整 Vx TLS、密碼登入、channel 與雙向 PTT 仍須在重新匯入修正版 DPK 後驗證。正式驗收前由 Android 應用程式權限介面授予 TAK Voice 麥克風權限；`POST_NOTIFICATIONS` 與 `BLUETOOTH_CONNECT` 依通知及藍牙 PTT／耳機需求決定。
+Mumble 已在 `192.168.137.1:40000` 同時發布 TCP／UDP，實機 TCP 可達。完整 Vx TLS、密碼登入、channel 與雙向 PTT 仍須在重新匯入修正版 DPK 後驗證。正式驗收前由 Android 應用程式權限介面授予 TAK Voice 麥克風權限；`POST_NOTIFICATIONS` 與 `BLUETOOTH_CONNECT` 依通知及藍牙 PTT／耳機需求決定。
 
 ### 8.5 Secrets 清單
 
@@ -442,7 +442,7 @@ ZIP 內含 `host all all 0.0.0.0/0 md5`。Compose 版本改為只允許私有 ba
 ### 階段 D：MediaMTX 與 Mumble
 
 - 加入 MediaMTX RTSP over TCP、單播 UDP 與帳密。
-- 已整合 Mumble 設定、持久化 volume、secrets 與 TAK 中繼 CA 簽發的獨立 server certificate；host `64400/TCP+UDP` 映射至 container `64738`。
+- 已整合 Mumble 設定、持久化 volume、secrets 與 TAK 中繼 CA 簽發的獨立 server certificate；host `40000/TCP+UDP` 映射至 container `64738`。
 - 第一階段 MediaMTX 維持純 RTSP，記錄未加密限制；若要求 RTSPS，另以公開 profile 驗證 `8322/TCP`、`8004-8005/UDP` 與 ATAK 相容性。
 - 所有發布連接埠綁定固定 LAN IP。
 - 建立 Windows Private profile 的 TCP／UDP 防火牆規則草案；套用前另行檢查。

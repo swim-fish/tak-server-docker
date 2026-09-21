@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | TAK CoT TLS | `takbox.local:8089` | `8089/TCP` |
 | TAK 管理介面 | `https://takbox.local:8443` | `8443/TCP` |
-| Mumble | `takbox.local:64400` | `64738/TCP`、`64738/UDP` |
+| Mumble | `takbox.local:40000` | `64738/TCP`、`64738/UDP` |
 
 目前 `compose.yaml` 將主機通訊埠綁定到 `192.168.137.1`，預期 ATAK 裝置位於 `192.168.137.0/24`。若主機介面不同，必須同步修改：
 
@@ -239,18 +239,27 @@ python .\scripts\provision_mumble_channel.py
 
 ## 9. Windows 防火牆與 mDNS
 
-以系統管理員身分開啟 PowerShell，執行：
+先以系統管理員 PowerShell 建立 TAK 防火牆規則：
 
 ```powershell
 .\scripts\Install-TakFirewall.ps1
+```
+
+Mumble 防火牆與 Windows mDNS 安裝腳本可從一般 PowerShell 執行，並在需要時顯示 Windows UAC：
+
+```powershell
 .\scripts\Install-MumbleFirewall.ps1
 .\scripts\Install-WindowsMdns.ps1
 .\scripts\Test-WindowsMdns.ps1
 ```
 
-防火牆只允許 `192.168.137.0/24` 存取 TAK 的 `8089/TCP`、`8443/TCP` 及 Mumble 的 `64400/TCP`、`64400/UDP`。Mumble 的 TCP 用於 TLS 控制連線，UDP 用於低延遲語音。
+核准後，安裝腳本會以系統管理員權限繼續建立防火牆規則與 `TAK-mDNS-Responder` 排程工作，並保留命令列參數。`Test-WindowsMdns.ps1` 是唯讀檢查，不會要求提高權限。
+
+防火牆只允許 `192.168.137.0/24` 存取 TAK 的 `8089/TCP`、`8443/TCP` 及 Mumble 的 `40000/TCP`、`40000/UDP`。Mumble 的 TCP 用於 TLS 控制連線，UDP 用於低延遲語音。Windows 預設動態通訊埠範圍是 `49152–65535`，HNS／WinNAT 可能在其中建立會隨開機變動的 UDP 排除區間；因此 Mumble 對外使用範圍之外的 `40000`，避免 Docker Desktop 重新啟動後無法綁定。
 
 Android 裝置應能把 `takbox.local` 解析為 `192.168.137.1`。`.local` 僅適合同一個 link；跨 VLAN、VPN 或公開服務請改用一般 DNS。
+
+若 `Test-WindowsMdns.ps1` 回報 `ModuleNotFoundError: ifaddr`、`No module named pip` 或 mDNS Python environment 不完整，請重新執行 `Install-WindowsMdns.ps1` 並核准 UAC。安裝腳本會偵測損壞的 `runtime/mdns/.venv`、重建 virtual environment，並以 `pip check` 驗證 `ifaddr` 與 `zeroconf` 相依套件。安裝腳本也會重新建立 `TAK-mDNS-Responder` 排程工作；只執行測試腳本不會修復或建立排程工作。
 
 後續移植到 Linux 時，同一 Layer 2 網段可由 Linux host 使用 Avahi 發布 `takbox.local`。跨 VLAN、VPN 或由 Router 管理的部署應建立一般 DNS 名稱，調整 DHCP／DNS、路由與防火牆規則，並重新簽發含新 DNS SAN 的 TAK 與 Mumble server certificate；不要在一般 DNS 中建立 `.local` zone。
 
@@ -284,7 +293,7 @@ config/servers.pref
 | 欄位 | 值 |
 | --- | --- |
 | Address | `takbox.local` |
-| Port | `64400` |
+| Port | `40000` |
 | Password | `runtime/secrets/mumble_server_password` 的內容 |
 
 ![設定 Mumble server 位址、通訊埠與密碼](images/atak-vx-02-configure-mumble-server.jpg)
@@ -317,7 +326,7 @@ docker compose logs --tail 100 mumble
 2. ATAK 能連到 `takbox.local:8089:ssl`。
 3. Vx 不再出現 certificate import 或 unknown issuer 錯誤。
 4. Vx 能使用一般 Mumble server password 登入並加入 `Primary` 或 `Alternate`。
-5. 使用第二個用戶端進行 PTT，確認 `64400/UDP` 有語音流量。
+5. 使用第二個用戶端進行 PTT，確認 `40000/UDP` 有語音流量。
 
 更完整的驗收與問題判讀請見 [本機整合驗證計畫](../LOCAL_VALIDATION_PLAN.md)。
 
@@ -336,3 +345,11 @@ docker compose up -d
 ```
 
 不要加上 `--volumes`，除非確定要刪除 PostgreSQL、TAK logs 與 Mumble database。PKI 與 Data Package 在 `runtime/`，即使刪除 named volumes 也不會自動輪替。
+
+需要移除 Windows mDNS 排程工作、防火牆規則與 runtime 時，可從一般 PowerShell 執行：
+
+```powershell
+.\scripts\Uninstall-WindowsMdns.ps1 -RemoveRuntime
+```
+
+腳本會顯示 Windows UAC；核准後會保留 `-RemoveRuntime` 等參數並繼續移除。這不會刪除 TAK、Mumble 或其憑證及資料。

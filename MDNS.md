@@ -7,7 +7,7 @@
 
 ```text
 takbox.local. A 192.168.137.1
-ATAK Voice._mumble._tcp.local. SRV takbox.local.:64400
+ATAK Voice._mumble._tcp.local. SRV takbox.local.:40000
 TAK CoT TLS._tak-cot._tcp.local. SRV takbox.local.:8089
 ```
 
@@ -47,13 +47,13 @@ flowchart TB
     ICA --> MUMCERT["Mumble Server 葉憑證<br/>serverAuth、CA:FALSE<br/>DNS SAN: takbox.local"]
 
     TAKCERT --> TAKSERVER["TAK Server<br/>8089 / 8443"]
-    MUMCERT --> MUMBLE["Mumble Server<br/>64400 TCP + UDP"]
+    MUMCERT --> MUMBLE["Mumble Server<br/>40000 TCP + UDP"]
 
     ROOT -.-> CAP12["ATAK Data Package<br/>caCert.p12<br/>Root + Intermediate CA"]
     ICA -.-> CAP12
     CAP12 --> ATAK["ATAK / Vx<br/>匯入 CA 信任鏈"]
 
-    MDNS["mDNS responder<br/>takbox.local → 192.168.137.1"] --> ADDRESS["Vx Address<br/>takbox.local:64400"]
+    MDNS["mDNS responder<br/>takbox.local → 192.168.137.1"] --> ADDRESS["Vx Address<br/>takbox.local:40000"]
     ATAK --> ADDRESS
     ADDRESS -->|"TLS 連線"| MUMBLE
 
@@ -121,9 +121,9 @@ DNS:takbox.local
 IP:192.168.137.1
 ```
 
-DPK 的 TAK 連線可改為 `takbox.local:8089:ssl`，Vx Mumble 位址可改為 `takbox.local:64400`。
+DPK 的 TAK 連線可改為 `takbox.local:8089:ssl`，Vx Mumble 位址可改為 `takbox.local:40000`。
 
-目前 `takbox.local` 的 mDNS 解析與 `64400/TCP` 連線已在 Android 實機通過。bootstrap 產生的 TAK 與 Mumble server certificate 都包含 `DNS:takbox.local` 與 `IP:192.168.137.1` SAN；Vx 可優先使用 `takbox.local`，IP 位址保留作為同一測試網段內的診斷方式。
+目前 `takbox.local` 的 mDNS 解析與 `40000/TCP` 連線已在 Android 實機通過。bootstrap 產生的 TAK 與 Mumble server certificate 都包含 `DNS:takbox.local` 與 `IP:192.168.137.1` SAN；Vx 可優先使用 `takbox.local`，IP 位址保留作為同一測試網段內的診斷方式。
 
 ## 移植到 Linux 與 Router／DNS 規劃
 

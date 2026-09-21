@@ -109,8 +109,8 @@ services:
       - ./runtime/pki/mumble-server.key.pem:/certs/mumble-server.key.pem:ro
       - ./runtime/pki/public/root-ca.crt.pem:/certs/root-ca.pem:ro
     ports:
-      - "192.168.137.1:64400:64738/tcp"
-      - "192.168.137.1:64400:64738/udp"
+      - "192.168.137.1:40000:64738/tcp"
+      - "192.168.137.1:40000:64738/udp"
     networks:
       - tak-edge
     healthcheck:

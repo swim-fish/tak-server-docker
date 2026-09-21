@@ -2,7 +2,7 @@
 
 ## 範圍
 
-本紀錄涵蓋 2026-09-21 在 Windows 11、Docker Desktop／WSL2 與 Android 實機 `<ATAK_DEVICE_ID>` 完成的 Mumble 伺服器端驗證。Vx 已通過 TLS 信任、密碼驗證、具名子頻道加入及 UDP transport 驗證；雙向 PTT 仍需第二個用戶端驗證。
+本紀錄涵蓋 2026-09-21 在 Windows 11、Docker Desktop／WSL2 與 Android 實機 `<ATAK_DEVICE_ID>` 完成的 Mumble 伺服器端驗證。改用 `40000` 後，Android Mumla client 已重新通過 TLS、密碼驗證與具名子頻道加入。雙向 PTT 與 UDP 語音仍需第二個用戶端驗證。
 
 ## Compose 設定
 
@@ -10,12 +10,12 @@
 | --- | --- |
 | Image | `mumblevoip/mumble-server:v1.5.915-1` |
 | Container port | `64738/TCP`、`64738/UDP` |
-| Windows host port | `192.168.137.1:64400/TCP`、`192.168.137.1:64400/UDP` |
+| Windows host port | `192.168.137.1:40000/TCP`、`192.168.137.1:40000/UDP` |
 | Container process | UID/GID `10000:10000` |
 | Client authentication | `certrequired=false`，使用一般 server password |
 | Persistent data | `mumble-data:/data` |
 
-Windows 的 UDP excluded port range 涵蓋 `64738`，因此標準 Mumble container port 維持 `64738`，Windows 對外改用 `64400`。`scripts/Install-MumbleFirewall.ps1` 只允許本機位址 `192.168.137.1` 與遠端子網路 `192.168.137.0/24` 的 `64400/TCP+UDP`。
+Windows 預設 UDP dynamic port range 是 `49152–65535`。HNS／WinNAT 的 UDP excluded port range 曾先後涵蓋 `64738` 與 `64400`，而且重新啟動後區間會移動。因此標準 Mumble container port 維持 `64738`，Windows 對外改用動態範圍之外的 `40000`。`scripts/Install-MumbleFirewall.ps1` 只允許本機位址 `192.168.137.1` 與遠端子網路 `192.168.137.0/24` 的 `40000/TCP+UDP`。
 
 一般 server password、SuperUser password 與 TLS private key passphrase 都由 Compose secrets 掛載，不寫入 Compose 或日誌。Vx 一般登入密碼位於忽略版控的 `runtime/secrets/mumble_server_password`；不得使用 SuperUser 或 PKCS#12 密碼代替。
 
@@ -41,7 +41,7 @@ Mumble 使用由 TAK 中繼 CA 簽發的獨立 server certificate。`runtime/pki
 - SAN 包含 `DNS:takbox.local` 與 `IP:192.168.137.1`。
 - EKU 包含 `serverAuth`。
 - Mumble 日誌顯示載入一張 intermediate certificate。
-- 從 Windows 連到 `192.168.137.1:64400`，以 Root CA 驗證 `takbox.local`，結果為 `Verify return code: 0 (ok)`。
+- 從 Windows 連到 `192.168.137.1:40000`，以 Root CA 驗證 `takbox.local`，結果為 `Verify return code: 0 (ok)`。
 
 ATAK Voice 自行建立的 self-signed Mumble client certificate 只用於 Vx 的 Mumble client 身分。它不是 TAK 裝置 client certificate，也不需要由 TAK 中繼 CA 簽發。本機 Mumble 明確設定 `certrequired=false`，登入由 Mumble server password 與 channel ACL 控制。
 
@@ -51,8 +51,8 @@ ATAK Voice 自行建立的 self-signed Mumble client certificate 只用於 Vx �
 
 ```text
 tak-local-mumble-1  mumblevoip/mumble-server:v1.5.915-1  Up (healthy)
-192.168.137.1:64400->64738/tcp
-192.168.137.1:64400->64738/udp
+192.168.137.1:40000->64738/tcp
+192.168.137.1:40000->64738/udp
 ```
 
 容器主程序：
@@ -61,11 +61,11 @@ tak-local-mumble-1  mumblevoip/mumble-server:v1.5.915-1  Up (healthy)
 1  10000  10000  mumble-server  /usr/bin/mumble-server -fg -ini /data/mumble_server_config.ini
 ```
 
-Android 實機 `<ANDROID_DEVICE_MODEL>` 執行 `toybox nc -z -w 3 takbox.local 64400` 成功，證明 mDNS 與 TCP 路徑可達。UDP 語音路徑必須在 Vx 完成登入並建立加密語音狀態後，以雙向 PTT 實測，單純 UDP socket 探測不能取代此驗證。
+Windows host 已完成 `40000/TCP+UDP` 綁定、Docker port publish、Mumble healthcheck、mDNS SRV 與 TLS hostname 驗證。Android 裝置未連接 ADB，因此未重跑 `toybox nc -z -w 3 takbox.local 40000`；但重新啟動後，Mumble 已記錄 Android `Mumla 3.7.3` client 完成 `Authenticated`，並進入 `Primary`、`Alternate` 與 `TAK`，證明新通訊埠的實際 client TCP、TLS、密碼與頻道流程可用。UDP 語音路徑仍須以雙向 PTT 實測。
 
 ### Vx 首次登入結果
 
-Vx 先前使用錯誤的一般 server password，Mumble 日誌明確回報 `Invalid server password`。改用 `runtime/secrets/mumble_server_password` 的內容後，Mumble 在 2026-09-21 17:10:40（Asia/Taipei）記錄 ATAK Vx client 完成 `Authenticated`，證明 TLS、ATAK truststore 與 Mumble 密碼驗證均已通過。
+Vx 在通訊埠移轉前曾使用錯誤的一般 server password，Mumble 日誌明確回報 `Invalid server password`。改用 `runtime/secrets/mumble_server_password` 的內容後，Mumble 在 2026-09-21 17:10:40（Asia/Taipei）記錄 ATAK Vx client 完成 `Authenticated`。改用 `40000` 並重新啟動後，日誌於 20:47:37 再次記錄 Android `Mumla 3.7.3` client 完成 `Authenticated`，隨後成功切換至 `Primary`、`Alternate` 與 `TAK`。最終重啟後，20:52:18 又有 Android client 完成驗證，20:53:27 進入 `Primary`；Windows 同時顯示 Android 熱點用戶端到 `40000/TCP` 的連線為 `ESTABLISHED`。
 
 Mumble 初始資料庫只有預設頻道：
 
@@ -122,7 +122,7 @@ UDP Pings received steadily, continuing to use UDP
 Received UDP packet of type: PING
 ```
 
-因此本機 `64400/UDP`、Mumble crypt state 與雙向 UDP ping 已通過。尚未有第二個語音用戶端，所以不把 UDP ping 成功等同於雙向 PTT 音訊驗收。
+以上 Vx UDP 紀錄來自通訊埠移轉前的驗證。`40000/TCP+UDP` 的 Windows 與 Docker server 端驗證完成後，仍須由 Vx 重新連線，確認 Mumble crypt state 與雙向 UDP ping。尚未有第二個語音用戶端，所以不把 UDP ping 成功等同於雙向 PTT 音訊驗收。
 
 Vx 2.1.0 的頻道欄位必須填入伺服器上已存在的非 Root 具名子頻道。空白、未建立的名稱及 `Root` 都無法加入。
 
@@ -133,7 +133,7 @@ Vx 2.1.0 的頻道欄位必須填入伺服器上已存在的非 Root 具名子�
 | 欄位 | 值 |
 | --- | --- |
 | Address | `takbox.local`，也可用 SAN 內的 `192.168.137.1` |
-| Port | `64400` |
+| Port | `40000` |
 | Password | `runtime/secrets/mumble_server_password` 的內容 |
 | P 主要 Channel | `Primary` |
 | A 次要 Channel | `Alternate` |
