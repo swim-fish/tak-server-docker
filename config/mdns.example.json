@@ -1,0 +1,22 @@
+{
+  "address": "192.168.137.1",
+  "hostname": "takbox.local",
+  "services": [
+    {
+      "type": "_mumble._tcp.local.",
+      "name": "ATAK Voice",
+      "port": 64400,
+      "properties": {
+        "tls": "true"
+      }
+    },
+    {
+      "type": "_tak-cot._tcp.local.",
+      "name": "TAK CoT TLS",
+      "port": 8089,
+      "properties": {
+        "tls": "true"
+      }
+    }
+  ]
+}
