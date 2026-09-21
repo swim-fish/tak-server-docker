@@ -1,0 +1,161 @@
+name: tak-local
+
+services:
+  tak-db:
+    image: takserver-db-hardened:5.8-release-84
+    build:
+      context: ./vendor/takserver-docker-hardened-5.8-RELEASE-84
+      dockerfile: docker/Dockerfile.hardened-takserver-db
+    entrypoint: ["/bin/bash", "/opt/local/db-entrypoint.sh"]
+    volumes:
+      - tak-db-data:/var/lib/postgresql/data
+      - ./runtime/tak/CoreConfig.xml:/opt/tak/CoreConfig.xml:ro
+      - ./config/tak/pg_hba.conf:/opt/tak/db-utils/pg_hba.conf:ro
+      - ./docker/db-entrypoint.sh:/opt/local/db-entrypoint.sh:ro
+    networks:
+      tak-backend:
+        ipv4_address: 172.28.0.2
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U postgres -d postgres"]
+      start_period: 180s
+      interval: 15s
+      timeout: 10s
+      retries: 20
+    restart: unless-stopped
+    logging:
+      driver: local
+      options:
+        max-size: 20m
+        max-file: "3"
+
+  tak-server:
+    image: takserver-hardened:5.8-release-84
+    build:
+      context: ./vendor/takserver-docker-hardened-5.8-RELEASE-84
+      dockerfile: docker/Dockerfile.hardened-takserver
+    environment:
+      ADMIN_CERT_NAME: admin
+      CONFIG_MAX_HEAP: "384"
+      API_MAX_HEAP: "1536"
+      MESSAGING_MAX_HEAP: "1536"
+      PLUGIN_MANAGER_MAX_HEAP: "384"
+      RETENTION_MAX_HEAP: "384"
+    secrets:
+      - tak_store_password
+    volumes:
+      - ./runtime/tak/CoreConfig.xml:/opt/tak/CoreConfig.xml
+      - ./runtime/tak/UserAuthenticationFile.xml:/opt/tak/UserAuthenticationFile.xml
+      - ./runtime/tak/certs:/opt/tak/certs/files:ro
+      - tak-logs:/opt/tak/logs
+    ports:
+      - "192.168.137.1:8089:8089/tcp"
+      - "192.168.137.1:8443:8443/tcp"
+    networks:
+      tak-backend:
+        ipv4_address: 172.28.0.3
+      tak-edge: {}
+    depends_on:
+      tak-db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          ADMIN_CERT_PASS=$$(cat /run/secrets/tak_store_password) &&
+          HTTP_CODE=$$(curl -sS --cert-type P12
+          --cert /opt/tak/certs/files/admin.p12:$$ADMIN_CERT_PASS
+          --cacert /opt/tak/certs/files/root-ca.pem
+          --resolve takbox.local:8443:127.0.0.1
+          -o /dev/null -w '%{http_code}'
+          https://takbox.local:8443/Marti/api/missions) &&
+          test "$$HTTP_CODE" = "200"
+      start_period: 240s
+      interval: 30s
+      timeout: 20s
+      retries: 20
+    restart: unless-stopped
+    stop_grace_period: 60s
+    logging:
+      driver: local
+      options:
+        max-size: 20m
+        max-file: "3"
+
+  mumble:
+    image: mumblevoip/mumble-server:v1.5.915-1
+    environment:
+      PUID: "10000"
+      PGID: "10000"
+      MUMBLE_CHOWN_DATA: "true"
+      MUMBLE_CONFIG_HOST: "0.0.0.0"
+      MUMBLE_CONFIG_PORT: "64738"
+      MUMBLE_CONFIG_USERS: "20"
+      MUMBLE_CONFIG_BONJOUR: "false"
+      MUMBLE_CONFIG_ALLOWPING: "false"
+      MUMBLE_CONFIG_CERTREQUIRED: "false"
+      MUMBLE_CONFIG_SENDVERSION: "false"
+      MUMBLE_CONFIG_SSLCERT: /certs/mumble-fullchain.pem
+      MUMBLE_CONFIG_SSLKEY: /certs/mumble-server.key.pem
+    secrets:
+      - source: mumble_server_password
+        target: MUMBLE_CONFIG_SERVERPASSWORD
+      - source: mumble_superuser_password
+        target: MUMBLE_SUPERUSER_PASSWORD
+      - source: mumble_tls_key_password
+        target: MUMBLE_CONFIG_SSLPASSPHRASE
+    volumes:
+      - mumble-data:/data
+      - ./runtime/pki/mumble-fullchain.pem:/certs/mumble-fullchain.pem:ro
+      - ./runtime/pki/mumble-server.key.pem:/certs/mumble-server.key.pem:ro
+      - ./runtime/pki/public/root-ca.crt.pem:/certs/root-ca.pem:ro
+    ports:
+      - "192.168.137.1:64400:64738/tcp"
+      - "192.168.137.1:64400:64738/udp"
+    networks:
+      - tak-edge
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          printf '\n' |
+          openssl s_client -connect 127.0.0.1:64738
+          -servername takbox.local
+          -CAfile /certs/root-ca.pem
+          -verify_hostname takbox.local
+          -verify_return_error >/dev/null 2>&1
+      start_period: 30s
+      interval: 30s
+      timeout: 15s
+      retries: 5
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    stop_grace_period: 30s
+    logging:
+      driver: local
+      options:
+        max-size: 10m
+        max-file: "3"
+
+networks:
+  tak-backend:
+    internal: true
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+  tak-edge: {}
+
+volumes:
+  tak-db-data: {}
+  tak-logs: {}
+  mumble-data: {}
+
+secrets:
+  tak_store_password:
+    file: ./runtime/secrets/tak_store_password
+  mumble_server_password:
+    file: ./runtime/secrets/mumble_server_password
+  mumble_superuser_password:
+    file: ./runtime/secrets/mumble_superuser_password
+  mumble_tls_key_password:
+    file: ./runtime/secrets/leaf_key_password

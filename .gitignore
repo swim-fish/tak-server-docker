@@ -1,0 +1,36 @@
+runtime/
+vendor/
+secrets/
+__pycache__/
+*.py[cod]
+
+# Local environment and credentials
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.crt
+*.cer
+*.der
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.csr
+*.srl
+*.crl
+
+# Device packages, local databases, and diagnostics
+*.dpk
+*.zip
+*.db
+*.sqlite
+*.sqlite3
+*.log
+*.dump
+*.trace
+*.pcap
+*.pcapng
+*.trx
+*.junit.xml
