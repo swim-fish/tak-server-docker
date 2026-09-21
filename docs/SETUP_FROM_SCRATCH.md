@@ -298,6 +298,8 @@ config/servers.pref
 
 ![設定 Mumble server 位址、通訊埠與密碼](images/atak-vx-02-configure-mumble-server.jpg)
 
+> 此截圖拍攝於通訊埠移轉前，畫面中的 `64400` 是歷史值；目前請依上表輸入 `40000`。
+
 選取由 provisioner 建立的 `Primary` 頻道。Channel 不可留空，也不要只使用 Mumble 的 `Root`。
 
 ![選取 Primary 頻道](images/atak-vx-03-select-server-channel.jpg)
