@@ -7,6 +7,8 @@
 - [從零開始建置與啟動](docs/SETUP_FROM_SCRATCH.md)
 - [Windows mDNS 設定](MDNS.md)
 - [本機整合驗證計畫](LOCAL_VALIDATION_PLAN.md)
+- [TAK Server 與 Vx Mumble 整合 DPK 計畫](docs/VX_DPK_INTEGRATION_PLAN.md)
+- [互動式取消 Mumble 使用者註冊](docs/SETUP_FROM_SCRATCH.md#81-互動式取消-mumble-使用者註冊)
 
 `vendor/` 與 `runtime/` 都是本機產物，不應提交 Git。`vendor/` 保存官方 hardened 套件；`runtime/` 保存私鑰、密碼、憑證、Data Package 與執行階段設定。
 
