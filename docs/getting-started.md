@@ -36,10 +36,20 @@ Test-Path ./vendor/takserver-docker-hardened-5.8-RELEASE-84/docker/Dockerfile.ha
 ## 2. 產生憑證與 TAK 連線包
 
 ```powershell
-python ./scripts/bootstrap_local.py --host takbox.local --ip 192.168.137.1 --client-name atak-client
+python ./scripts/bootstrap_local.py --host takbox.local --client-name atak-client
 ```
 
 腳本產生 Root CA、中繼 CA、獨立葉憑證、CRL、服務設定、密碼及 `runtime/packages/atak-local-test.dpk`，並執行憑證檢查。成功後應有 `runtime/tak/CoreConfig.xml` 及上述 DPK。
+
+腳本沒有預填 DNS 或 IP，必須至少指定 `--host`（別名 `--dns`）或 `--ip`；兩者都未指定、空白或格式錯誤時，會在產生或清除 runtime 前停止。上述教學明確選用 DNS，讓 IP 改變時可沿用名稱與憑證。
+
+| 輸入選項 | TAK／Mumble SAN | 憑證 CN 與 DPK 連線位址 |
+| --- | --- | --- |
+| `--host takbox.local` | 只有 DNS | `takbox.local` |
+| `--ip 192.168.137.1` | 只有 IP | `192.168.137.1` |
+| `--host takbox.local --ip 192.168.137.1` | DNS＋IP | 優先使用 `takbox.local` |
+
+這些參數不會修改 Compose、mDNS 或防火牆。使用 DNS 時，IP 變動後須同步更新名稱解析、服務綁定與防火牆。選用 IP-only 時，除了 Vx Address 與管理工具，TAK、Mumble 的健康檢查也要改用相符的 IP；TAK 的 curl 探測應使用 IP URL，移除原本的 `--resolve takbox.local:8443:127.0.0.1`。Mumble 範例見[IP-only 維運](mumble/server.md#使用-ip-only-憑證)。
 
 若腳本回報既有部署，先確認檔案來源再繼續。`--force` 會重建整套憑證與密碼，不能當成一般重試參數。詳細原理與更新方式見[憑證頁](security/certificates.md)。
 

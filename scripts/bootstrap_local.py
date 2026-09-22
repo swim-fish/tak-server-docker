@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import ipaddress
 import os
 import re
 import secrets
@@ -78,13 +79,43 @@ def export_p12(openssl: str, env: dict[str, str], name: str, key: Path, cert: Pa
     run(openssl, "pkcs12", "-export", "-name", name, "-inkey", str(key), "-passin", "env:TAK_LEAF_PASS", "-in", str(cert), "-certfile", str(PUBLIC / "ca-chain.pem"), "-out", str(output), "-passout", "env:TAK_STORE_PASS", env=env)
 
 
-def main() -> int:
+def dns_name(value: str) -> str:
+    value = value.strip()
+    labels = value.split(".")
+    if len(value) > 253 or not all(re.fullmatch(r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?", label) for label in labels):
+        raise argparse.ArgumentTypeError("Enter a DNS name without a scheme, port, or trailing dot")
+    try:
+        ipaddress.ip_address(value)
+    except ValueError:
+        return value
+    raise argparse.ArgumentTypeError("Use --ip for an IP address")
+
+
+def ip_literal(value: str) -> str:
+    try:
+        return str(ipaddress.ip_address(value.strip()))
+    except ValueError as error:
+        raise argparse.ArgumentTypeError("Enter a valid IP address without a port") from error
+
+
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--host", default="takbox.local")
-    parser.add_argument("--ip", default="192.168.137.1")
+    parser.add_argument("--host", "--dns", type=dns_name, help="DNS SAN and preferred connection name; specify this and/or --ip")
+    parser.add_argument("--ip", type=ip_literal, help="IP SAN and connection address when DNS is omitted")
     parser.add_argument("--client-name", default="atak-client")
     parser.add_argument("--force", action="store_true")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
+    if not args.host and not args.ip:
+        parser.error("Specify at least one of --host/--dns or --ip")
+    args.server_name = args.host or args.ip
+    args.server_san = ",".join(
+        value for value in (f"DNS:{args.host}" if args.host else None, f"IP:{args.ip}" if args.ip else None) if value
+    )
+    return args
+
+
+def main() -> int:
+    args = parse_args()
 
     openssl = shutil.which("openssl")
     keytool = shutil.which("keytool")
@@ -215,10 +246,10 @@ commonName = supplied
 emailAddress = optional
 ''', encoding="ascii", newline="\n")
 
-    server_key, server_cert = make_leaf(openssl, env, "takserver", args.host, "serverAuth,clientAuth", f"DNS:{args.host},IP:{args.ip}")
+    server_key, server_cert = make_leaf(openssl, env, "takserver", args.server_name, "serverAuth,clientAuth", args.server_san)
     admin_key, admin_cert = make_leaf(openssl, env, "admin", "admin", "clientAuth")
     client_key, client_cert = make_leaf(openssl, env, "atak-client", args.client_name, "clientAuth")
-    mumble_key, mumble_cert = make_leaf(openssl, env, "mumble", args.host, "serverAuth", f"DNS:{args.host},IP:{args.ip}")
+    mumble_key, mumble_cert = make_leaf(openssl, env, "mumble", args.server_name, "serverAuth", args.server_san)
 
     root_crl = PUBLIC / "root-ca.crl.pem"
     crl = PUBLIC / "intermediate-ca.crl.pem"
@@ -275,7 +306,7 @@ emailAddress = optional
   <preference version="1" name="cot_streams">
     <entry key="count" class="class java.lang.Integer">1</entry>
     <entry key="description0" class="class java.lang.String">Local TAK Server 5.8</entry>
-    <entry key="connectString0" class="class java.lang.String">{escape(args.host)}:8089:ssl</entry>
+    <entry key="connectString0" class="class java.lang.String">{escape(args.server_name)}:8089:ssl</entry>
     <entry key="enabled0" class="class java.lang.Boolean">true</entry>
     <entry key="useAuth0" class="class java.lang.Boolean">false</entry>
     <entry key="caLocation0" class="class java.lang.String">cert/caCert.p12</entry>
@@ -318,8 +349,11 @@ emailAddress = optional
         run(openssl, "verify", "-crl_check_all", "-CRLfile", str(crl_bundle), "-CAfile", str(root_cert), "-untrusted", str(intermediate_cert), str(cert), env=env)
     run(openssl, "crl", "-in", str(root_crl), "-noout", "-issuer", "-lastupdate", "-nextupdate")
     run(openssl, "crl", "-in", str(crl), "-noout", "-issuer", "-lastupdate", "-nextupdate")
-    run(openssl, "x509", "-in", str(server_cert), "-noout", "-checkhost", args.host)
-    run(openssl, "x509", "-in", str(server_cert), "-noout", "-checkip", args.ip)
+    for cert in (server_cert, mumble_cert):
+        if args.host:
+            run(openssl, "verify", "-CAfile", str(root_cert), "-untrusted", str(intermediate_cert), "-purpose", "sslserver", "-verify_hostname", args.host, str(cert), env=env)
+        if args.ip:
+            run(openssl, "verify", "-CAfile", str(root_cert), "-untrusted", str(intermediate_cert), "-purpose", "sslserver", "-verify_ip", args.ip, str(cert), env=env)
     run(keytool, "-list", "-keystore", str(TAK_CERTS / "takserver.jks"), "-storepass:env", "TAK_STORE_PASS", env=env)
     run(openssl, "pkcs12", "-in", str(PACKAGES / "clientCert.p12"), "-passin", "env:TAK_STORE_PASS", "-noout", "-info", env=env)
 
