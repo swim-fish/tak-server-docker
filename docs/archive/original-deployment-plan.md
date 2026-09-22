@@ -1,5 +1,7 @@
 # TAK Server 5.8 Hardened Docker Compose 建置計畫
 
+> 歷史資料：保存至 2026-09-22 的原始計畫與研究歷程，內含未實作設計、舊值及已被後續實測修正的判斷。請勿直接照此部署；現行操作從[文件首頁](../README.md)開始，未完成項目見[後續計畫](../plans/roadmap.md)。
+
 ## 1. 文件目的
 
 本計畫說明如何使用下列官方套件，在 Windows 主機的 Docker Desktop／WSL2 環境建立本機 TAK 服務：

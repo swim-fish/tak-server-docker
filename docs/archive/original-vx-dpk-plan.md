@@ -1,6 +1,8 @@
 # TAK Server 與 Vx Mumble 整合 DPK 計畫
 
-日期：2026-09-22。狀態：Vx-only DPK 經本機 TAK Server 下載已實測成功：觸發 sharing.downloaded、建立 vx-only-test 任務及 Mumble 頻道，輸入密碼後登入並加入 Primary。一般 Local SD 匯入仍不觸發 Vx 任務建立。後續雙頻道 vx-dual-test 亦已通過：同一台 Mumble Server 的 Primary／Alternate 可同時維持獨立 session。部署建議改為 TAK 憑證本機匯入＋Vx-only 伺服器下載兩階段；PTT 按鍵及雙向語音尚未驗收。詳見 [實機驗證紀錄](validation/2026-09-22-tak-vx-dpk.md#tak-server-下載實測成功)。
+> 歷史資料：保存至 2026-09-22 的原始計畫與研究歷程，內含未實作設計、舊值及已被後續實測修正的判斷。請勿直接照此部署；現行操作從[文件首頁](../README.md)開始，未完成項目見[後續計畫](../plans/roadmap.md)。
+
+日期：2026-09-22。狀態：Vx-only DPK 經本機 TAK Server 下載已實測成功：觸發 sharing.downloaded、建立 vx-only-test 任務及 Mumble 頻道，輸入密碼後登入並加入 Primary。一般 Local SD 匯入仍不觸發 Vx 任務建立。後續雙頻道 vx-dual-test 亦已通過：同一台 Mumble Server 的 Primary／Alternate 可同時維持獨立 session。部署建議改為 TAK 憑證本機匯入＋Vx-only 伺服器下載兩階段；PTT 按鍵及雙向語音尚未驗收。詳見 [實機驗證紀錄](../validation/2026-09-22-tak-vx-dpk.md#tak-server-下載實測成功)。
 
 ## 1. 實機擷取結果
 
@@ -91,7 +93,7 @@ Protobuf 則把 `takbox.local` 與整數 `64400` 分開保存於 connection，ch
 
 本機 APK 的 `assets/User Guide.pdf` 第 4 頁明確說明：Mumble server password 不隨任務分享，接收端嘗試加入時會提示輸入。此次 JSON 與 Protobuf 也沒有包含伺服器密碼。
 
-提示不是每次下載任務或輪替一般密碼都會出現。已有儲存密碼或可驗證的 Mumble 註冊身分時，可能直接登入；伺服器支援以已登錄的用戶端憑證驗證註冊身分，此時不再檢查一般 server password。2026-09-22 的密碼輪替測試已確認 Vx 仍以註冊 ID 連線，詳見 [驗證紀錄](validation/2026-09-22-tak-vx-dpk.md#更換-mumble-密碼以重現提示畫面)。
+提示不是每次下載任務或輪替一般密碼都會出現。已有儲存密碼或可驗證的 Mumble 註冊身分時，可能直接登入；伺服器支援以已登錄的用戶端憑證驗證註冊身分，此時不再檢查一般 server password。2026-09-22 的密碼輪替測試已確認 Vx 仍以註冊 ID 連線，詳見 [驗證紀錄](../validation/2026-09-22-tak-vx-dpk.md#更換-mumble-密碼以重現提示畫面)。
 
 APK 內另有 `voice_configuration_database.sqlite`，可辨識 `mission`、`mumble_channels`、`mumble_connections` 資料表定義。這比僅使用全域 `hostIP`／`hostPassword` 的公開範例更完整，也表示不能以寫入兩個偏好設定鍵值取代原生任務。
 
@@ -181,4 +183,4 @@ Mumble 使用同一中繼 CA 簽發的獨立 server certificate，DNS SAN 須包
 - `ATAK-CIV-5.7.0.15-SDK/main.jar`：同版本匯入類別的靜態檢查；本機分析輸出保留於上述 runtime 目錄。
 - `atak-civ/atak/ATAK/app/src/main/java/` 的 `PreferenceControl`、`ImportCertSort`、`MissionPackageExtractor`、`MissionPackageReceiver`：參考原始碼的 SharedPreferences、憑證 finalize 與接收 callback 行為。此原始碼快照不當作手機 APK 的逐位元相同實作。
 
-以上保留原始計畫與設計依據；目前實作及驗收結果以 [實機驗證紀錄](validation/2026-09-22-tak-vx-dpk.md) 為準。
+以上保留原始計畫與設計依據；目前實作及驗收結果以 [實機驗證紀錄](../validation/2026-09-22-tak-vx-dpk.md) 為準。
