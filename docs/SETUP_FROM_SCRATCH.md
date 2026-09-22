@@ -237,6 +237,42 @@ python .\scripts\provision_mumble_channel.py
 
 再次執行是安全的；已存在的頻道會保留。
 
+### 8.1 互動式取消 Mumble 使用者註冊
+
+在專案目錄開啟一般 PowerShell／Windows Terminal，執行：
+
+```powershell
+.\scripts\Remove-MumbleUsers.ps1
+```
+
+需要 Python、Docker CLI、可存取 Docker Desktop 的帳號，以及正在執行的 `mumble` 服務。不必預先以系統管理員身分開啟終端機。腳本沿用 `runtime/secrets/mumble_superuser_password` 與 Root CA，驗證 TLS 憑證及 `takbox.local`；TCP 位址和通訊埠從本機 Compose 容器的實際對應取得。已變更憑證 DNS 名稱時，使用 `-ServerName <DNS_NAME>`。
+
+| 按鍵 | 功能 |
+| --- | --- |
+| `↑`／`↓` | 移動游標，清單較長時自動換頁。 |
+| 空白鍵 | 選取／取消目前使用者，可多選。 |
+| `A` | 全選；永遠排除 `SuperUser`。 |
+| `N` | 全部不選。 |
+| Enter | 檢視選取清單；尚未執行取消註冊。 |
+| `Q`／Esc／Ctrl+C | 在選取畫面取消操作。 |
+
+清單顯示註冊 ID、名稱與目前連線數。檢查選取結果後，必須輸入大寫 `DELETE` 才會執行。沒有選取使用者或輸入其他文字時，不會取消任何註冊。只查看清單時可執行：
+
+```powershell
+.\scripts\Remove-MumbleUsers.ps1 -ListOnly
+```
+
+取消註冊流程：
+
+1. 核對目前容器、註冊名稱及驗證資料的指紋，避免把先前選取的 ID 套到已變更的身分。
+2. 使用 SQLite 一致性備份保存完整 Mumble 資料庫，並驗證 `integrity_check`；失敗時停止操作。
+3. 備份後再次核對選取身分，透過 Mumble 原生管理協定取消指定註冊。
+4. 中斷所選使用者仍存在且身分相符的連線，不加入封鎖清單；核對取消結果及其他註冊身分。
+
+備份、清單快照與操作紀錄存放在 Git 忽略的 `runtime/mumble-admin/`。資料庫備份含驗證資料，不能提交版控或公開分享。失敗時先查看腳本回報的 `.operation.json`，確認是否已部分完成，再重新列出使用者；不要直接重跑舊選取。取消多個註冊與中斷連線不是單一原子交易。
+
+這個操作取消 Mumble 註冊身分，保留頻道、伺服器憑證、CA 與 ATAK／Vx 設定。Vx 已儲存的密碼不會被清除；一般 server password 輪替後，取消註冊可用於重現密碼提示。使用者重新通過驗證後仍可能再次註冊，因此這不是永久停權或封鎖功能。若需還原完整資料庫，應先停止 Mumble，於維護時段處理；還原也會回復備份之後的其他資料變動。
+
 ## 9. Windows 防火牆與 mDNS
 
 先以系統管理員 PowerShell 建立 TAK 防火牆規則：
@@ -245,15 +281,38 @@ python .\scripts\provision_mumble_channel.py
 .\scripts\Install-TakFirewall.ps1
 ```
 
-Mumble 防火牆與 Windows mDNS 安裝腳本可從一般 PowerShell 執行，並在需要時顯示 Windows UAC：
+Windows mDNS 安裝腳本可從一般 PowerShell 執行，並在需要時顯示 Windows UAC：
 
 ```powershell
-.\scripts\Install-MumbleFirewall.ps1
 .\scripts\Install-WindowsMdns.ps1
 .\scripts\Test-WindowsMdns.ps1
 ```
 
 核准後，安裝腳本會以系統管理員權限繼續建立防火牆規則與 `TAK-mDNS-Responder` 排程工作，並保留命令列參數。`Test-WindowsMdns.ps1` 是唯讀檢查，不會要求提高權限。
+
+Mumble 防火牆改為前景工作階段。先開啟 Windows「行動熱點」（分享 Wi-Fi），再於一般 PowerShell 執行：
+
+```powershell
+.\scripts\Install-MumbleFirewall.ps1
+```
+
+腳本先確認 `192.168.137.1` 已配置於 Windows、IPv4 `AddressState` 為 `Preferred`，且對應介面的 `ConnectionState` 為 `Connected`。未就緒時會顯示啟用熱點的提示並結束，不要求 UAC、不建立規則。此位址是分享 Wi-Fi 用戶端的 gateway；檢查不要求熱點介面本身另有上游 gateway，也不代表已驗證 Internet 或 Mumble 服務可達性。
+
+檢查通過後才要求 UAC，並開啟可操作的管理員 PowerShell 視窗。看到 `Mumble firewall active` 後，保留原始及管理員視窗；後續建置指令請在另一個 shell 執行。在任一執行中的 shell 按 `Ctrl+C`，會結束工作階段並清除本次建立的 TCP／UDP 規則。原始 shell 透過停止訊號通知管理員程序清除，不直接強制終止它；若原始 shell 程序消失，管理員程序也會停止。
+
+規則同時限制本機 IP、介面、通訊埠與遠端子網路。腳本每秒檢查一次介面；熱點關閉、位址失效或移到不同介面時，同樣結束並清除本次規則。重新啟用熱點後須重新執行腳本。
+
+```powershell
+.\scripts\Install-MumbleFirewall.ps1 -LocalAddress 192.168.137.1 -RemoteAddress 192.168.137.0/24 -Port 40000
+```
+
+此腳本只管理防火牆，不啟動或停止 Docker／Mumble，也不改動 mDNS 排程。每次使用獨立的 `TAK-Local-Mumble-Session-<id>-<protocol>-<port>` 規則名稱。舊版建立的永久規則及其他工作階段會保留；若偵測到既有 Mumble 規則，會提示它們可能在本次結束後繼續允許連線，因此「清除此工作階段」不等於封鎖所有 Mumble 流量。
+
+請用 `Ctrl+C` 正常結束。強制終止管理員程序、關閉其視窗或斷電時，無法保證清除流程執行；需要檢查並移除已停止工作階段留下的規則。只有正常中斷流程才提供本次規則的自動清除。
+
+驗證：`scripts/tests/Test-MumbleFirewallSession.ps1` 在 PowerShell 7 與 Windows PowerShell 5.1 均通過 IP 未配置、介面未連線、位址未就緒、部分建立失敗、介面消失、父程序停止訊號與 pipeline 中斷的模擬測試。2026-09-22 實機另確認熱點未啟用時，腳本拒絕啟動且前後防火牆規則相同。
+
+同日啟用熱點後，已從一般 PowerShell 經 UAC 建立額外測試工作階段，確認新增兩條規則，再透過原始 shell 的 PTY 送出 `Ctrl+C`。管理員程序隨後移除該兩條測試規則；使用者原有工作階段的兩條規則與兩條舊版永久規則全部保留。這確認了真實防火牆與父程序中斷的清除流程；直接在管理員視窗按 `Ctrl+C` 的鍵盤操作尚未獨立實測。
 
 防火牆只允許 `192.168.137.0/24` 存取 TAK 的 `8089/TCP`、`8443/TCP` 及 Mumble 的 `40000/TCP`、`40000/UDP`。Mumble 的 TCP 用於 TLS 控制連線，UDP 用於低延遲語音。Windows 預設動態通訊埠範圍是 `49152–65535`，HNS／WinNAT 可能在其中建立會隨開機變動的 UDP 排除區間；因此 Mumble 對外使用範圍之外的 `40000`，避免 Docker Desktop 重新啟動後無法綁定。
 
@@ -284,6 +343,26 @@ config/servers.pref
 
 ## 11. ATAK Vx 設定 Mumble
 
+可選擇以下手動設定，或使用已驗證的 [Vx-only DPK 伺服器下載流程](validation/2026-09-22-tak-vx-dpk.md#tak-server-下載實測成功)。後者會建立任務、伺服器連線與頻道，未有可用登入資料的新用戶端仍需輸入 Mumble 密碼。請先完成 TAK 憑證匯入及 Vx 載入；一般 Import → Local SD 匯入 Vx-only DPK 只解壓縮檔案，本次版本不會觸發任務接收 callback。
+
+### 11.1 從伺服器下載任務包後輸入密碼
+
+1. 確認 ATAK 已連上 TAK Server，且 Vx 已載入。
+2. 開啟 Tools → Data Packages → Download，選擇本機 TAK Server，再下載 Vx-only 任務包。
+3. 在 TAK Voice → Missions 開啟下載的任務。未有可用登入資料的新用戶端嘗試連線時，Vx 會顯示 **Enter Password for takbox.local**；已有儲存密碼或可驗證的註冊身分時，可能直接登入。
+4. 在密碼欄輸入 `runtime/secrets/mumble_server_password` 的內容，按 **Confirm**。此處使用一般 Mumble server password；不是 `SuperUser` 密碼、PKCS#12 密碼或 TAK client certificate 密碼。
+5. 在 Channel Pool 選取頻道。雙頻道範例為 `vx-dual-test` 的 `01-P1`／Primary 與 `02-A1`／Alternate，可分別指派到 VS1／VS2。
+
+![Vx 要求輸入 Mumble 伺服器密碼，密碼欄尚未輸入](images/atak-vx-06-enter-mumble-password.jpg)
+
+此為實機截圖，僅裁切保留密碼對話框。2026-09-22 在一般密碼輪替並取消既有 Mumble 註冊身分後重現；不是每次下載任務都會顯示。
+
+密碼提示出現在嘗試連線時，不保證在資料包下載／匯入完成當下出現。Vx 任務包不攜帶 Mumble 密碼；輸入後由 Vx 以加密偏好設定保存。本版以主機名稱作為密碼索引，不包含通訊埠，所以同一個 `takbox.local` 的其他任務或頻道可能沿用已儲存密碼，不會再次提示。未出現提示不能單獨作為連線成功的證據，應核對頻道狀態與伺服器驗證紀錄。
+
+另一個原因是 Mumble 的註冊使用者驗證：伺服器可用已登錄的用戶端憑證雜湊辨識身分；註冊身分驗證成功後，不再檢查一般 `serverpassword`。因此，更換 `mumble_server_password` 不會撤銷既有註冊身分。2026-09-22 實測中，新密碼已生效、未註冊測試帳號使用舊密碼遭拒，但 Vx 仍以兩個註冊 ID 登入 Primary／Alternate，未出現提示。詳見 [密碼輪替驗證](validation/2026-09-22-tak-vx-dpk.md#更換-mumble-密碼以重現提示畫面)。
+
+### 11.2 手動建立 Mumble channel
+
 先在 Vx 新增 Mumble channel。
 
 ![在 Vx 選擇 Mumble channel 類型](images/atak-vx-01-select-mumble.jpg)
@@ -312,7 +391,7 @@ config/servers.pref
 
 ![已儲存的 Vx Mumble channel](images/atak-vx-05-saved-channel-profile.jpg)
 
-Mumble 使用 TAK 中繼 CA 簽發的獨立 server certificate。Vx 透過 ATAK Data Package 內的 CA chain 驗證它，並確認畫面輸入的 `takbox.local` 符合憑證的 DNS SAN；Mumble 登入本身仍使用 `mumble_server_password`，不會使用 ATAK 的 client certificate。
+Mumble 使用 TAK 中繼 CA 簽發的獨立 server certificate。Vx 透過 ATAK Data Package 內的 CA chain 驗證它，並確認畫面輸入的 `takbox.local` 符合憑證的 DNS SAN。這是用戶端驗證伺服器的流程。Mumble 使用者登入另有一般 server password 與註冊身分驗證；已登錄的用戶端憑證可用於後者。不能把共用 TAK CA 信任鏈解讀為 Mumble 已使用 ATAK 的 client certificate 登入；本次尚未比對兩者的用戶端憑證。
 
 ## 12. 基本驗證
 

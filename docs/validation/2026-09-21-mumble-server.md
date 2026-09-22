@@ -6,6 +6,8 @@
 
 ## Compose 設定
 
+> 2026-09-22 補充：實際匯出 Vx 2.1.0 任務 `a` 後，發現其 `Primary` 頻道仍保存 `takbox.local:64400`。下文 `40000` 的 Android／Mumla 連線紀錄可證明該用戶端連線成功，但未與當時 Vx 畫面或程序識別交叉核對，因此不能單獨當成此 Vx 任務已改用 `40000` 的證據。完整欄位及後續驗收方式見 [整合 DPK 計畫](../VX_DPK_INTEGRATION_PLAN.md)。
+
 | 項目 | 值 |
 | --- | --- |
 | Image | `mumblevoip/mumble-server:v1.5.915-1` |
