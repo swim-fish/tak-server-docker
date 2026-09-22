@@ -1,5 +1,7 @@
 # TAK Server 5.8 Hardened 與 ATAK Data Package 驗證紀錄
 
+> 日期紀錄：以下保留當次觀察與後續修正。現行操作見[文件首頁](../README.md)，結果界線見[驗證索引](README.md)。
+
 ## 範圍
 
 本紀錄涵蓋 2026-09-21 在 Windows 11、Docker Desktop／WSL2 與 Android 實機 `<ATAK_DEVICE_ID>` 完成的項目：
@@ -71,11 +73,11 @@ Root CA 與中繼 CA 都會產生 30 天有效的 CRL。TAK listener 只載入�
 實測流程：
 
 1. 由中繼 CA 簽發一次性 `crl-probe` client certificate。
-2. 撤銷前，probe 可完成 `8089` 的 TLS 1.3 握手。
+2. 撤銷前，probe 可完成 `8089` 的 TLS 1.3 交握。
 3. 以 `scripts/revoke_tak_certificate.py` 撤銷 probe，重新發布 CRL，並重新啟動 TAK Server。
 4. OpenSSL 離線驗證回報 `certificate revoked`。
 5. TAK Server 對 probe 回傳 TLS alert `certificate revoked`。
-6. 正式 `<ATAK_DEVICE_ID>` client certificate 仍可完成 TLS 1.3 握手。
+6. 正式 `<ATAK_DEVICE_ID>` client certificate 仍可完成 TLS 1.3 交握。
 7. `admin.p12` 健康檢查仍取得 HTTP 200。
 
 更新 CRL：
@@ -164,7 +166,7 @@ atak-local-test.dpk
 Server cert verification failed: 20 - check truststore for this connection
 ```
 
-TAK Server 在 TLS 握手時已送出「server 葉憑證 → 中繼 CA → Root CA」，OpenSSL 驗證亦為 `Verify return code: 0`，因此問題不在伺服器漏送 chain。將作用中的中繼 CA 加入 DPK 的 `caCert.p12` 後，truststore 結構與官方 `makeCert.sh ca` 一致。
+TAK Server 在 TLS 交握時已送出「server 葉憑證 → 中繼 CA → Root CA」，OpenSSL 驗證亦為 `Verify return code: 0`，因此問題不在伺服器漏送 chain。將作用中的中繼 CA 加入 DPK 的 `caCert.p12` 後，truststore 結構與官方 `makeCert.sh ca` 一致。
 
 修正使用 `scripts/rebuild_atak_data_package.py`，只重建 `caCert.p12`、Manifest 與 DPK；不輪替既有 server、admin 或裝置憑證。新套件在 ATAK 顯示名稱為 `ATAK Local TAK 5.8 v2`，仍使用 `takbox.local:8089:ssl`。
 
@@ -196,7 +198,7 @@ ADB 識別到：
 
 目前狀態：v2 DPK 已建立並完成離線結構驗證。實機重新匯入後，使用者已確認 ATAK Server 連線成功；原先的 native Commo 錯誤碼 20 已排除。
 
-最終服務重啟後，`tak-server` 的 `8089/TCP` listener、mTLS healthcheck 與先前 Android subscription 紀錄均正常。本次 55 秒即時監看未觀察到新的持續 `8089` session，因此此紀錄只主張 ATAK app 已完成過連線驗證，不把該監看期間描述為持續在線。Vx／Mumble `40000` 則已有重新啟動後的 Android `ESTABLISHED`、`Authenticated` 與 `Primary` 頻道紀錄。
+最終服務重新啟動後，`tak-server` 的 `8089/TCP` listener、mTLS healthcheck 與先前 Android subscription 紀錄均正常。本次 55 秒即時監看未觀察到新的持續 `8089` session，因此此紀錄只主張 ATAK app 已完成過連線驗證，不把該監看期間描述為持續已連線。Vx／Mumble `40000` 則已有重新啟動後的 Android `ESTABLISHED`、`Authenticated` 與 `Primary` 頻道紀錄。
 
 ## 已知非阻斷訊息
 

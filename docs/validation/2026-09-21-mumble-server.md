@@ -1,12 +1,14 @@
 # Mumble 本機伺服器驗證紀錄
 
+> 日期紀錄：以下保留當次觀察與後續修正。現行操作見[文件首頁](../README.md)，結果界線見[驗證索引](README.md)。
+
 ## 範圍
 
 本紀錄涵蓋 2026-09-21 在 Windows 11、Docker Desktop／WSL2 與 Android 實機 `<ATAK_DEVICE_ID>` 完成的 Mumble 伺服器端驗證。改用 `40000` 後，Android Mumla client 已重新通過 TLS、密碼驗證與具名子頻道加入。雙向 PTT 與 UDP 語音仍需第二個用戶端驗證。
 
 ## Compose 設定
 
-> 2026-09-22 補充：實際匯出 Vx 2.1.0 任務 `a` 後，發現其 `Primary` 頻道仍保存 `takbox.local:64400`。下文 `40000` 的 Android／Mumla 連線紀錄可證明該用戶端連線成功，但未與當時 Vx 畫面或程序識別交叉核對，因此不能單獨當成此 Vx 任務已改用 `40000` 的證據。完整欄位及後續驗收方式見 [整合 DPK 計畫](../VX_DPK_INTEGRATION_PLAN.md)。
+> 2026-09-22 補充：實際匯出 Vx 2.1.0 任務 `a` 後，發現其 `Primary` 頻道仍保存 `takbox.local:64400`。下文 `40000` 的 Android／Mumla 連線紀錄可證明該用戶端連線成功，但未與當時 Vx 畫面或程序識別交叉核對，因此不能單獨當成此 Vx 任務已改用 `40000` 的證據。完整欄位及後續驗收方式見 [Vx DPK 格式與實測限制](../reference/vx-package-format.md)。
 
 | 項目 | 值 |
 | --- | --- |
@@ -67,7 +69,7 @@ Windows host 已完成 `40000/TCP+UDP` 綁定、Docker port publish、Mumble hea
 
 ### Vx 首次登入結果
 
-Vx 在通訊埠移轉前曾使用錯誤的一般 server password，Mumble 日誌明確回報 `Invalid server password`。改用 `runtime/secrets/mumble_server_password` 的內容後，Mumble 在 2026-09-21 17:10:40（Asia/Taipei）記錄 ATAK Vx client 完成 `Authenticated`。改用 `40000` 並重新啟動後，日誌於 20:47:37 再次記錄 Android `Mumla 3.7.3` client 完成 `Authenticated`，隨後成功切換至 `Primary`、`Alternate` 與 `TAK`。最終重啟後，20:52:18 又有 Android client 完成驗證，20:53:27 進入 `Primary`；Windows 同時顯示 Android 熱點用戶端到 `40000/TCP` 的連線為 `ESTABLISHED`。
+Vx 在通訊埠移轉前曾使用錯誤的一般 server password，Mumble 日誌明確回報 `Invalid server password`。改用 `runtime/secrets/mumble_server_password` 的內容後，Mumble 在 2026-09-21 17:10:40（Asia/Taipei）記錄 ATAK Vx client 完成 `Authenticated`。改用 `40000` 並重新啟動後，日誌於 20:47:37 再次記錄 Android `Mumla 3.7.3` client 完成 `Authenticated`，隨後成功切換至 `Primary`、`Alternate` 與 `TAK`。最終重新啟動後，20:52:18 又有 Android client 完成驗證，20:53:27 進入 `Primary`；Windows 同時顯示 Android 熱點用戶端到 `40000/TCP` 的連線為 `ESTABLISHED`。
 
 Mumble 初始資料庫只有預設頻道：
 

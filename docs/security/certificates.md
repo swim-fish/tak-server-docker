@@ -1,0 +1,97 @@
+# 憑證、信任鏈與 CRL
+
+本機部署必須保留中繼簽發 CA。Root CA 簽中繼 CA，中繼 CA 簽發 TAK、Mumble、管理員及裝置的獨立葉憑證。憑證與金鑰由 [bootstrap](../../scripts/bootstrap_local.py) 產生；檔案用途見[runtime 參考](../reference/runtime-layout.md)。
+
+## 簽發與匯入原則
+
+實作參考官方 hardened 套件 `tak/certs/makeRootCa.sh`、`makeCert.sh`（包括 `makeCert.sh ca`）的憑證用途、鏈與 truststore 組成原則。腳本以 OpenSSL／keytool 自行產生，不是直接執行這兩個上游腳本。
+
+- Root CA 為 `CA:TRUE, pathlen:1`；中繼 CA 為 `CA:TRUE, pathlen:0`。
+- TAK 與 Mumble 使用各自的葉憑證及私鑰；Mumble 葉憑證為 `CA:FALSE`，具有 `serverAuth` EKU。
+- 預設伺服器 SAN 包含 `DNS:takbox.local` 與 `IP:192.168.137.1`。
+- ATAK `caCert.p12` 與 TAK truststore 包含 Root 及作用中的中繼 CA。裝置 `clientCert.p12` 包含裝置私鑰及憑證鏈。
+- Mumble `mumble-fullchain.pem` 為葉憑證加中繼 CA；不把 Root CA 加入伺服器送出的鏈。
+- CA 私鑰留在受控簽發環境；常駐容器不掛載 CA 私鑰。本機 `runtime/pki/private/` 仍須另行保護及備份。
+
+## Vx 驗證 Mumble 的範圍
+
+本次 ATAK／Vx 版本已實測：Vx 可利用 ATAK 個別 TAK Server 設定匯入的 CA 信任資料，驗證同一 CA 階層簽發的 Mumble 憑證。這是本專案採用同一中繼 CA 的理由；不是 Mumble 協定要求所有部署都必須使用 TAK CA。
+
+TAK DPK 設定是指定連線的憑證設定，詳見[ATAK 連線](../atak/connection.md)。Vx 的信任整合不能推論為 Android 所有 App 都信任此 CA，也不保證其他 ATAK／Vx 版本行為相同。
+
+```mermaid
+flowchart TB
+    ROOT["TAK Root CA"] --> ICA["TAK Issuing Intermediate CA"]
+
+    ICA --> TAKCERT["TAK Server 葉憑證<br/>獨立私鑰與 SAN"]
+    ICA --> MUMCERT["Mumble Server 葉憑證<br/>serverAuth、CA:FALSE<br/>DNS SAN: takbox.local"]
+
+    TAKCERT --> TAKSERVER["TAK Server<br/>8089 / 8443"]
+    MUMCERT --> MUMBLE["Mumble Server<br/>40000 TCP + UDP"]
+
+    ROOT -.-> CAP12["ATAK Data Package<br/>caCert.p12<br/>Root + Intermediate CA"]
+    ICA -.-> CAP12
+    CAP12 --> ATAK["ATAK / Vx<br/>匯入 CA 信任鏈"]
+
+    MDNS["mDNS responder<br/>takbox.local → 192.168.137.1"] --> ADDRESS["Vx Address<br/>takbox.local:40000"]
+    ATAK --> ADDRESS
+    ADDRESS -->|"TLS 連線"| MUMBLE
+
+    MUMBLE -->|"送出 Mumble 葉憑證與中繼鏈"| CHAIN{"簽發 CA<br/>是否受 ATAK 信任？"}
+    ATAK -->|"已匯入的 trust context"| CHAIN
+    CHAIN -->|"是"| SAN{"Vx Address 是否符合<br/>DNS / IP SAN？"}
+    ADDRESS --> SAN
+    SAN -->|"是"| PASS["TLS 驗證成功<br/>再驗證 Mumble 註冊身分或共用密碼"]
+
+    CHAIN -->|"否"| FAILCA["拒絕連線<br/>unknown issuer / import certificate"]
+    SAN -->|"否"| FAILSAN["拒絕連線<br/>hostname / IP mismatch"]
+
+    classDef ca fill:#e8f1ff,stroke:#2563a8,stroke-width:2px,color:#10243e;
+    classDef server fill:#eaf8ef,stroke:#2f855a,stroke-width:2px,color:#153d2b;
+    classDef client fill:#fff7df,stroke:#b7791f,stroke-width:2px,color:#4b3512;
+    classDef success fill:#ddf7e7,stroke:#16803c,stroke-width:2px,color:#103c21;
+    classDef failure fill:#ffe8e8,stroke:#c53030,stroke-width:2px,color:#5b1717;
+
+    class ROOT,ICA,CAP12 ca;
+    class TAKCERT,MUMCERT,TAKSERVER,MUMBLE,MDNS server;
+    class ATAK,ADDRESS,CHAIN,SAN client;
+    class PASS success;
+    class FAILCA,FAILSAN failure;
+```
+
+CA 信任與 SAN 必須同時成立。mDNS 只提供名稱解析，不會替憑證增加 SAN，也不會建立信任。Mumble 的共用密碼、Vx 自行管理的用戶端憑證與註冊身分，是 TLS 伺服器驗證後的另一層機制，見[Mumble 使用者](../mumble/users.md)。
+
+## 啟用撤銷檢查
+
+bootstrap 已在 `CoreConfig.xml` 設定 `auth` 的 `x509checkRevocation="true"`，並在 `security/tls` 下加入指向 `/opt/tak/certs/files/intermediate-ca.crl.pem` 的 CRL 項目。TAK 用此清單檢查中繼 CA 簽發的用戶端憑證。Root CRL 及合併 CRL 同時保存供簽發／離線驗證；不能宣稱 TAK listener 已載入所有 CRL。
+
+此設定不會自動讓 Mumble 檢查 TAK CRL，也不會取消 Mumble 註冊身分。Mumble 權限另依[使用者管理](../mumble/users.md)處理。
+
+## 更新 CRL
+
+需要本機 CA 資料庫、加密 CA 私鑰、對應密碼檔，以及 OpenSSL。CRL 目前有效期為 30 天；尚無自動更新排程，管理者應在 `nextUpdate` 前更新：
+
+```powershell
+python ./scripts/refresh_tak_crls.py
+openssl crl -in ./runtime/tak/certs/intermediate-ca.crl.pem -noout -issuer -lastupdate -nextupdate
+docker compose restart tak-server
+docker compose ps
+```
+
+成功時腳本發布 Root、中繼及合併 CRL，日期更新，TAK 重新啟動後回復 healthy。若簽發失敗，先保留既有檔案並檢查 CA 設定、密碼及有效期；不要以關閉撤銷檢查解決。既有 CRL 過期時應先重新發布有效 CRL，再重新驗證用戶端。
+
+## 撤銷特定 TAK 憑證
+
+先核對目標公開憑證的 subject／serial，保留 CA 資料庫備份，確認是要撤銷的裝置。下列為佔位範例，應替換成目標公開 PEM；不要直接使用管理員或伺服器憑證：
+
+```powershell
+openssl x509 -in <TARGET_CERT_PEM> -noout -subject -issuer -serial
+python ./scripts/revoke_tak_certificate.py <TARGET_CERT_PEM> --reason keyCompromise
+docker compose restart tak-server
+```
+
+腳本將憑證加入簽發 CA 的撤銷資料庫並更新 CRL。應另外確認目標裝置的新 TLS 連線遭拒，仍有效的裝置可連線；不要只檢查既有 session。撤銷是持久的 CA 狀態變更，需要恢復連線資格時應規劃新憑證與新 DPK。
+
+中繼 CA 遭入侵時，不能只更新葉憑證 CRL；必須移除受損 CA 的信任並更換簽發鏈及葉憑證。自動輪替、停機復原演練仍列於[後續計畫](../plans/roadmap.md)。
+
+依據：[CRL 更新](../../scripts/refresh_tak_crls.py)、[撤銷工具](../../scripts/revoke_tak_certificate.py)、[TAK 與 DPK 實測](../validation/2026-09-21-tak-server-dpk.md)。
