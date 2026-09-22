@@ -12,6 +12,7 @@
 | Vx Local SD | 清除設定及重新安裝後仍未建立任務，撤回早期成功判斷 | [2026-09-22](2026-09-22-tak-vx-dpk.md#清除既有設定後重測) |
 | Vx Server Download | Vx-only 任務、首次密碼提示、登入及加入頻道成功 | [下載實測](2026-09-22-tak-vx-dpk.md#tak-server-下載實測成功) |
 | Vx 雙頻道 | 同一伺服器的兩個 session 同時位於 Primary／Alternate；不包含音訊驗收 | [雙頻道結果](2026-09-22-tak-vx-dpk.md#雙頻道實測結果) |
+| Mumble 單一類型 SAN | DNS-only／IP-only 搭配相符 Vx Address，P1／A1 均成功；不包含不相符 SAN 拒絕測試 | [SAN 實測](2026-09-22-mumble-san.md) |
 | 密碼輪替與註冊 | 已註冊 Vx 仍可登入；取消註冊後重現密碼提示 | [密碼測試](2026-09-22-tak-vx-dpk.md#更換-mumble-密碼以重現提示畫面) |
 | 公開儲存庫衛生 | 本機內容稽核通過；最終發布檢查待文件提交後重跑 | [2026-09-22](2026-09-22-public-repo-hygiene.md) |
 | 文件重整 | 分類、來源、連結、圖片及語言驗收 | [2026-09-22](2026-09-22-docs-refactor.md) |

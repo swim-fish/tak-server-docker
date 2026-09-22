@@ -4,9 +4,11 @@
 
 ## 為什麼採用 mDNS
 
-Vx 驗證 Mumble 伺服器時，必須同時通過 CA 信任鏈與 Address 對憑證 SAN 的比對。本機實測已確認：匯入 TAK 連線的 CA 信任鏈後，Vx 能驗證同一中繼 CA 簽發的 Mumble 葉憑證。詳細範圍見[憑證與信任鏈](../security/certificates.md)。
+部署 Vx 與 Mumble 時，應提供受信任的 CA 鏈及與 Address 相符的 SAN。本機實測已確認：匯入 TAK 連線的 CA 信任鏈後，Vx 能驗證同一中繼 CA 簽發的 Mumble 葉憑證。詳細範圍見[憑證與信任鏈](../security/certificates.md)。
 
 固定使用 `takbox.local`，可讓用戶端的 Address 與 `DNS:takbox.local` SAN 保持一致。直接輸入 IP 也可行，但必須有相符的 IP SAN。mDNS 負責解析名稱；CA 信任、憑證簽發與防火牆仍須各自設定。
+
+DNS-only 與 IP-only 憑證均已通過 Vx P1／A1 登入及加入頻道測試，SAN 可依 Address 擇一。直接以 IP 連線的 Mumble 不需要 mDNS；本專案預設採用 mDNS，是為了固定名稱並降低主機 IP 改變時的憑證更新需求。TAK 若仍使用 `takbox.local`，仍須保留名稱解析。詳見[實測紀錄](../validation/2026-09-22-mumble-san.md)。
 
 Responder 在 Windows 主機執行，公告熱點 IP，避免發出 Docker bridge 位址。現行記錄為：
 

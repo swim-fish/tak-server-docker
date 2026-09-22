@@ -8,7 +8,7 @@
 
 - Root CA 為 `CA:TRUE, pathlen:1`；中繼 CA 為 `CA:TRUE, pathlen:0`。
 - TAK 與 Mumble 使用各自的葉憑證及私鑰；Mumble 葉憑證為 `CA:FALSE`，具有 `serverAuth` EKU。
-- 預設伺服器 SAN 包含 `DNS:takbox.local` 與 `IP:192.168.137.1`。
+- bootstrap 必須明確指定 `--host`（或 `--dns`）、`--ip` 至少一項；只填 DNS 產生 DNS-only，只填 IP 產生 IP-only，兩者都填則產生 DNS＋IP。DNS 存在時優先作為 CN 與 DPK 連線名稱；參數不會修改網路設定。本專案教學採用固定 DNS 名稱，讓 IP 可變動。
 - ATAK `caCert.p12` 與 TAK truststore 包含 Root 及作用中的中繼 CA。裝置 `clientCert.p12` 包含裝置私鑰及憑證鏈。
 - Mumble `mumble-fullchain.pem` 為葉憑證加中繼 CA；不把 Root CA 加入伺服器送出的鏈。
 - CA 私鑰留在受控簽發環境；常駐容器不掛載 CA 私鑰。本機 `runtime/pki/private/` 仍須另行保護及備份。
@@ -18,6 +18,22 @@
 本次 ATAK／Vx 版本已實測：Vx 可利用 ATAK 個別 TAK Server 設定匯入的 CA 信任資料，驗證同一 CA 階層簽發的 Mumble 憑證。這是本專案採用同一中繼 CA 的理由；不是 Mumble 協定要求所有部署都必須使用 TAK CA。
 
 TAK DPK 設定是指定連線的憑證設定，詳見[ATAK 連線](../atak/connection.md)。Vx 的信任整合不能推論為 Android 所有 App 都信任此 CA，也不保證其他 ATAK／Vx 版本行為相同。
+
+### SAN 依連線位址選擇 DNS 或 IP
+
+2026-09-22 已分別換用 DNS-only、IP-only Mumble 葉憑證，並由使用者確認 Vx 的 P1／A1 都能重新登入及加入頻道。**SAN 不必同時含 DNS 與 IP；應包含 Vx Address 實際使用的名稱或位址。**
+
+| Vx Address | Mumble 葉憑證 SAN | 名稱解析需求 |
+| --- | --- | --- |
+| `takbox.local` | `DNS:takbox.local` 即可 | mDNS 能解析到主機 IP |
+| `192.168.137.1` | `IP:192.168.137.1` 即可 | 此 Mumble 連線不需要 mDNS／DNS |
+| 兩種入口都要提供 | 同時加入上述 DNS 與 IP SAN | 使用名稱的用戶端仍需要名稱解析 |
+
+IP 要使用 `IP:` 類型，不能以 `DNS:192.168.137.1` 取代。通訊埠 `40000` 填在 Vx Port，不放入 SAN。固定 DNS 名稱可在 IP 改變後沿用憑證；直接以 IP 連線時，IP 改變就要重新簽發含新 IP SAN 的憑證，並更新 Vx Address。
+
+以上實測保留同一 CA、私鑰與 `CN=takbox.local`。APK 的信任流程有 Android、TAK 及自訂 fallback 分支；自訂分支接受符合 host 的 DNS 或 IP SAN，也有 CN fallback。本次正向測試證明兩種 SAN 配置可用，沒有證明各分支對不相符 SAN 都會拒絕；部署仍應使用相符 SAN，不依賴 CN fallback。完整範圍見[單一類型 SAN 實測](../validation/2026-09-22-mumble-san.md)。
+
+以下圖示以 DNS 入口為例，表示部署時應符合的信任與位址條件，不逐一表示 APK 的內部分支。
 
 ```mermaid
 flowchart TB
@@ -59,7 +75,7 @@ flowchart TB
     class FAILCA,FAILSAN failure;
 ```
 
-CA 信任與 SAN 必須同時成立。mDNS 只提供名稱解析，不會替憑證增加 SAN，也不會建立信任。Mumble 的共用密碼、Vx 自行管理的用戶端憑證與註冊身分，是 TLS 伺服器驗證後的另一層機制，見[Mumble 使用者](../mumble/users.md)。
+部署應同時具備受信任的 CA 鏈及與 Address 相符的 SAN。mDNS 只提供名稱解析，不會替憑證增加 SAN，也不會建立信任。Mumble 的共用密碼、Vx 自行管理的用戶端憑證與註冊身分，是 TLS 伺服器驗證後的另一層機制，見[Mumble 使用者](../mumble/users.md)。
 
 ## 啟用撤銷檢查
 
