@@ -12,6 +12,7 @@
 | 啟用熱點與防火牆、處理重新開機後的連線 | [防火牆](network/firewall.md) |
 | 理解憑證鏈、SAN、TAK 信任庫與更新 CRL | [憑證與撤銷](security/certificates.md) |
 | 管理 TAK 服務、管理員與裝置使用者 | [TAK Server 維運](tak-server/operations.md) |
+| 用控制台管理用戶端憑證、群組、DPK 與撤銷 | [用戶端憑證控制台](tak-server/certificate-console.md) |
 | 啟動 Mumble、建立頻道或更換密碼 | [Mumble Server](mumble/server.md) |
 | 啟動 RTSP／RTSPS 影像服務、設定 TAK ICU | [MediaMTX](mediamtx/server.md) |
 | 用 QR Code 佈建 TAK ICU 影像發布設定 | [ICU QR Code](mediamtx/icu-qrcode.md) |

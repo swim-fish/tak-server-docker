@@ -10,6 +10,7 @@ RUN pip install --no-cache-dir "qrcode[pil]==8.2" "Flask==3.1.2" "gunicorn==23.0
 
 COPY scripts/share_portal.py scripts/share_admin_flask.py scripts/share_admin.js scripts/build_icu_qr.py /app/
 COPY docker/share-portal/templates/ /app/templates/
+COPY docker/share-portal/static/ /app/static/
 
 USER 10001:10001
 WORKDIR /app

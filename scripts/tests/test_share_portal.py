@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import os
 import sys
 import tempfile
 import unittest
@@ -10,6 +11,7 @@ import zipfile
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import share_portal as portal
@@ -67,6 +69,99 @@ class SharePortalTests(unittest.TestCase):
         self.assertEqual(sum(item is not None for item in reservations), 3)
         self.assertEqual(portal.get_share(row["token"])["accepted"], 3)
 
+    def test_certificate_revocation_stops_every_matching_snapshot(self) -> None:
+        first = self.share(ttl_minutes=10, max_downloads=3)
+        second = self.share(ttl_minutes=10, max_downloads=3)
+        self.assertEqual(portal.stop_file_shares("example.dpk"), 2)
+        self.assertIsNone(portal.reserve_download(first["token"]))
+        self.assertIsNone(portal.reserve_download(second["token"]))
+        self.assertEqual(portal.stop_file_shares("example.dpk"), 0)
+
+    def test_certificate_page_and_issue_post_require_admin_and_csrf(self) -> None:
+        import share_admin_flask as admin
+
+        record = {"serial": "1002", "fingerprint": "a" * 64, "issuer": "CN=Test CA",
+                  "cn": "tablet", "name": "Field tablet", "expires_at": "2028-09-23 08:00:00",
+                  "days_left": "730 天", "expiring_soon": False, "expired": False,
+                  "revoked": False, "package": None, "registered": True}
+        client = admin.app.test_client()
+        auth = "Basic " + base64.b64encode(b"admin:test-admin-password-that-is-long-enough").decode()
+        headers = {"Authorization": auth, "Host": "127.0.0.1:8766"}
+        self.assertEqual(client.get("/certificates").status_code, 401)
+        with patch.object(admin, "cert_control", return_value={"certificates": [record], "last_result": None}):
+            response = client.get("/certificates", headers=headers)
+            self.assertEqual(response.status_code, 200)
+            self.assertIn("到期日（台灣時間）", response.data.decode())
+            self.assertIn("Field tablet", response.data.decode())
+            self.assertIn("style-src 'self' 'unsafe-inline'", response.headers["Content-Security-Policy"])
+            self.assertIn("data-group-board", response.data.decode())
+            self.assertIn('id="view-list" aria-pressed="false"', response.data.decode())
+            self.assertIn('class="certificate-list" role="list" data-view="cards"', response.data.decode())
+            self.assertIn('id="hide-revoked"', response.data.decode())
+            self.assertIn('id="count-total">1</strong>', response.data.decode())
+        stylesheet = client.get("/static/group_assignment.css", headers=headers)
+        self.assertEqual(stylesheet.status_code, 200)
+        self.assertIn(b".group-lanes", stylesheet.data)
+        stylesheet.close()
+        with patch.object(admin, "cert_control", side_effect=[
+                {"certificates": [record], "last_result": None},
+                {"status": {"username": "device-01", "in_groups": ["local-test"],
+                            "out_groups": ["local-test"]}}]):
+            detail = client.get("/certificates/1002", headers=headers)
+            self.assertEqual(detail.status_code, 200)
+            self.assertIn("群組權限", detail.data.decode())
+        with patch.object(admin, "cert_control") as control:
+            self.assertEqual(client.post("/certificates/issue", headers=headers,
+                                         data={"csrf": "wrong"}).status_code, 403)
+            control.assert_not_called()
+            response = client.post("/certificates/issue", headers=headers,
+                                   data={"csrf": admin.CSRF, "name": "Tablet 02", "cn": "tablet-02",
+                                         "in_group": "local-test", "out_group": "local-test"})
+            self.assertEqual(response.status_code, 303)
+            control.assert_called_once_with("issue", name="Tablet 02", cn="tablet-02",
+                                            in_groups=["local-test"], out_groups=["local-test"])
+
+    def test_revoke_route_stops_package_shares_before_host_operation(self) -> None:
+        import share_admin_flask as admin
+
+        row = self.share(ttl_minutes=10, max_downloads=3)
+        record = {"serial": "1002", "fingerprint": "a" * 64, "package": "example.dpk"}
+        auth = "Basic " + base64.b64encode(b"admin:test-admin-password-that-is-long-enough").decode()
+        headers = {"Authorization": auth, "Host": "127.0.0.1:8766"}
+        client = admin.app.test_client()
+
+        def worker(action, **parameters):
+            if action == "validate_selection":
+                return {"certificates": [record]}
+            if action == "revoke":
+                self.assertIsNone(portal.reserve_download(row["token"]))
+                return {"results": []}
+            raise AssertionError(action)
+
+        with patch.object(admin, "cert_control", side_effect=worker):
+            response = client.post("/certificates/revoke", headers=headers,
+                                   data={"csrf": admin.CSRF, "confirmation": "yes",
+                                         "certificate": "1002:" + "a" * 64})
+            self.assertEqual(response.status_code, 303)
+        self.assertEqual(portal.share_status(portal.get_share(row["token"]), False), "已手動停止")
+
+    def test_alternate_admin_port_and_crl_republish_confirmation(self) -> None:
+        import share_admin_flask as admin
+
+        auth = "Basic " + base64.b64encode(b"admin:test-admin-password-that-is-long-enough").decode()
+        headers = {"Authorization": auth, "Host": "127.0.0.1:10066",
+                   "Origin": "http://127.0.0.1:10066"}
+        client = admin.app.test_client()
+        with patch.dict(os.environ, {"SHARE_ADMIN_HOST_PORT": "10066"}), \
+                patch.object(admin, "cert_control") as worker:
+            self.assertEqual(client.post("/certificates/republish", headers=headers,
+                                         data={"csrf": admin.CSRF}).status_code, 400)
+            worker.assert_not_called()
+            self.assertEqual(client.post("/certificates/republish", headers=headers,
+                                         data={"csrf": admin.CSRF,
+                                               "confirmation": "yes"}).status_code, 303)
+            worker.assert_called_once_with("republish")
+
     def test_public_qr_and_download_count(self) -> None:
         row = self.share(ttl_minutes=10, max_downloads=1)
         client = portal.app.test_client()
@@ -95,7 +190,7 @@ class SharePortalTests(unittest.TestCase):
         auth = "Basic " + base64.b64encode(b"admin:test-admin-password-that-is-long-enough").decode()
         self.assertIn(b"TAK", client.get("/", headers={"Authorization": auth}).data)
         headers = {"Authorization": auth, "Origin": "null", "Sec-Fetch-Site": "same-origin",
-                   "Host": "127.0.0.1:8766"}
+                   "Host": f"127.0.0.1:{os.environ.get('SHARE_ADMIN_HOST_PORT', '8766')}"}
         response = client.post("/stop", data={"csrf": admin.CSRF, "id": row["id"]}, headers=headers)
         self.assertEqual(response.status_code, 303)
         self.assertIsNone(portal.reserve_download(row["token"]))

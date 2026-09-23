@@ -41,7 +41,7 @@ docker compose exec -w /opt/tak tak-server java -jar utils/UserManager.jar userm
 
 預期一般裝置沒有 `ROLE_ADMIN`，並具有預期的讀寫群組。實測中的 `ROLE_ANONYMOUS` 是一般使用者角色名稱，不代表略過 TLS 用戶端憑證驗證。裝置彼此是否能看見資料，仍需檢查群組交集。
 
-這段流程只授權既有憑證，不會簽發更多裝置憑證。多裝置應各用獨立身分；完整的批次簽發／交付流程尚待補齊。誤授權時先停止交付，依備份及 UserManager 的實際設定修正；不要把 `-A` 套用到一般裝置。
+這段手動流程只授權既有憑證，不會簽發更多裝置憑證。多裝置可改用[用戶端憑證控制台](certificate-console.md)逐筆簽發、指派群組與產生專屬 DPK；正式實機驗收項目列於該頁。誤授權時先停止交付，依備份及 UserManager 的實際設定修正；不要把 `-A` 套用到一般裝置。
 
 ## 維護與備份範圍
 

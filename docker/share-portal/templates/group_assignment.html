@@ -1,0 +1,47 @@
+<div class="group-board full" data-group-board data-readonly="{{ 'true' if group_disabled else 'false' }}">
+  <p class="group-help">點選一個或多個群組，再選擇目的清單並按「移動」；也可將群組拖曳到目的清單。In 可寫入，Out 可讀取。</p>
+  <div class="group-lanes">
+    {% for lane, title, description in [
+      ('none', '未指派', '不授予讀寫權限'),
+      ('in', 'In／寫入', '只授予寫入'),
+      ('out', 'Out／讀取', '只授予讀取'),
+      ('both', 'In + Out／讀寫', '同時授予讀取與寫入')
+    ] %}
+    <section class="group-lane" data-lane="{{ lane }}">
+      <h3>{{ title }} <span class="group-count" data-count="{{ lane }}"></span></h3>
+      <p>{{ description }}</p>
+      <ul class="group-list" data-group-list="{{ lane }}" aria-label="{{ title }}群組清單">
+        {% for group in group_catalog %}
+          {% set in_state = group in assigned_in %}
+          {% set out_state = group in assigned_out %}
+          {% set position = 'both' if in_state and out_state else 'in' if in_state else 'out' if out_state else 'none' %}
+          {% if position == lane %}
+          <li class="group-entry" data-group="{{ group }}" draggable="{{ 'false' if group_disabled else 'true' }}">
+            <button type="button" class="group-pick" aria-pressed="false" {% if group_disabled %}disabled{% endif %}>{{ group }}</button><span class="group-grip" aria-hidden="true">⋮⋮</span>
+          </li>
+          {% endif %}
+        {% endfor %}
+      </ul>
+    </section>
+    {% endfor %}
+  </div>
+  <div class="group-controls">
+    <label>移至清單
+      <select data-group-destination {% if group_disabled %}disabled{% endif %}>
+        <option value="in">In／寫入</option><option value="out">Out／讀取</option>
+        <option value="both">In + Out／讀寫</option><option value="none">未指派</option>
+      </select>
+    </label>
+    <button type="button" data-group-move disabled>移動選取的群組</button>
+    <label>新增群組
+      <input type="text" data-group-new maxlength="64" placeholder="例如：team-a" {% if group_disabled %}disabled{% endif %}>
+    </label>
+    <button type="button" data-group-add {% if group_disabled %}disabled{% endif %}>加入未指派清單</button>
+  </div>
+  <p class="group-message" data-group-message role="status" aria-live="polite"></p>
+  <div data-group-fields>
+    {% for group in assigned_in %}<input type="hidden" name="in_group" value="{{ group }}">{% endfor %}
+    {% for group in assigned_out %}<input type="hidden" name="out_group" value="{{ group }}">{% endfor %}
+  </div>
+  <noscript><p>群組移動需要啟用 JavaScript；目前顯示的是原始權限。</p></noscript>
+</div>

@@ -23,8 +23,9 @@ flowchart LR
 | `mumble` | Vx 語音及頻道 | 在 `tak-edge`，獨立於 TAK 的健康狀態 |
 | `mediamtx` | RTSP／RTSPS 影像發布及讀取 | 在 `tak-edge`，獨立於 TAK 的健康狀態 |
 | `share-public` | Flask 短效檔案下載與 QR 頁 | `sharing` profile，僅綁定熱點 IP 的 TCP 8765 |
-| `share-admin` | Flask 分享與 Mumble 管理頁 | `sharing` profile，僅綁定 Windows `127.0.0.1:8766` |
+| `share-admin` | Flask 分享、Mumble 與用戶端憑證管理頁 | `sharing` profile，僅綁定 Windows `127.0.0.1:8766` |
 | Windows Mumble 管理程式 | 執行受限的 Mumble 管理動作 | 前景執行；容器不持有 Docker socket |
+| Windows TAK 憑證管理程式 | 操作中繼 CA、TAK 群組、DPK 與 CRL | 前景執行；CA 私鑰與 Docker socket 不掛進 Flask 容器 |
 | Windows mDNS responder | 將固定名稱解析到主機 LAN IP | 在 Windows 執行，不公告 Docker bridge IP |
 
 TAK 等待資料庫健康後啟動。Windows 防火牆限制 LAN 存取；Docker Desktop／WSL2 執行 Linux 容器。專案設定以 Windows 路徑掛載，資料庫與 Mumble 資料儲存在 Docker named volume；原始計畫的全 WSL 檔案系統布局未直接套用。
