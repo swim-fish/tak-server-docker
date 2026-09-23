@@ -73,7 +73,7 @@ Get-NetFirewallRule -Name 'TAK-Local-Mumble-*' | Select-Object Name,DisplayName,
 
 1. 啟動 Docker Desktop，等待 Linux engine 可用。
 2. 啟用熱點並確認主機 IP／網段。
-3. 執行 `Test-WindowsMdns.ps1`；缺少排程或相依套件時依 [mDNS 頁](mdns.md)重新安裝。
+3. 執行 `./scripts/Manage-WindowsMdns.ps1 -Action Start` 手動啟動 mDNS，再執行 `Test-WindowsMdns.ps1`；缺少排程或相依套件時依 [mDNS 頁](mdns.md)選「安裝／修復並啟動」。mDNS 不會隨重新開機自動啟動。
 4. TAK／MediaMTX 持久規則若仍在且參數相同，可繼續沿用；Mumble 前景規則需要重新啟動工作階段。
 5. 執行 `docker compose up -d`，確認服務 healthy，再由 Android 測試連線。
 

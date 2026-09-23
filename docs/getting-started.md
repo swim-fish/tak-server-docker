@@ -63,10 +63,10 @@ python ./scripts/provision_mediamtx.py --dns takbox.local
 
 ## 3. 啟用名稱解析與防火牆
 
-一般 PowerShell 執行 mDNS 安裝，依提示核准 UAC：
+一般 PowerShell 開啟 mDNS 管理選單，選「安裝／修復並啟動」，依提示核准 UAC：
 
 ```powershell
-./scripts/Install-WindowsMdns.ps1
+./scripts/Manage-WindowsMdns.ps1
 ./scripts/Test-WindowsMdns.ps1
 ```
 
