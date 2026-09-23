@@ -34,7 +34,7 @@ runtime/tak/
 
 | 檔案 | 用途 |
 | --- | --- |
-| `CoreConfig.xml` | TAK Server 主設定。包含資料庫連線、TLS keystore/truststore、`x509checkRevocation="true"` 與中繼 CA CRL 路徑。 |
+| `CoreConfig.xml` | TAK Server 主設定。包含資料庫連線、TLS keystore/truststore、`x509checkRevocation="true"`，以及 8089 使用的中繼 CA CRL 路徑；8443 connector 目前未設定 `crlFile`。 |
 | `UserAuthenticationFile.xml` | TAK Server 使用者驗證資料檔。初始內容為空的 `UserAuthenticationFile`。 |
 | `takserver.jks` | TAK Server 的 server certificate 與私鑰。 |
 | `truststore-root.jks` | TAK TLS 信任庫，包含 Root CA 與中繼 CA。 |

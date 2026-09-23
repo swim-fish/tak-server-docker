@@ -80,7 +80,7 @@ flowchart TB
 
 ## 啟用撤銷檢查
 
-bootstrap 已在 `CoreConfig.xml` 設定 `auth` 的 `x509checkRevocation="true"`，並在 `security/tls` 下加入指向 `/opt/tak/certs/files/intermediate-ca.crl.pem` 的 CRL 項目。TAK 用此清單檢查中繼 CA 簽發的用戶端憑證。Root CRL 及合併 CRL 同時保存供簽發／離線驗證；不能宣稱 TAK listener 已載入所有 CRL。
+bootstrap 已在 `CoreConfig.xml` 設定 `auth` 的 `x509checkRevocation="true"`，並在 `security/tls/crl` 指向 `/opt/tak/certs/files/intermediate-ca.crl.pem`，供 CoT/TLS 8089 使用。目前 8443 的 `network/connector` 未設定 `crlFile`；先前啟用此屬性的測試保留於[驗證紀錄](../validation/2026-09-23-tak-crl-8443.md)，不代表現在的 8443 已啟用 TLS 層 CRL 檢查。`x509checkRevocation` 是 TAK Client Certificates 的應用層檢查，不能代替 8443 connector 的 CRL 設定。Root CRL 及合併 CRL 同時保存供簽發／離線驗證；目前沒有宣稱 TAK listener 載入所有 CRL。
 
 此設定不會自動讓 Mumble 檢查 TAK CRL，也不會取消 Mumble 註冊身分。Mumble 權限另依[使用者管理](../mumble/users.md)處理。
 
