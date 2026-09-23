@@ -27,7 +27,7 @@ PUBLIC = RUNTIME / "pki" / "public"
 CA_DB = PRIVATE / "ca-db"
 ROOT_CA_DB = PRIVATE / "root-ca-db"
 TAK_CERTS = RUNTIME / "tak" / "certs"
-PACKAGES = RUNTIME / "packages"
+PACKAGES = RUNTIME / "packages" / "atak"
 
 
 def run(*args: str, env: dict[str, str] | None = None) -> None:

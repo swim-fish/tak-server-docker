@@ -1,6 +1,6 @@
 # 憑證、信任鏈與 CRL
 
-本機部署必須保留中繼簽發 CA。Root CA 簽中繼 CA，中繼 CA 簽發 TAK、Mumble、管理員及裝置的獨立葉憑證。憑證與金鑰由 [bootstrap](../../scripts/bootstrap_local.py) 產生；檔案用途見[runtime 參考](../reference/runtime-layout.md)。
+本機部署必須保留中繼簽發 CA。Root CA 簽中繼 CA，中繼 CA 簽發 TAK、Mumble、MediaMTX、管理員及裝置的獨立葉憑證。TAK／Mumble 憑證由 [bootstrap](../../scripts/bootstrap_local.py) 產生，MediaMTX 由[獨立簽發腳本](../../scripts/provision_mediamtx.py)產生；檔案用途見[runtime 參考](../reference/runtime-layout.md)。
 
 ## 簽發與匯入原則
 
@@ -11,6 +11,7 @@
 - bootstrap 必須明確指定 `--host`（或 `--dns`）、`--ip` 至少一項；只填 DNS 產生 DNS-only，只填 IP 產生 IP-only，兩者都填則產生 DNS＋IP。DNS 存在時優先作為 CN 與 DPK 連線名稱；參數不會修改網路設定。本專案教學採用固定 DNS 名稱，讓 IP 可變動。
 - ATAK `caCert.p12` 與 TAK truststore 包含 Root 及作用中的中繼 CA。裝置 `clientCert.p12` 包含裝置私鑰及憑證鏈。
 - Mumble `mumble-fullchain.pem` 為葉憑證加中繼 CA；不把 Root CA 加入伺服器送出的鏈。
+- MediaMTX 也使用獨立 `serverAuth` 葉憑證、私鑰與葉憑證加中繼 CA 的 fullchain。其私鑰未加密，僅放在忽略版控的 runtime 並唯讀掛載；不與 TAK／Mumble 共用私鑰。RTSP 不使用此憑證，RTSPS 才會使用。
 - CA 私鑰留在受控簽發環境；常駐容器不掛載 CA 私鑰。本機 `runtime/pki/private/` 仍須另行保護及備份。
 
 ## Vx 驗證 Mumble 的範圍

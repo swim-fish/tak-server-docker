@@ -16,7 +16,7 @@ from xml.sax.saxutils import escape
 
 PROJECT = Path(__file__).resolve().parents[1]
 RUNTIME = PROJECT / "runtime"
-PACKAGES = RUNTIME / "packages"
+PACKAGES = RUNTIME / "packages" / "atak"
 PUBLIC = RUNTIME / "pki" / "public"
 SECRETS = RUNTIME / "secrets"
 

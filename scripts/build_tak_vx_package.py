@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build experimental combined or Vx-only packages from a single-channel Vx 2.1 export."""
+"""Build combined or Vx-only packages from a verified Vx 2.1 mission export."""
 
 import argparse
 import copy
@@ -162,37 +162,47 @@ def build(tak_path, native_path, output, host, port, mission_name, vx_only=False
     proto_path = next(n for n in entries if n.endswith('_proto'))
     json_path = next(n for n in entries if not n.endswith('_proto'))
     legacy = json.loads(native[json_path])
-    if len(legacy['channels']) != 1 or legacy['channels'][0]['isMumble'] is not True:
-        raise ValueError('Only the verified single Mumble channel template is supported')
+    if not isinstance(legacy.get('channels'), list) or not legacy['channels']:
+        raise ValueError('Expected a Vx mission with Mumble channels')
 
     root = decode(native[proto_path])
     channel_wrapper, connection_wrapper = decode(field(root, 3)), decode(field(root, 4))
-    channel, connection = decode(field(channel_wrapper, 1)), decode(field(connection_wrapper, 1))
-    mumble = decode(field(channel, 6))
+    encoded_channels = [value for number, wire, value in channel_wrapper if number == 1 and wire == 2]
+    if len(encoded_channels) != len(legacy['channels']):
+        raise ValueError('Native JSON/protobuf channel count mismatch')
+    connection = decode(field(connection_wrapper, 1))
     old_id = field(root, 1).decode()
-    old = legacy['channels'][0]
-    expected = (legacy['missionId']['uuid'] == old_id and old['missionId'] == old_id
-                and old['id'] == field(channel, 1).decode()
-                and legacy['name'] == field(root, 2).decode()
-                and old['name'] == field(channel, 2).decode()
-                and old['subtitle'] == field(mumble, 2).decode()
-                and old['serverChannelId'] == field(mumble, 1, 0)
-                and old['host'] == f'{field(connection, 2).decode()}:{field(connection, 3, 0)}'
-                and field(channel, 4) == field(connection, 1))
+    expected = legacy['missionId']['uuid'] == old_id and legacy['name'] == field(root, 2).decode()
+    templates = []
+    for old, encoded_channel in zip(legacy['channels'], encoded_channels):
+        channel = decode(encoded_channel)
+        mumble = decode(field(channel, 6))
+        expected = expected and (
+            old['isMumble'] is True and old['missionId'] == old_id
+            and old['id'] == field(channel, 1).decode()
+            and old['name'] == field(channel, 2).decode()
+            and old['subtitle'] == field(mumble, 2).decode()
+            and old['serverChannelId'] == field(mumble, 1, 0)
+            and old['host'] == f'{field(connection, 2).decode()}:{field(connection, 3, 0)}'
+            and field(channel, 4) == field(connection, 1))
+        templates.append((old, channel, mumble))
     if not expected or encode(root) != native[proto_path]:
         raise ValueError('Native JSON/protobuf mismatch or unsupported encoding')
 
-    # Use a distinct test mission; preserve unknown fields in each protobuf message.
+    # Preserve each existing channel's unknown fields; clone the first for new IDs.
     mission_id, connection_id = [str(uuid.uuid4()) for _ in range(2)]
     legacy['missionId']['uuid'] = mission_id
     legacy['name'] = mission_name
     if channels is None:
         channels = [{'number': field(channel, 3, 0), 'alias': old['name'],
                      'mumble_channel_id': old['serverChannelId'],
-                     'mumble_channel_name': old['subtitle']}]
+                     'mumble_channel_name': old['subtitle']}
+                    for old, channel, _ in templates]
     validate_channels(channels)
+    templates_by_id = {template[0]['serverChannelId']: template for template in templates}
     legacy_channels, proto_channels = [], []
     for spec in channels:
+        old, channel, mumble = templates_by_id.get(spec['mumble_channel_id'], templates[0])
         channel_id = str(uuid.uuid4())
         item = copy.deepcopy(old)
         item.update(id=channel_id, missionId=mission_id, host=f'{host}:{port}',
@@ -225,7 +235,7 @@ def build(tak_path, native_path, output, host, port, mission_name, vx_only=False
         if p.get('name') == 'uid': p.set('value', str(uuid.uuid4()))
         elif p.get('name') == 'name':
             p.set('value', package_name or (
-                'ATAK Local Voice Only Test' if vx_only else 'ATAK Local TAK and Voice Test'))
+                'ATAK Local Voice' if vx_only else 'ATAK Local TAK and Voice Test'))
         elif p.get('name') not in ('onReceiveImport', 'onReceiveDelete', 'onReceiveAction'):
             raise ValueError('Unexpected native Configuration metadata')
 
@@ -260,7 +270,7 @@ def build(tak_path, native_path, output, host, port, mission_name, vx_only=False
 if __name__ == '__main__':
     project = Path(__file__).resolve().parents[1]
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--tak-package', type=Path, default=project / 'runtime/packages/atak-local-test.dpk')
+    parser.add_argument('--tak-package', type=Path, default=project / 'runtime/packages/atak/atak-local-test.dpk')
     parser.add_argument('--vx-package', type=Path, required=True)
     parser.add_argument('--vx-only', action='store_true', help='Include only native Vx JSON and protobuf payloads')
     parser.add_argument('--output', type=Path)
@@ -271,9 +281,9 @@ if __name__ == '__main__':
     parser.add_argument('--channels-file', type=Path,
                         help='JSON channel array for one Mumble endpoint; use verified server IDs')
     args = parser.parse_args()
-    output = args.output or project / 'runtime/packages' / (
-        'atak-local-vx-only.dpk' if args.vx_only else 'atak-local-tak-vx.dpk')
-    mission_name = args.mission_name or ('vx-only-test' if args.vx_only else 'a-dpk-test')
+    output = args.output or project / 'runtime/packages/atak' / (
+        'atak-local-vx.dpk' if args.vx_only else 'atak-local-tak-vx.dpk')
+    mission_name = args.mission_name or ('vx-local' if args.vx_only else 'a-dpk-test')
     channels = json.loads(args.channels_file.read_text(encoding='utf-8-sig')) if args.channels_file else None
     build(args.tak_package, args.vx_package, output, args.host, args.port, mission_name,
           args.vx_only, channels, args.package_name)

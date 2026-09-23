@@ -13,9 +13,12 @@
 | 理解憑證鏈、SAN、TAK 信任庫與更新 CRL | [憑證與撤銷](security/certificates.md) |
 | 管理 TAK 服務、管理員與裝置使用者 | [TAK Server 維運](tak-server/operations.md) |
 | 啟動 Mumble、建立頻道或更換密碼 | [Mumble Server](mumble/server.md) |
+| 啟動 RTSP／RTSPS 影像服務、設定 TAK ICU | [MediaMTX](mediamtx/server.md) |
+| 用 QR Code 佈建 TAK ICU 影像發布設定 | [ICU QR Code](mediamtx/icu-qrcode.md) |
+| 分享 ICU 設定或 ATAK DPK／ZIP，管理 Mumble | [分享與管理頁](sharing/portal.md) |
 | 查詢或取消 Mumble 註冊身分 | [Mumble 使用者](mumble/users.md) |
 | 匯入 TAK 連線與裝置憑證 | [ATAK 連線](atak/connection.md) |
-| 設定 Vx、下載任務或使用雙頻道 | [Vx 任務與頻道](atak/vx-missions.md) |
+| 設定 Vx、下載任務或使用多頻道 | [Vx 任務與頻道](atak/vx-missions.md) |
 | 排查無法連線、憑證或密碼提示 | [疑難排解](troubleshooting.md) |
 
 ## 查設定與格式

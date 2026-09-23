@@ -7,7 +7,7 @@
 需要 Python 3、從 Vx 匯出的**單一 Mumble 頻道** ZIP，以及已確認的主機／頻道資料。原生 ZIP 含本機設定，放在 Git 忽略的 runtime；下列檔名為自行準備的輸入，不隨 repository 提供：
 
 ```powershell
-python ./scripts/build_tak_vx_package.py --vx-only --vx-package ./runtime/packages/vx-native-single.zip --host takbox.local --port 40000 --mission-name vx-local --package-name "ATAK Local Voice" --output ./runtime/packages/atak-local-vx-only.dpk
+python ./scripts/build_tak_vx_package.py --vx-only --vx-package ./runtime/packages/atak/vx-native-single.zip --host takbox.local --port 40000 --mission-name vx-local --package-name "ATAK Local Voice" --output ./runtime/packages/atak/atak-local-vx.dpk
 ```
 
 產物為指定 DPK 及同名 `.sha256`。預設沿用範本的頻道 ID／名稱／Alias；若目標 Mumble 不同，應先核對 ID，再用下一節覆寫。
@@ -16,17 +16,19 @@ python ./scripts/build_tak_vx_package.py --vx-only --vx-package ./runtime/packag
 
 ## 一個 Mission 放入多個頻道
 
-先以[頻道工具](../mumble/server.md#建立-primary-與-alternate)確認目前伺服器回報的 ID。下列僅為歷史測試 ID，必須改成自己的值，另存成 `runtime/packages/channels.json`：
+先以[頻道工具](../mumble/server.md#建立-primary-與-alternate)確認目前伺服器回報的 ID。下列是目前本機 Mumble 的 ID；移植到其他資料庫時必須重新核對，另存成 `runtime/packages/atak/channels.json`：
 
 ```json
 [
-  {"number": 1, "alias": "P1", "mumble_channel_id": 2, "mumble_channel_name": "Primary"},
-  {"number": 2, "alias": "A1", "mumble_channel_id": 3, "mumble_channel_name": "Alternate"}
+  {"number": 1, "alias": "Primary", "mumble_channel_id": 2, "mumble_channel_name": "Primary"},
+  {"number": 2, "alias": "Alternate", "mumble_channel_id": 3, "mumble_channel_name": "Alternate"},
+  {"number": 3, "alias": "Medical", "mumble_channel_id": 4, "mumble_channel_name": "Medical"},
+  {"number": 4, "alias": "Emergency", "mumble_channel_id": 5, "mumble_channel_name": "Emergency"}
 ]
 ```
 
 ```powershell
-python ./scripts/build_tak_vx_package.py --vx-only --vx-package ./runtime/packages/vx-native-single.zip --channels-file ./runtime/packages/channels.json --host takbox.local --port 40000 --mission-name vx-dual --package-name "ATAK Local Voice Dual" --output ./runtime/packages/atak-local-vx-dual.dpk
+python ./scripts/build_tak_vx_package.py --vx-only --vx-package ./runtime/packages/atak/vx-native-single.zip --channels-file ./runtime/packages/atak/channels.json --host takbox.local --port 40000 --mission-name vx-local --package-name "ATAK Local Voice" --output ./runtime/packages/atak/atak-local-vx.dpk
 ```
 
 頻道序號範圍為 1–99；不可重複序號或 Mumble ID。多個頻道參照同一 connection UUID，但 Vx 啟用 VS1／VS2 時仍可建立兩個獨立 Mumble session。套件不指定 PTT 按鍵或語音位置。

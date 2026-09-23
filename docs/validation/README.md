@@ -12,7 +12,11 @@
 | Vx Local SD | 清除設定及重新安裝後仍未建立任務，撤回早期成功判斷 | [2026-09-22](2026-09-22-tak-vx-dpk.md#清除既有設定後重測) |
 | Vx Server Download | Vx-only 任務、首次密碼提示、登入及加入頻道成功 | [下載實測](2026-09-22-tak-vx-dpk.md#tak-server-下載實測成功) |
 | Vx 雙頻道 | 同一伺服器的兩個 session 同時位於 Primary／Alternate；不包含音訊驗收 | [雙頻道結果](2026-09-22-tak-vx-dpk.md#雙頻道實測結果) |
+| TAK／Vx／ICU 分離佈建 | TAK 憑證 QR 成功；Vx QR 一般匯入不建立 Mission，改由 TAK Server Download 建立四頻道並逐一加入；ICU QR 發布 RTSPS 成功 | [2026-09-23](2026-09-23-qr-tak-vx-icu.md) |
 | Mumble 單一類型 SAN | DNS-only／IP-only 搭配相符 Vx Address，P1／A1 均成功；不包含不相符 SAN 拒絕測試 | [SAN 實測](2026-09-22-mumble-san.md) |
+| MediaMTX／TAK ICU | RTSP、RTSPS TCP 與 Compose 內 UDP 串流通過；ICU 7.5.1 經 RTSPS＋帳密實際發布，獨立讀取成功；跨 bridge UDP 與 ATAK 內建播放仍待驗 | [2026-09-23](2026-09-23-mediamtx.md) |
+| TAK ICU QR Code | 依 ICU 7.5.1 APK 與原生 `local.prefs` 確認格式；`takbox.local` 含密碼 QR 已由第二台熱點裝置掃碼套用，ICU 無提示發布 RTSPS，獨立讀取端取得影像 | [2026-09-23](2026-09-23-icu-qrcode.md) |
+| 分享與 Mumble 管理頁 | Compose 健康、限時／限次與單次下載、Flask 管理頁與 Mumble 唯讀清單通過；真實使用者刪除與密碼輪替未執行 | [2026-09-23](2026-09-23-share-portal.md) |
 | 密碼輪替與註冊 | 已註冊 Vx 仍可登入；取消註冊後重現密碼提示 | [密碼測試](2026-09-22-tak-vx-dpk.md#更換-mumble-密碼以重現提示畫面) |
 | 公開儲存庫衛生 | 本機內容稽核通過；最終發布檢查待文件提交後重跑 | [2026-09-22](2026-09-22-public-repo-hygiene.md) |
 | 文件重整 | 分類、來源、連結、圖片及語言驗收 | [2026-09-22](2026-09-22-docs-refactor.md) |
@@ -36,4 +40,4 @@ Mumble 前景防火牆既有測試涵蓋介面未啟用、建立失敗清理、C
 5. 測斷線重連、短暫切換網路與延遲／丟包；保留去識別的結果。
 6. 完成同 UUID 任務重複下載、新 UUID 同名任務與既有密碼快取的測試。
 
-整合 TAK＋Vx 包的 Server Download、Linux、MediaMTX、公開 8446／ACME 及資料庫升級尚未驗收，見[後續計畫](../plans/roadmap.md)。
+整合 TAK＋Vx 包的 Server Download、Linux、MediaMTX 的跨網路 UDP／ATAK 內建播放、公開 8446／ACME 及資料庫升級尚未驗收，見[後續計畫](../plans/roadmap.md)。
