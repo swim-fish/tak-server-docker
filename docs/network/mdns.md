@@ -22,14 +22,14 @@ Vx 手動輸入主機時主要使用 A record；SRV 記錄供服務探索與診�
 
 ## 安裝與修復
 
-先確認 Python 3.14 已安裝於 `C:/Python314/python.exe`；目前安裝腳本固定使用此路徑，沒有 Python 路徑參數。再於一般 PowerShell 執行，需要時核准 UAC：
+先確認 Python 3.14 已安裝於 `C:/Python314/python.exe`；目前管理腳本固定使用此路徑，沒有 Python 路徑參數。再於一般 PowerShell 開啟互動式選單，選擇「安裝／修復並啟動」，需要時核准 UAC：
 
 ```powershell
-./scripts/Install-WindowsMdns.ps1
+./scripts/Manage-WindowsMdns.ps1
 ./scripts/Test-WindowsMdns.ps1
 ```
 
-安裝腳本建立 `runtime/mdns/.venv`、安裝固定版本的相依套件並檢查 `zeroconf`／`ifaddr`，寫入 `config.json`，設定 UDP 5353 防火牆與 `TAK-mDNS-Responder` 排程工作，再啟動及查詢公告。排程觸發點是**使用者登入**；不能當成尚未登入時就會啟動的系統服務。
+管理腳本的安裝／修復選項建立 `runtime/mdns/.venv`、安裝固定版本的相依套件並檢查 `zeroconf`／`ifaddr`，寫入 `config.json`，設定 UDP 5353 防火牆與 `TAK-mDNS-Responder` 排程工作，再啟動及查詢公告。排程工作**沒有自動觸發器**；重新開機或登入後不會自行啟動。啟用熱點後可從選單選「啟動公告」，或執行 `./scripts/Manage-WindowsMdns.ps1 -Action Start`。選「停止公告」只會停止 responder，保留設定與防火牆規則。
 
 成功時測試應找到兩筆預期服務記錄。在 Android 可用已授權的 ADB 驗證：
 
@@ -39,7 +39,7 @@ adb -s <ATAK_DEVICE_ID> shell ping -c 1 takbox.local
 
 應先看到解析為主機 IP；ICMP 回應與否另受防火牆影響。名稱解析成功後，仍需由 ATAK／Vx 實際連線驗證。
 
-若出現 `No module named 'ifaddr'`、排程不存在或 runtime 遺失，重新執行安裝，再測試。`Test-WindowsMdns.ps1` 只查詢，不負責修復。安裝失敗時檢視 `runtime/mdns/install-error.log`；執行狀態檢視 `runtime/mdns/responder.log`。分享紀錄前先移除本機識別資料。
+若出現 `No module named 'ifaddr'`、排程不存在或 runtime 遺失，重新選「安裝／修復並啟動」，再測試。`Test-WindowsMdns.ps1` 只查詢，不負責修復。安裝失敗時檢視 `runtime/mdns/install-error.log`；執行狀態檢視 `runtime/mdns/responder.log`。分享紀錄前先移除本機識別資料。
 
 ## 變更名稱或網段
 
@@ -47,7 +47,7 @@ adb -s <ATAK_DEVICE_ID> shell ping -c 1 takbox.local
 
 1. 確認主機新 IP 已存在且介面連線正常。
 2. 修改 `compose.yaml` 各服務的主機綁定位址；Mumble 的 TCP、UDP 對應應一致。
-3. 以 `Install-WindowsMdns.ps1 -Address <HOST_IP> -Hostname <HOSTNAME> -RemoteSubnet <CIDR>` 重建公告。通訊埠有變更時一併傳入 `-MumblePort`／`-TakPort`。
+3. 以 `Manage-WindowsMdns.ps1 -Action Install -Address <HOST_IP> -Hostname <HOSTNAME> -RemoteSubnet <CIDR>` 重建公告。通訊埠有變更時一併傳入 `-MumblePort`／`-TakPort`。
 4. 依[防火牆頁](firewall.md)更新服務規則與允許網段，再重建受影響的容器。
 5. 若 DNS 名稱改變，重新簽發含新 SAN 的獨立伺服器憑證，更新 TAK DPK 與 Vx Address。只改 IP、用戶端仍以既有 DNS SAN 連線時，不必因 IP 改變而重簽 DNS 憑證；直接用新 IP 連線則需要新 IP SAN。
 
@@ -57,14 +57,14 @@ adb -s <ATAK_DEVICE_ID> shell ping -c 1 takbox.local
 
 ## 移除
 
-一般 PowerShell 執行並核准 UAC：
+一般 PowerShell 在管理選單選「移除設定與防火牆規則」，或執行下列指令，並核准 UAC：
 
 ```powershell
-./scripts/Uninstall-WindowsMdns.ps1
+./scripts/Manage-WindowsMdns.ps1 -Action Uninstall
 ```
 
-這會停止並刪除排程與 mDNS 防火牆規則。確定不需保留專用環境及紀錄時，可加 `-RemoveRuntime`，只移除 `runtime/mdns/`，不處理 TAK／Mumble 容器或 PKI。自訂排程名稱時，安裝、測試、移除均須使用相同 `-TaskName`。
+這會停止並刪除排程與 mDNS 防火牆規則。確定不需保留專用環境及紀錄時，可加 `-RemoveRuntime`，只移除 `runtime/mdns/`，不處理 TAK／Mumble 容器或 PKI。互動式選單會另外詢問是否移除 runtime。自訂排程名稱時，安裝、啟動、測試、移除均須使用相同 `-TaskName`。
 
 移除後不應再有該排程及規則；若仍能暫時解析，先考慮用戶端快取或其他 responder。需要恢復時重新安裝並查詢。
 
-依據：[安裝](../../scripts/Install-WindowsMdns.ps1)、[查詢](../../scripts/Test-WindowsMdns.ps1)、[移除](../../scripts/Uninstall-WindowsMdns.ps1)、[實機紀錄](../validation/2026-09-21-windows-mdns.md)。
+依據：[管理腳本](../../scripts/Manage-WindowsMdns.ps1)、[查詢](../../scripts/Test-WindowsMdns.ps1)、[實機紀錄](../validation/2026-09-21-windows-mdns.md)。

@@ -18,7 +18,7 @@ if (-not (Test-Path -LiteralPath $venvPython)) {
 
 & $venvPython -c 'import ifaddr, zeroconf' 2>$null
 if ($LASTEXITCODE -ne 0) {
-    throw 'The mDNS Python environment is incomplete. Rerun Install-WindowsMdns.ps1 and approve the Windows UAC prompt.'
+    throw 'The mDNS Python environment is incomplete. Run Manage-WindowsMdns.ps1 -Action Install and approve the Windows UAC prompt.'
 }
 
 $taskStatusNote = $null

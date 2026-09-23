@@ -115,17 +115,17 @@ SAN: DNS:takbox.local, IP:192.168.137.1
 .\scripts\Test-WindowsMdns.ps1
 ```
 
-若測試出現 `ModuleNotFoundError: ifaddr`、`No module named pip` 或 mDNS Python environment 不完整，代表 `runtime/mdns/.venv` 不完整。重新執行下列安裝腳本並核准 Windows UAC；腳本會重建損壞的 virtual environment、重新安裝固定版本相依套件、執行 `pip check`，並重新建立排程工作：
+若測試出現 `ModuleNotFoundError: ifaddr`、`No module named pip` 或 mDNS Python environment 不完整，代表 `runtime/mdns/.venv` 不完整。現在應執行下列管理腳本並核准 Windows UAC；安裝／修復選項會重建損壞的 virtual environment、重新安裝固定版本相依套件、執行 `pip check`，並建立無自動觸發器的排程工作：
 
 ```powershell
-.\scripts\Install-WindowsMdns.ps1
+.\scripts\Manage-WindowsMdns.ps1 -Action Install
 .\scripts\Test-WindowsMdns.ps1
 ```
 
 完整移除排程工作、防火牆規則及 runtime：
 
 ```powershell
-.\scripts\Uninstall-WindowsMdns.ps1 -RemoveRuntime
+.\scripts\Manage-WindowsMdns.ps1 -Action Uninstall -RemoveRuntime
 ```
 
-解除安裝腳本可從一般 PowerShell 執行，並在需要時顯示 Windows UAC；提高權限後仍會保留 `-RemoveRuntime`。移除 mDNS 不會刪除 TAK、Mumble 或其憑證及資料。
+管理腳本的移除操作可從一般 PowerShell 執行，並在需要時顯示 Windows UAC；提高權限後仍會保留 `-RemoveRuntime`。移除 mDNS 不會刪除 TAK、Mumble 或其憑證及資料。

@@ -6,8 +6,8 @@
 
 | 症狀 | 先確認 | 接續處理 |
 | --- | --- | --- |
-| 重開機後全部不通 | 熱點 IP、Docker engine、mDNS 排程、前景防火牆 | [重新開機流程](network/firewall.md#重新開機後) |
-| mDNS 缺 `ifaddr` 或找不到排程 | 安裝是否成功、專用 venv 是否完整 | [重新安裝與測試](network/mdns.md#安裝與修復) |
+| 重開機後全部不通 | 熱點 IP、Docker engine、手動啟動 mDNS、前景防火牆 | [重新開機流程](network/firewall.md#重新開機後) |
+| mDNS 缺 `ifaddr` 或找不到排程 | 安裝是否成功、專用 venv 是否完整 | [安裝／修復與測試](network/mdns.md#安裝與修復) |
 | `unknown host` | Android 是否解析到主機 IP、是否跨 VLAN／VPN | [mDNS 範圍](network/mdns.md) |
 | IP 可連，名稱不可連 | A record 與名稱拼字、VPN／resolver | 先修解析，再核對 DNS SAN |
 | `unknown issuer`／`import certificate` | CA 信任庫是否含 Root 及中繼 CA、裝置時間 | [信任鏈](security/certificates.md)、[重打包](atak/connection.md#修正信任包而不重建-pki) |
