@@ -9,6 +9,7 @@
 | Windows mDNS | 主機與 Android 名稱解析曾通過；仍需在每個部署網段確認 | [2026-09-21](2026-09-21-windows-mdns.md) |
 | TAK 與 DPK | 裝置憑證連線、群組與 CRL 撤銷測試 | [2026-09-21](2026-09-21-tak-server-dpk.md) |
 | TAK 8443／8089 CRL | 歷史測試：8443 曾設定 `crlFile` 並驗證撤銷；目前已移除該屬性，8089 保留 CRL | [2026-09-23](2026-09-23-tak-crl-8443.md) |
+| 用戶端憑證控制台 | 臨時 CA 完成簽發／撤銷、群組讀回與 Flask 測試；正式裝置與 8089 尚待驗收 | [2026-09-23](2026-09-23-client-certificate-console.md) |
 | Mumble TLS／頻道 | 服務與頻道可用；早期 40000 測試不可單獨證明 Vx 任務端點已更新 | [2026-09-21](2026-09-21-mumble-server.md) |
 | Vx Local SD | 清除設定及重新安裝後仍未建立任務，撤回早期成功判斷 | [2026-09-22](2026-09-22-tak-vx-dpk.md#清除既有設定後重測) |
 | Vx Server Download | Vx-only 任務、首次密碼提示、登入及加入頻道成功 | [下載實測](2026-09-22-tak-vx-dpk.md#tak-server-下載實測成功) |

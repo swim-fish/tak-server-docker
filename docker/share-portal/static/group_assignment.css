@@ -1,0 +1,29 @@
+.group-board{min-width:0;margin:1rem 0}
+.group-help{color:var(--muted);margin:.2rem 0 1rem}
+.group-lanes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.85rem}
+.group-board .group-lane{min-width:0;margin:0;padding:.8rem;background:#13212a;border:1px solid #48616b;border-top:4px solid #84969d}
+.group-lane[data-lane="none"]{grid-column:1/-1}
+.group-lane[data-lane="none"] .group-list{min-height:3.5rem}
+.group-lane[data-lane="in"]{border-top-color:#80d7e6}
+.group-lane[data-lane="out"]{border-top-color:#74d6a5}
+.group-lane[data-lane="both"]{border-top-color:#f2c879}
+.group-lane h3{font-size:1rem;margin:0;color:var(--text)}
+.group-lane p{font-size:.86rem;color:var(--muted);margin:.25rem 0 .7rem}
+.group-count{color:var(--muted);font-weight:400}
+.group-list{list-style:none;margin:0;padding:.35rem;min-height:7rem;border:1px dashed #58727b;background:#0c151c}
+.group-lane.drag-over .group-list{border:2px solid var(--cyan);background:#19343e}
+.group-entry{display:flex;align-items:center;gap:.25rem;margin:.25rem 0;border:1px solid #48616b;background:#192b34;cursor:grab}
+.group-entry:active{cursor:grabbing}
+.group-entry.is-selected{border-color:var(--cyan);background:#24414b}
+.group-entry .group-pick{display:block;min-width:0;flex:1;margin:0;padding:.5rem .55rem;background:transparent;border:0;color:var(--text);text-align:left;overflow-wrap:anywhere;cursor:pointer}
+.group-entry .group-pick:disabled{cursor:default}
+.group-grip{flex:none;padding:0 .5rem;color:var(--muted);user-select:none}
+.group-controls{display:flex;flex-wrap:wrap;align-items:end;gap:.75rem;margin:1rem 0 .35rem}
+.group-controls label{display:grid;gap:.25rem;min-width:min(100%,12rem)}
+.group-controls select,.group-controls input{font:inherit;min-height:42px;padding:.45rem;background:#0c151c;color:var(--text);border:1px solid #58727b;max-width:100%}
+.group-controls button{min-height:42px}
+.group-controls button:disabled{background:#46535a;color:#adb9bb;border-color:#46535a;cursor:not-allowed}
+.group-message{min-height:1.4rem;margin:.35rem 0;color:var(--amber)}
+.group-board :focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+@media(max-width:850px){.group-lanes{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:620px){.group-lanes{grid-template-columns:1fr}.group-controls>*{width:100%}.group-controls label{min-width:0}}

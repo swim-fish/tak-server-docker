@@ -2,6 +2,8 @@
 
 此功能使用 Docker Compose `sharing` profile。公開下載、QR 頁與本機管理頁均由 Flask／Gunicorn 提供。公開容器只綁定 Windows 熱點的 `192.168.137.1:8765`；管理容器只綁定 Windows 本機的 `127.0.0.1:8766`。兩者不提供目錄瀏覽。
 
+本機管理頁另有[用戶端憑證控制台](../tak-server/certificate-console.md)，可管理憑證、群組與專屬 DPK；其 Windows 前景程式需另外啟動。
+
 ## 啟動
 
 先啟用熱點與 `takbox.local` mDNS，再於專案根目錄執行：
@@ -12,7 +14,7 @@ docker compose --profile sharing up -d --build share-admin share-public
 .\scripts\Install-SharePortalFirewall.ps1
 ```
 
-防火牆腳本會要求 UAC，只開放熱點網段的 TCP 8765；在該視窗按 Ctrl+C 會移除本次規則。管理頁不需對熱點開放防火牆通訊埠。於 Windows 主機瀏覽器開啟 `http://127.0.0.1:8766`，使用 `admin` 與 `runtime/secrets/share_admin_password` 的內容登入。密碼只在本機讀取，不要貼入聊天或文件。
+防火牆腳本會要求 UAC，只開放熱點網段的 TCP 8765；在該視窗按 Ctrl+C 會移除本次規則。管理頁不需對熱點開放防火牆通訊埠。於 Windows 主機瀏覽器開啟 `http://127.0.0.1:8766`，使用 `admin` 與 `runtime/secrets/share_admin_password` 的內容登入。密碼只在本機讀取，不要貼入聊天或文件。若本機 `.env` 將公開下載改到其他主機通訊埠，使用 `-Port <SHARE_PUBLIC_HOST_PORT>` 啟動防火牆腳本；管理頁網址則使用 `<SHARE_ADMIN_HOST_PORT>`。容器內仍維持 8765／8766。
 
 ## 分享規則
 

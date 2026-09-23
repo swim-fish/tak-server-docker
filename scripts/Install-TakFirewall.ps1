@@ -1,7 +1,9 @@
 [CmdletBinding()]
 param(
     [string]$LocalAddress = '192.168.137.1',
-    [string]$RemoteAddress = '192.168.137.0/24'
+    [string]$RemoteAddress = '192.168.137.0/24',
+    [ValidateRange(1, 65535)]
+    [int]$AdminPort = 8443
 )
 
 $ErrorActionPreference = 'Stop'
@@ -13,6 +15,6 @@ foreach ($name in $ruleNames) {
 New-NetFirewallRule -DisplayName $ruleNames[0] -Direction Inbound -Action Allow -Protocol TCP `
     -LocalAddress $LocalAddress -LocalPort 8089 -RemoteAddress $RemoteAddress -Profile Any | Out-Null
 New-NetFirewallRule -DisplayName $ruleNames[1] -Direction Inbound -Action Allow -Protocol TCP `
-    -LocalAddress $LocalAddress -LocalPort 8443 -RemoteAddress $RemoteAddress -Profile Any | Out-Null
+    -LocalAddress $LocalAddress -LocalPort $AdminPort -RemoteAddress $RemoteAddress -Profile Any | Out-Null
 
 Write-Host "Installed TAK firewall rules for $RemoteAddress."

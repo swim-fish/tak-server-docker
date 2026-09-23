@@ -19,6 +19,7 @@ import share_portal as portal
 
 
 CONTROL_DIR = Path(os.environ.get("MUMBLE_CONTROL_DIR", "/control"))
+CERT_CONTROL_DIR = Path(os.environ.get("TAK_CERT_CONTROL_DIR", "/cert-control"))
 ADMIN_PASSWORD = portal.ADMIN_PASSWORD_FILE.read_text(encoding="utf-8").strip()
 if len(ADMIN_PASSWORD) < 24:
     raise RuntimeError("Share admin password must contain at least 24 characters")
@@ -34,7 +35,7 @@ def security_headers(response: Response) -> Response:
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["Referrer-Policy"] = "no-referrer"
     response.headers["Content-Security-Policy"] = (
-        "default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; "
+        "default-src 'none'; img-src 'self'; style-src 'self' 'unsafe-inline'; "
         "script-src 'self' 'unsafe-inline'; connect-src 'self'; form-action 'self'; base-uri 'none'")
     return response
 
@@ -56,7 +57,8 @@ def require_login() -> None:
                         {"WWW-Authenticate": 'Basic realm="TAK Share Admin"'})
     if request.method == "POST":
         origin = request.headers.get("Origin")
-        loopback_hosts = ("127.0.0.1:8766", "localhost:8766")
+        admin_port = os.environ.get("SHARE_ADMIN_HOST_PORT", "8766")
+        loopback_hosts = (f"127.0.0.1:{admin_port}", f"localhost:{admin_port}")
         same_origin = origin in (None, *(f"http://{host}" for host in loopback_hosts))
         # Some Chrome configurations send Origin: null for local form submissions.
         same_origin = same_origin or (
@@ -70,11 +72,12 @@ def require_login() -> None:
             abort(403)
 
 
-def control(action: str, **parameters: object) -> dict:
-    inbox, outbox = CONTROL_DIR / "inbox", CONTROL_DIR / "outbox"
-    heartbeat = CONTROL_DIR / "heartbeat"
+def worker_control(directory: Path, action: str, *, timeout: int = 75,
+                   **parameters: object) -> dict:
+    inbox, outbox = directory / "inbox", directory / "outbox"
+    heartbeat = directory / "heartbeat"
     if not heartbeat.is_file() or time.time() - heartbeat.stat().st_mtime > 5:
-        raise RuntimeError("Start the Windows Mumble management worker first")
+        raise RuntimeError("Start the matching Windows management worker first")
     inbox.mkdir(parents=True, exist_ok=True)
     outbox.mkdir(parents=True, exist_ok=True)
     operation_id = uuid.uuid4().hex
@@ -83,16 +86,49 @@ def control(action: str, **parameters: object) -> dict:
     response_path = outbox / (operation_id + ".json")
     pending.write_text(json.dumps({"id": operation_id, "action": action, **parameters}), encoding="utf-8")
     os.replace(pending, request_path)
-    deadline = time.monotonic() + 75
+    deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
         if response_path.exists():
             result = json.loads(response_path.read_text(encoding="utf-8"))
             response_path.unlink(missing_ok=True)
             if not result.get("ok"):
-                raise RuntimeError(result.get("error", "Mumble control failed"))
+                raise RuntimeError(result.get("error", "Host worker operation failed"))
             return result
         time.sleep(0.15)
-    raise RuntimeError("Mumble control did not answer within 75 seconds")
+    raise RuntimeError(f"Host worker did not answer within {timeout} seconds")
+
+
+def control(action: str, **parameters: object) -> dict:
+    return worker_control(CONTROL_DIR, action, **parameters)
+
+
+def cert_control(action: str, **parameters: object) -> dict:
+    return worker_control(CERT_CONTROL_DIR, action, timeout=270, **parameters)
+
+
+def selected_certificates() -> list[dict]:
+    items = []
+    seen = set()
+    for value in request.form.getlist("certificate"):
+        serial, separator, fingerprint = value.partition(":")
+        if (not separator or not 1 <= len(serial) <= 40 or
+                any(c not in "0123456789ABCDEF" for c in serial) or
+                len(fingerprint) != 64 or any(c not in "0123456789abcdef" for c in fingerprint) or
+                serial in seen):
+            raise ValueError("Invalid or duplicate certificate selection")
+        seen.add(serial)
+        items.append({"serial": serial, "fingerprint": fingerprint})
+    if not 1 <= len(items) <= 100:
+        raise ValueError("Select between 1 and 100 certificates")
+    return items
+
+
+def group_values(prefix: str) -> list[str]:
+    values = request.form.getlist(prefix + "_group")
+    extra = request.form.get(prefix + "_extra", "").strip()
+    if extra:
+        values.extend(item.strip() for item in extra.split(","))
+    return values
 
 
 def selected(field: str) -> list[dict]:
@@ -220,3 +256,114 @@ def mumble_reset_password() -> Response:
     except (RuntimeError, OSError) as exc:
         return Response(str(exc), 409)
     return redirect(url_for("mumble", result="reset"), code=303)
+
+
+@app.get("/certificates")
+def certificates() -> str:
+    snapshot, error = None, None
+    try:
+        snapshot = cert_control("snapshot")
+    except (RuntimeError, OSError, ValueError) as exc:
+        error = str(exc)
+    rows, paused = portal.list_shares()
+    shares = {}
+    if snapshot:
+        for record in snapshot["certificates"]:
+            shares[record["serial"]] = [
+                {"url": f"{portal.PUBLIC_BASE}/q/{row['token']}",
+                 "status": portal.share_status(row, paused), "accepted": row["accepted"]}
+                for row in rows if row["filename"] == record["package"]
+                and portal.share_status(row, paused) == "分享中"]
+    return render_template("certificates.html", snapshot=snapshot, shares=shares,
+                           csrf=CSRF, error=error, result=request.args.get("result", ""))
+
+
+@app.get("/certificates/<serial>")
+def certificate_detail(serial: str) -> str | Response:
+    try:
+        snapshot = cert_control("snapshot")
+        record = next((item for item in snapshot["certificates"] if item["serial"] == serial), None)
+        if record is None:
+            abort(404)
+    except (RuntimeError, OSError, ValueError) as exc:
+        return Response(str(exc), 409)
+    status_error = None
+    try:
+        details = cert_control("status", serial=serial, fingerprint=record["fingerprint"])["status"]
+    except (RuntimeError, OSError, ValueError) as exc:
+        status_error = str(exc)
+        details = {"username": None, "in_groups": [], "out_groups": []}
+    groups = sorted(set(details["in_groups"] + details["out_groups"]
+                        + snapshot.get("group_choices", ["local-test"])))
+    return render_template("certificate_detail.html", record=record, details=details,
+                           groups=groups, status_error=status_error, csrf=CSRF,
+                           result=request.args.get("result", ""))
+
+
+@app.post("/certificates/groups")
+def certificate_groups() -> Response:
+    try:
+        serial = request.form.get("serial", "")
+        cert_control("groups", serial=serial, fingerprint=request.form.get("fingerprint", ""),
+                     in_groups=group_values("in"), out_groups=group_values("out"))
+    except (RuntimeError, OSError, ValueError) as exc:
+        return Response(str(exc), 409)
+    return redirect(url_for("certificate_detail", serial=serial, result="groups"), code=303)
+
+
+@app.post("/certificates/issue")
+def certificate_issue() -> Response:
+    try:
+        result = cert_control("issue", name=request.form.get("name", ""),
+                              cn=request.form.get("cn", ""),
+                              in_groups=group_values("in"), out_groups=group_values("out"))
+    except (RuntimeError, OSError, ValueError) as exc:
+        return Response(str(exc), 409)
+    return redirect(url_for("certificate_detail", serial=result["serial"], result="issued"), code=303)
+
+
+@app.post("/certificates/share")
+def certificate_share() -> Response:
+    if request.form.get("confirmation") != "yes":
+        return Response("Confirm private-key package delivery", 400)
+    try:
+        serial = request.form.get("serial", "")
+        fingerprint = request.form.get("fingerprint", "")
+        snapshot = cert_control("snapshot")
+        record = next((item for item in snapshot["certificates"] if item["serial"] == serial
+                       and item["fingerprint"] == fingerprint), None)
+        if not record or record["revoked"] or record["expired"] or not record["package"]:
+            raise ValueError("Certificate package is unavailable; refresh the page")
+        if record["registered"] is False:
+            raise ValueError("TAK registration must be verified before sharing")
+        portal.create_share("file", f"atak:{record['package']}", 20, 3)
+    except (RuntimeError, OSError, ValueError) as exc:
+        return Response(str(exc), 409)
+    return redirect(url_for("certificates", result="shared"), code=303)
+
+
+@app.post("/certificates/revoke")
+def certificate_revoke() -> Response:
+    if request.form.get("confirmation") != "yes":
+        return Response("Confirm irreversible certificate revocation", 400)
+    try:
+        selected = selected_certificates()
+        records = cert_control("validate_selection", selected=selected)["certificates"]
+        for record in records:
+            if record["package"]:
+                portal.stop_file_shares(record["package"])
+        cert_control("revoke", selected=selected)
+    except (RuntimeError, OSError, ValueError) as exc:
+        return Response(str(exc), 409)
+    return redirect(url_for("certificates", result="revoked"), code=303)
+
+
+@app.post("/certificates/republish")
+def certificate_republish() -> Response:
+    if request.form.get("confirmation") != "yes":
+        return Response("Confirm CRL publication and TAK restart", 400)
+    try:
+        cert_control("republish")
+    except (RuntimeError, OSError, ValueError) as exc:
+        return Response(str(exc), 409)
+    return redirect(url_for("certificates", result="republished"), code=303)

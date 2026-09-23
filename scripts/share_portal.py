@@ -230,6 +230,16 @@ def update_status(share_id: str) -> None:
         db.execute("UPDATE shares SET status='stopped' WHERE id=?", (share_id,))
 
 
+def stop_file_shares(filename: str) -> int:
+    """Stop every copied download snapshot for a certificate package."""
+    with connection() as db:
+        db.execute("BEGIN IMMEDIATE")
+        result = db.execute("UPDATE shares SET status='stopped' WHERE kind='file' AND filename=? "
+                            "AND status='active'", (filename,))
+        db.commit()
+        return result.rowcount
+
+
 def set_paused(paused: bool) -> None:
     with connection() as db:
         db.execute("UPDATE settings SET value=? WHERE key='paused'", ("1" if paused else "0",))
@@ -345,7 +355,7 @@ def admin_page(csrf: str) -> bytes:
             f"<input type='hidden' name='csrf' value='{csrf}'>"
             f"<button id='master-button' class='{'button' if paused else 'stop'}'>{'恢復所有分享下載' if paused else '暫停所有分享下載'}</button>"
             "</form></section>")
-    body = ("<header class='page-header'><h1>TAK 控制台</h1><p><strong>檔案分享</strong>　<a href='/mumble'>Mumble 管理 →</a></p>"
+    body = ("<header class='page-header'><h1>TAK 控制台</h1><p><strong>檔案分享</strong>　<a href='/mumble'>Mumble 管理 →</a>　<a href='/certificates'>用戶端憑證 →</a></p>"
             "<p class='muted'>公開入口 <code>" + esc(PUBLIC_BASE) + "</code>　｜　管理入口僅限本機　｜　"
             "<span id='live-sync' role='status' aria-live='polite'>正在同步狀態…</span></p></header>"
             + master +
