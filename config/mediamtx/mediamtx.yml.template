@@ -1,0 +1,42 @@
+logLevel: info
+authMethod: internal
+authInternalUsers:
+  - user: atak-publisher
+    pass: __PUBLISH_PASSWORD__
+    ips: []
+    permissions:
+      - action: publish
+        path: '~^(live/.+|test)$'
+  - user: atak-viewer
+    pass: __READ_PASSWORD__
+    ips: []
+    permissions:
+      - action: read
+        path: '~^(live/.+|test)$'
+
+rtsp: true
+rtspTransports: [tcp, udp]
+rtspEncryption: optional
+rtspAddress: :8554
+rtspsAddress: :8322
+rtpAddress: :8000
+rtcpAddress: :8001
+srtpAddress: :8004
+srtcpAddress: :8005
+rtspServerKey: /certs/mediamtx-server.key.pem
+rtspServerCert: /certs/mediamtx-fullchain.pem
+rtspAuthMethods: [basic]
+
+rtmp: false
+hls: false
+webrtc: false
+srt: false
+moq: false
+api: false
+metrics: false
+pprof: false
+playback: false
+
+paths:
+  '~^(live/.+|test)$':
+    source: publisher

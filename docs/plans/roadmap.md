@@ -11,13 +11,11 @@
 | 任務重複部署 | 分別測同 UUID 重複下載、新 UUID 同名任務的覆寫／去重行為。 |
 | 多裝置憑證 | 每台獨立簽發、授權、交付、撤銷，驗證不影響其他裝置。 |
 
-## MediaMTX 與 UDP
+## MediaMTX 後續驗收
 
-Compose 尚無 MediaMTX。第一階段沿用原計畫的 RTSP 控制 TCP 8554、單播 RTP UDP 8000、RTCP UDP 8001，明確啟用 TCP／UDP transport。映像版本與設定鍵須在實作時依選定版本確認。
+MediaMTX RTSP／RTSPS、publish／read 權限、獨立中繼 CA 簽發憑證及 Compose TCP／UDP 對應已實作，見[MediaMTX 操作](../mediamtx/server.md)及[實測紀錄](../validation/2026-09-23-mediamtx.md)。TAK ICU 7.5.1 已經由 RTSPS＋帳密發布實機影像，FFmpeg 獨立讀取成功。
 
-需要分別設定 publish／read 權限、Compose UDP 對應及主機防火牆，用另一台 LAN 裝置驗證發布與讀取。遇到 UDP 不可用時，另驗證 RTSP over TCP，不把 TCP 成功當成 UDP 通過。
-
-本機 `rtsp://` 不需要 TLS 憑證，但缺少 TLS 保護，僅列入受信任 LAN／VPN 情境。日後改用 RTSPS 時，採獨立伺服器私鑰與完整鏈，另驗證 ATAK／攝影機／播放器相容性；安全媒體 transport 與通訊埠依選定版本再定案。不共用 TAK 伺服器私鑰。
+仍須由實際 LAN 裝置測 UDP RTP／RTCP 與 SRTP／SRTCP 的發布及讀取。獨立 Docker bridge 經 Windows 發布通訊埠的 UDP 讀取未成功；需分辨 Docker Desktop NAT 與用戶端回程路徑，不把 Compose 內 UDP 成功當成外部 UDP 通過。ATAK 內建播放器的 RTSPS 讀取與 ICU 對不受信任憑證的拒絕行為也未驗收。
 
 ## 公開 8446 與 Let's Encrypt
 

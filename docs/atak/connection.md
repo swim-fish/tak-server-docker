@@ -6,7 +6,7 @@
 
 確認 TAK Server 已啟動、裝置在同一網路、`takbox.local` 可解析，且管理者已授予該裝置適當[群組](../tak-server/operations.md#新增一般憑證使用者)。每份裝置憑證 DPK 含私鑰與 PKCS#12 匯入密碼，只交付指定裝置，不上傳為共享任務包。
 
-bootstrap 產物為 `runtime/packages/atak-local-test.dpk`，內容：
+bootstrap 產物為 `runtime/packages/atak/atak-local-test.dpk`，內容：
 
 | 路徑 | 用途 |
 | --- | --- |
@@ -17,12 +17,14 @@ bootstrap 產物為 `runtime/packages/atak-local-test.dpk`，內容：
 
 ## 匯入與確認
 
-1. 以受控方式把 DPK 放到裝置可選取的位置。
-2. 在 ATAK 選 Import → Local SD，選擇該 DPK 並完成匯入。
+1. 以受控方式把指定裝置的 DPK 放到裝置可選取的位置，或由[短效分享頁](../sharing/portal.md)建立 ATAK `tak://com.atakmap.app/import?url=...` QR。
+2. 在 ATAK 選 Import → Local SD，選擇該 DPK 並完成匯入；使用 QR 時則點相機顯示的完整 `tak:` 連結，選 ATAK 並確認匯入。
 3. 在 TAK Server 設定確認 `takbox.local:8089:ssl`。
 4. 確認指定 TAK 伺服器連線成功，沒有憑證信任錯誤；必要時比對伺服器同時段紀錄。
 
 成功代表 TAK 憑證連線可用，不代表 Vx 任務已建立。若失敗，先檢查名稱解析、憑證有效期及信任鏈，再看[疑難排解](../troubleshooting.md)。
+
+2026-09-23 實機 QR 匯入已確認 `takbox.local:8089:ssl` 連線成功。此 DPK 含裝置私鑰與匯入密碼；本次 HTTP QR 僅在使用者明確授權的本機熱點、短效及限次條件下測試，完成後已停止分享。Vx-only DPK 使用相同 ATAK QR 匯入時未建立 Mission，須另走[TAK Server Download](vx-missions.md#從-tak-server-下載任務)。
 
 ## 設定是個別伺服器還是全域
 

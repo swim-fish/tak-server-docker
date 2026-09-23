@@ -42,21 +42,21 @@ docker compose -f compose.yaml -f runtime/compose.mumble-ip.yaml up -d --no-deps
 
 `127.0.0.1:64738` 是容器內的探測位置，`-verify_ip` 則是憑證應包含的用戶端入口 IP。後續重新建立此服務時沿用同一 override。頻道工具使用 `--server-name 192.168.137.1`，使用者管理腳本使用 `-ServerName 192.168.137.1`，讓管理連線也依 IP SAN 驗證。切回 DNS 模式前，先換回含相符 DNS SAN 的憑證及 Vx Address，再採用原本 Compose 健康檢查。
 
-## 建立 Primary 與 Alternate
+## 建立 Voice 頻道
 
 ```powershell
 python ./scripts/provision_mumble_channel.py
 ```
 
-腳本使用 SuperUser，驗證 CA 與 `takbox.local` 後，建立持久化的 `Primary`（主要）、`Alternate`（次要）。頻道已存在時回報既有 ID，不重複建立。自訂名稱或端點：
+腳本使用 SuperUser，驗證 CA 與 `takbox.local` 後，初次建立持久化的 `Primary`（主要）、`Alternate`（次要）。目前四頻道 Vx DPK 另使用 `Medical`、`Emergency`；建立或核對全部頻道：
 
 ```powershell
-python ./scripts/provision_mumble_channel.py Primary Alternate --connect-host 192.168.137.1 --server-name takbox.local --port 40000
+python ./scripts/provision_mumble_channel.py Primary Alternate Medical Emergency --connect-host 192.168.137.1 --server-name takbox.local --port 40000
 ```
 
-成功時應列出每個頻道的 ID。DPK 必須使用本台伺服器的實際 ID，不能把歷史測試的 `2`、`3` 當成所有部署的固定值。建立失敗時先檢查 TLS、SuperUser secret 與伺服器紀錄，再重跑；不要清空 volume。
+成功時應列出每個頻道的 ID。頻道已存在時回報既有 ID，不重複建立。DPK 必須使用本台伺服器的實際 ID，不能把本次的 `2`–`5` 當成所有部署的固定值。建立失敗時先檢查 TLS、SuperUser secret 與伺服器紀錄，再重跑；不要清空 volume。
 
-Vx 的 Channel 不可留空，本次使用兩個子頻道完成驗證。用戶端設定見[Vx 任務](../atak/vx-missions.md)。
+Vx 的 Channel 不可留空；目前四頻道任務的使用方式見[Vx 任務](../atak/vx-missions.md)。
 
 ## 密碼與註冊身分
 

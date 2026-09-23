@@ -52,16 +52,23 @@ runtime/tak/
 | --- | --- | --- |
 | `runtime/tak/` | bind mount 到 TAK Server 的設定、JKS、管理憑證、CA 與 CRL。 | 高 |
 | `runtime/pki/private/` | Root／中繼 CA 私鑰、葉私鑰、CSR、CA database、serial 與簽發設定。 | 最高 |
-| `runtime/pki/public/` | CA、TAK、ATAK、Mumble 的公開憑證與 CRL。 | 低，但仍屬部署資料 |
+| `runtime/pki/public/` | CA、TAK、ATAK、Mumble、MediaMTX 的公開憑證與 CRL。 | 低，但仍屬部署資料 |
 | `runtime/pki/mumble-fullchain.pem` | Mumble server certificate 加中繼 CA；不包含 Root CA。 | 公開憑證鏈 |
 | `runtime/pki/mumble-server.key.pem` | Mumble 加密私鑰，由 `leaf_key_password` 解密。 | 最高 |
+| `runtime/pki/mediamtx-fullchain.pem` | MediaMTX 葉憑證加中繼 CA。 | 公開憑證鏈 |
+| `runtime/pki/mediamtx-server.key.pem` | MediaMTX 專用未加密私鑰，容器唯讀掛載。 | 最高 |
+| `runtime/mediamtx/mediamtx.yml` | 產生的 MediaMTX 設定，含發布／讀取帳密。 | 高 |
+| `runtime/icu-qr/.venv/` | 手動產生 ICU QR 時使用的隔離 Python 環境。 | 本機工具 |
 | `runtime/secrets/` | Docker Compose secrets 與 PKI／資料庫密碼，一個檔案一個值。 | 最高 |
-| `runtime/packages/` | TAK 憑證 DPK、PKCS#12 與 checksum；TAK 包含裝置私鑰及匯入密碼。Vx-only 包只含任務設定。 | 依套件內容判定 |
+| `runtime/packages/icu/` | 手動產生的 ICU `initial.prefs`、QR URI 與圖片；設定檔含 MediaMTX 發布密碼。 | 高 |
+| `runtime/packages/atak/` | TAK／Vx DPK、ZIP 範本、PKCS#12 與 checksum；TAK 包含裝置私鑰及匯入密碼。 | 依套件內容判定 |
+| `runtime/share-inbox/` | 舊測試目錄；分享服務不再讀取，現有檔案不會自動刪除。 | 依檔案內容判定 |
+| `runtime/share-control/` | Windows 前景 Mumble 管理程式與 Flask 頁面的佇列、心跳及密碼備份。 | 高 |
 | `runtime/mdns/` | Windows mDNS virtual environment、產生的設定與本機 log。 | 本機狀態 |
 | `runtime/mumble-admin/` | 註冊清單快照、資料庫備份與操作紀錄；資料庫含驗證資料。 | 最高 |
 | `runtime/analysis/` | 本機除錯或逆向檢查產物，不是啟動服務的必要輸入。 | 依內容判定 |
 
-PostgreSQL、TAK logs 與 Mumble database 分別保存在 Docker named volume：`tak-db-data`、`tak-logs`、`mumble-data`，不在 `runtime/` 內。
+PostgreSQL、TAK logs、Mumble database 與分享資料分別保存在 Docker named volume：`tak-db-data`、`tak-logs`、`mumble-data`、`share-state`、`share-files`，不在 `runtime/` 內。分享快照可能含 ICU 發布密碼或 ATAK 私鑰。
 
 ## 密碼檔案
 
@@ -74,6 +81,9 @@ PostgreSQL、TAK logs 與 Mumble database 分別保存在 Docker named volume：
 | `tak_store_password` | TAK JKS、PKCS#12、管理 health check 與 ATAK DPK 憑證匯入密碼。 |
 | `mumble_server_password` | Mumble 一般用戶端共用密碼；填入 ATAK Vx 的 **Password** 欄位。 |
 | `mumble_superuser_password` | Mumble `SuperUser` 管理密碼；`provision_mumble_channel.py` 用它建立頻道。不要填入 Vx。 |
+| `mediamtx_publish_password` | TAK ICU 或其他影像來源的 `atak-publisher` 密碼。 |
+| `mediamtx_read_password` | 播放端的 `atak-viewer` 密碼；與發布密碼不同。 |
+| `share_admin_password` | 本機 Flask 管理頁的 `admin` 登入密碼；不提供給 Android。 |
 
 需要在本機檢視 Vx 應輸入的 Mumble 密碼時執行：
 

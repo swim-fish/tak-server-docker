@@ -57,12 +57,24 @@ Get-NetFirewallRule -Name 'TAK-Local-Mumble-*' | Select-Object Name,DisplayName,
 
 正常 Ctrl+C 後應看不到該組 `TAK-Local-Mumble-Session-<id>-...`；其他既存規則應保留。若仍有殘留，先確認對應工作階段已停止，再依完整 `Name` 處理。
 
+## MediaMTX 規則
+
+在一般 PowerShell 啟動，腳本先檢查目標 IP，再請求 UAC。它建立持久的 `TAK-Local-MediaMTX-TCP`（8554、8322）與 `TAK-Local-MediaMTX-UDP`（8000、8001、8004、8005）規則，限制主機位址、熱點介面及來源網段：
+
+```powershell
+./scripts/Install-MediaMtxFirewall.ps1
+```
+
+自訂主機與來源網段時傳 `-LocalAddress <HOST_IP> -RemoteAddress <CIDR>`，並同步調整 Compose port bind、名稱解析及憑證 SAN。重新執行會替換同名規則；移除時須在管理員 PowerShell 核對並精確移除這兩個 Name。規則允許封包進入，不保證 Docker Desktop UDP NAT 或用戶端回程可用；以實際串流驗證。
+
 ## 重新開機後
+
+分享入口需要時使用 `./scripts/Install-SharePortalFirewall.ps1`，只開放熱點 TCP 8765；管理頁 `127.0.0.1:8766` 不對裝置開放。詳見[分享與管理頁](../sharing/portal.md)。
 
 1. 啟動 Docker Desktop，等待 Linux engine 可用。
 2. 啟用熱點並確認主機 IP／網段。
 3. 執行 `Test-WindowsMdns.ps1`；缺少排程或相依套件時依 [mDNS 頁](mdns.md)重新安裝。
-4. TAK 持久規則若仍在且參數相同，可繼續沿用；Mumble 前景規則需要重新啟動工作階段。
+4. TAK／MediaMTX 持久規則若仍在且參數相同，可繼續沿用；Mumble 前景規則需要重新啟動工作階段。
 5. 執行 `docker compose up -d`，確認服務 healthy，再由 Android 測試連線。
 
 防火牆成功不代表名稱解析、TLS 或頻道登入成功，完整檢查見[疑難排解](../troubleshooting.md)。

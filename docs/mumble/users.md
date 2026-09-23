@@ -20,6 +20,8 @@ Mumble 支援由管理員註冊已連線使用者、允許用戶端自行註冊�
 
 ## 互動式取消註冊
 
+若使用本機 Flask 管理頁，可依[分享與管理頁](../sharing/portal.md#mumble-管理)操作線上連線中斷、註冊身分刪除、搜尋與多選。管理頁把兩種操作分開；下方命令列腳本仍可獨立使用。
+
 在專案目錄開啟一般 PowerShell／Windows Terminal，執行：
 
 ```powershell
