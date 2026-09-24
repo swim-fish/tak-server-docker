@@ -69,7 +69,7 @@ Get-NetFirewallRule -Name 'TAK-Local-Mumble-*' | Select-Object Name,DisplayName,
 
 ## 重新開機後
 
-分享入口需要時使用 `./scripts/Install-SharePortalFirewall.ps1`，只開放熱點 TCP 8765；管理頁 `127.0.0.1:8766` 不對裝置開放。詳見[分享與管理頁](../sharing/portal.md)。
+分享入口需要時使用 `./scripts/Install-SharePortalFirewall.ps1 -Port 10065`，只開放目前熱點下載通訊埠；管理頁 `127.0.0.1:10066` 不對裝置開放。若 `.env` 改變映射，防火牆 `-Port` 也須同步調整。詳見[分享與管理頁](../sharing/portal.md)。
 
 1. 啟動 Docker Desktop，等待 Linux engine 可用。
 2. 啟用熱點並確認主機 IP／網段。

@@ -21,6 +21,8 @@
 
 建議分兩階段：TAK 憑證 DPK 可經 Local SD 或經實機驗證的 ATAK QR 匯入；Vx-only DPK 必須經 TAK Server 下載。已實測的一般 Local SD 匯入會解壓縮 Vx 檔案，但不觸發建立任務的 callback；重新安裝 ATAK、先載入 Vx 後也相同。
 
+控制台的 **引導式佈建 → Vx 任務** 現可從已驗證的本機 Vx 範本產生四頻道 Vx-only DPK，預覽 SHA-256、Mumble 位址與頻道，並將 TAK Server 上所有顯示名稱**完全等於** `ATAK Local Voice` 的舊套件先按 SHA-256 備份，再按確切 hash 刪除。新套件上傳後會讀回檢查唯一同名結果、`tool=public` 與 `missionpackage` 標籤。若刪除後失敗，結果頁提供從本機備份恢復的操作；不會刪除其他名稱的套件。TAK 的一般 metadata API 寫入 `tool` 時使用原始 `public` 字串；帶 JSON 引號的字串在本機 TAK 5.8 會回 HTTP 500。Vx 部署與後續 Android 驗證見[引導式佈建驗證](../validation/2026-09-24-guided-provisioning.md)。
+
 2026-09-23 另以 ATAK `tak://com.atakmap.app/import?url=...` QR 下載現行四頻道 Vx-only DPK。裝置收到檔案並由 Import Manager 處理，但 TAK Voice 未新增 `vx-local`；該 QR 路徑仍不能當成下列 TAK Server Download 的替代。TAK 連線憑證 DPK 的 QR 匯入則已連線成功，兩種 DPK 必須分開判定。
 
 1. 管理者先[產生 Vx-only DPK](../reference/vx-package-format.md#產生-vx-only-套件)，確認不含裝置私鑰或密碼。

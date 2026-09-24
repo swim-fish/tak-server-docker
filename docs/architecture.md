@@ -1,6 +1,6 @@
 # 現行架構與驗證狀態
 
-本頁描述 2026-09-23 專案已實作的本機部署。主要來源是 [Compose](../compose.yaml)、[bootstrap](../scripts/bootstrap_local.py) 與[驗證紀錄](validation/README.md)。
+本頁描述 2026-09-24 專案已實作的本機部署。主要來源是 [Compose](../compose.yaml)、[bootstrap](../scripts/bootstrap_local.py) 與[驗證紀錄](validation/README.md)。
 
 ```mermaid
 flowchart LR
@@ -22,8 +22,10 @@ flowchart LR
 | `tak-db` | TAK 資料庫 | 僅在 internal `tak-backend`，不發布主機通訊埠 |
 | `mumble` | Vx 語音及頻道 | 在 `tak-edge`，獨立於 TAK 的健康狀態 |
 | `mediamtx` | RTSP／RTSPS 影像發布及讀取 | 在 `tak-edge`，獨立於 TAK 的健康狀態 |
-| `share-public` | Flask 短效檔案下載與 QR 頁 | `sharing` profile，僅綁定熱點 IP 的 TCP 8765 |
-| `share-admin` | Flask 分享、Mumble 與用戶端憑證管理頁 | 預設 Compose 服務，自動重啟；僅綁定 Windows `127.0.0.1:8766` |
+| `media-viewer`、`media-viewer-gateway` | 受控熱點上的匿名 WebRTC 觀看及總開關 | MediaMTX viewer 留在 Compose 網路；gateway 對熱點提供 `8889/TCP` |
+| `media-preview` | 供控制台登入後使用的 WebRTC 即時預覽 | 僅在 Compose 網路內，由 `share-admin` 同來源轉送 |
+| `share-public` | Flask 短效檔案下載與 QR 頁 | `sharing` profile，僅綁定熱點 IP；本機 `.env` 映射 TCP 10065 |
+| `share-admin` | Flask 分享、引導佈建、MediaMTX、Mumble 與用戶端憑證管理頁 | 預設 Compose 服務，自動重啟；本機 `.env` 映射 Windows `127.0.0.1:10066` |
 | Windows Mumble 管理程式 | 使用 Mumble 原生協定管理 session 與註冊身分，重建 Mumble | 登入後排程工作；Flask 容器不持有 Docker socket |
 | `mumble-db-helper` | 透過 `mumble-data` volume 唯讀列出註冊及製作 SQLite 一致性備份 | 按需啟動的 Compose 維護容器，沒有網路 |
 | Windows TAK 憑證管理程式 | 操作中繼 CA、TAK API、共用驗證檔、DPK 與 CRL | 登入後排程工作；CA 私鑰與 Docker socket 不掛進 Flask 容器 |
@@ -44,7 +46,8 @@ TAK 用戶端群組的日常讀寫使用 5.8 管理 API；新憑證的指紋綁�
 - 已驗證：TAK 憑證連線、TAK client CRL 撤銷測試、mDNS、Mumble TLS 與頻道登入。
 - 已驗證：現行四頻道 Vx-only 套件從 TAK Server 下載後建立任務，Primary／Alternate／Medical／Emergency 均能加入；Primary／Alternate 亦曾同時維持兩條獨立連線。一般 ATAK QR 匯入同一 Vx DPK 不會建立 Mission。
 - 已驗證：MediaMTX RTSP／RTSPS TCP 及 Compose 內 UDP 發布／讀取；TAK ICU 7.5.1 經 RTSPS 與帳密發布，獨立用戶端成功讀取影像。
-- 已驗證：分享頁的時間／次數先到停止、QR 與檔案下載；Flask 管理頁能唯讀列出 Mumble session 與註冊身分。管理頁異動操作尚未對真實 Vx 身分執行。
+- 已驗證：分享頁的時間／次數先到停止、QR 與檔案下載；引導頁的批次憑證、Vx 伺服器端替換、ICU QR 及 MediaMTX 小隊發布身分。Flask 管理頁能列出 Mumble session 與註冊身分；管理頁異動操作尚未對真實 Vx 身分執行。
+- 已驗證：Android ICU 經 RTSPS 發布 `live/alpha/1/VIDEO_1`，Chrome 由控制台預覽與熱點 WebRTC 入口觀看；公開觀看開關及工作階段數量會更新。網際網路入口尚未建置。
 - 待驗：雙向 PTT、UDP 音訊品質、同 UUID 任務重複下載的覆寫／去重行為。
 - 待驗：MediaMTX 跨網路 UDP、ATAK 內建播放與 ICU 憑證拒絕行為。
 - 尚未實作：公開 8446／ACME、Linux 遷移與 Federation Hub，見[後續計畫](plans/roadmap.md)。

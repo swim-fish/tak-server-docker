@@ -13,6 +13,7 @@ import tempfile
 from pathlib import Path
 
 from bootstrap_local import dns_name, ip_literal
+from media_registry import load as load_media_registry, render_config
 
 
 PROJECT = Path(__file__).resolve().parents[1]
@@ -90,13 +91,26 @@ def main() -> int:
     SECRETS.mkdir(parents=True, exist_ok=True)
     publish = secret_file(SECRETS / "mediamtx_publish_password")
     read = secret_file(SECRETS / "mediamtx_read_password")
-    config = TEMPLATE.read_text(encoding="utf-8")
-    config = config.replace("__PUBLISH_PASSWORD__", json.dumps(publish))
-    config = config.replace("__READ_PASSWORD__", json.dumps(read))
+    api = secret_file(SECRETS / "mediamtx_api_password")
+    registry_path = CONFIG.parent / "publishers.json"
+    registry = json.loads(registry_path.read_text(encoding="utf-8")) if registry_path.exists() else {"version": 1, "publishers": {}}
+    config = render_config(TEMPLATE.read_text(encoding="utf-8"), registry, publish, read, api)
     CONFIG.parent.mkdir(parents=True, exist_ok=True)
     temp_config = CONFIG.with_suffix(".yml.tmp")
     temp_config.write_text(config, encoding="utf-8", newline="\n")
     temp_config.replace(CONFIG)
+    viewer_state = CONFIG.parent / "viewer_state.json"
+    state = json.loads(viewer_state.read_text(encoding="utf-8")) if viewer_state.exists() else {"enabled": True}
+    if type(state.get("enabled")) is not bool:
+        raise SystemExit("Invalid MediaMTX viewer state")
+    admin_password = secret_file(SECRETS / "share_admin_password")
+    for name, content in viewer_configs(read, api, admin_password).items():
+        output = CONFIG.parent / name
+        pending = output.with_suffix(".next")
+        pending.write_text(content, encoding="utf-8", newline="\n")
+        pending.replace(output)
+    if not viewer_state.exists():
+        viewer_state.write_text(json.dumps(state), encoding="utf-8")
     print("MediaMTX certificate, full chain, credentials, and configuration are ready.")
     return 0
 
@@ -117,6 +131,34 @@ def secret_file(path: Path) -> str:
     if not value:
         raise SystemExit(f"Empty secret: {path}")
     return value
+
+
+def viewer_configs(read_password: str, api_password: str, admin_password: str,
+                   ) -> dict[str, str]:
+    upstream = json.dumps("rtsp://atak-viewer:" + read_password + "@mediamtx:8554/$G1")
+    paths = ("paths:\n  '~^(live/.+)$':\n    source: " + upstream
+             + "\n    sourceOnDemand: true\n    rtspTransport: tcp\n    rtspDemuxMpegts: true\n")
+    base = ("logLevel: info\nrtsp: false\nrtmp: false\nhls: false\nsrt: false\nmoq: false\n"
+            "metrics: false\npprof: false\nplayback: false\n"
+            "authMethod: internal\n")
+    public = (base + "authInternalUsers:\n"
+              "  - user: any\n    pass:\n    ips: []\n    permissions:\n"
+              "      - action: read\n        path: '~^live/.+$'\n"
+              "  - user: tak-console\n    pass: " + json.dumps(api_password) +
+              "\n    ips: []\n    permissions:\n      - action: api\n"
+              "api: true\napiAddress: :9997\n"
+              "webrtc: true\n"
+              "webrtcAddress: :8889\nwebrtcLocalUDPAddress: :8189\n"
+              "webrtcLocalTCPAddress: :8189\n"
+              "webrtcAdditionalHosts: [takbox.local, 192.168.137.1]\n" + paths)
+    preview = (base + "authInternalUsers:\n"
+               "  - user: admin\n    pass: " + json.dumps(admin_password) +
+               "\n    ips: []\n    permissions:\n"
+               "      - action: read\n        path: '~^live/.+$'\n"
+               "api: false\nwebrtc: true\nwebrtcAddress: :8889\n"
+               "webrtcLocalUDPAddress: :8190\nwebrtcLocalTCPAddress: :8190\n"
+               "webrtcAdditionalHosts: [127.0.0.1]\n" + paths)
+    return {"viewer-public.yml": public, "viewer-preview.yml": preview}
 
 
 if __name__ == "__main__":

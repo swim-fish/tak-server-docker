@@ -16,6 +16,7 @@
 | Vx 雙頻道 | 同一伺服器的兩個 session 同時位於 Primary／Alternate；不包含音訊驗收 | [雙頻道結果](2026-09-22-tak-vx-dpk.md#雙頻道實測結果) |
 | TAK／Vx／ICU 分離佈建 | TAK 憑證 QR 成功；Vx QR 一般匯入不建立 Mission，改由 TAK Server Download 建立四頻道並逐一加入；ICU QR 發布 RTSPS 成功 | [2026-09-23](2026-09-23-qr-tak-vx-icu.md) |
 | 全新憑證 QR 與撤銷 | 清除 ATAK 資料後重新匯入、Vx 四頻道、ICU RTSPS、CRL 撤銷及實機重連；發現 ATAK Data Packages 需要 8443 可達 | [2026-09-24](2026-09-24-qr-e2e-revocation.md) |
+| 引導式批次憑證與 Vx 替換 | 兩張測試憑證合併註冊並由 API 讀回；伺服器固定名稱 Vx 套件替換及 metadata 讀回通過，Android 新套件待驗 | [2026-09-24](2026-09-24-guided-provisioning.md) |
 | Mumble 單一類型 SAN | DNS-only／IP-only 搭配相符 Vx Address，P1／A1 均成功；不包含不相符 SAN 拒絕測試 | [SAN 實測](2026-09-22-mumble-san.md) |
 | MediaMTX／TAK ICU | RTSP、RTSPS TCP 與 Compose 內 UDP 串流通過；ICU 7.5.1 經 RTSPS＋帳密實際發布，獨立讀取成功；跨 bridge UDP 與 ATAK 內建播放仍待驗 | [2026-09-23](2026-09-23-mediamtx.md) |
 | TAK ICU QR Code | 依 ICU 7.5.1 APK 與原生 `local.prefs` 確認格式；`takbox.local` 含密碼 QR 已由第二台熱點裝置掃碼套用，ICU 無提示發布 RTSPS，獨立讀取端取得影像 | [2026-09-23](2026-09-23-icu-qrcode.md) |

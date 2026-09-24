@@ -79,12 +79,16 @@ class CertificateHostTests(unittest.TestCase):
                 "V\t261013000000Z\t\t1001\tunknown\t/CN=admin\n"
                 "V\t260923120000Z\t\t1002\tunknown\t/CN=tablet\n"
                 "R\t260922000000Z\t260921000000Z\t1003\tunknown\t/CN=old-tablet\n")
-            (control / "registry.json").write_text(json.dumps({"1002": {"name": "Field device"}}))
+            (control / "registry.json").write_text(json.dumps({"1002": {
+                "name": "Field device", "in_groups": ["operations", "shared"],
+                "out_groups": ["shared"]}}))
             with patch.multiple(host, CA_DB=ca_db, PUBLIC=public, CONTROL=control,
                                 REGISTRY=control / "registry.json", PACKAGES=packages):
                 rows = host.inventory(now)
                 self.assertEqual([item["serial"] for item in rows], ["1003", "1002"])
                 self.assertEqual(rows[1]["name"], "Field device")
+                self.assertEqual(rows[1]["in_groups"], ["operations", "shared"])
+                self.assertEqual(rows[1]["out_groups"], ["shared"])
                 self.assertEqual(rows[1]["days_left"], "少於 1 天")
                 self.assertTrue(rows[0]["expired"])
                 self.assertTrue(rows[0]["revoked"])
@@ -95,6 +99,32 @@ class CertificateHostTests(unittest.TestCase):
     def test_group_flags_map_in_and_out_groups(self):
         self.assertEqual(host.group_flags(["publish", "shared"], ["observe", "shared"]),
                          ["-g", "shared", "-ig", "publish", "-og", "observe"])
+
+    def test_group_batch_checks_live_groups_before_any_update(self):
+        record = {"serial": "1002", "fingerprint": "f" * 64, "cn": "tablet",
+                  "registered": True, "revoked": False, "expired": False}
+        change = {"serial": "1002", "fingerprint": "f" * 64,
+                  "expected_in": ["old"], "expected_out": ["old"],
+                  "in_groups": ["new"], "out_groups": ["new"]}
+        with patch.object(host, "checked_record", return_value=record), \
+             patch.object(host, "status", return_value={"role": "ROLE_USER",
+                                                         "in_groups": ["old"], "out_groups": ["old"]}), \
+             patch.object(host, "set_groups", return_value={}) as update:
+            result = host.set_group_batch([change])
+            self.assertEqual(result["state"], "complete")
+            update.assert_called_once_with("1002", "f" * 64, ["new"], ["new"])
+        with patch.object(host, "checked_record", return_value=record), \
+             patch.object(host, "status", return_value={"role": "ROLE_USER",
+                                                         "in_groups": ["changed"], "out_groups": ["old"]}), \
+             patch.object(host, "set_groups") as update:
+            with self.assertRaisesRegex(RuntimeError, "refresh"):
+                host.set_group_batch([change])
+            update.assert_not_called()
+        with patch.object(host, "inventory", return_value=[{**record, "revoked": True}]), \
+             patch.object(host, "status") as status:
+            with self.assertRaisesRegex(ValueError, "Revoked"):
+                host.set_group_batch([change])
+            status.assert_not_called()
 
     def test_volume_registration_preserves_bind_mounted_file(self):
         with tempfile.TemporaryDirectory() as temp:

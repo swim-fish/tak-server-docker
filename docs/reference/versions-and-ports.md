@@ -1,6 +1,6 @@
 # 版本、通訊埠與上游套件
 
-以下是 2026-09-23 專案設定及實測版本。主機位址與通訊埠以 [compose.yaml](../../compose.yaml) 為準；改動時同步更新本頁及相關指令範例。
+以下是 2026-09-24 專案設定及實測版本。表格主機端採目前本機 `.env` 的值；Compose 原始預設與主機通訊埠覆寫仍以 [compose.yaml](../../compose.yaml) 為準。
 
 ## 版本
 
@@ -22,16 +22,19 @@ Vx 標籤中的 `[5.6.0]` 是套件標示；與 ATAK 5.7 的可用性以本次�
 | Windows 行動熱點 | `192.168.137.1`／`192.168.137.0/24` | 裝置需在允許子網路內 |
 | 名稱 | `takbox.local` | mDNS 指向主機 LAN IP |
 | TAK CoT TLS | `8089/TCP` | `8089/TCP` |
-| TAK 管理 API | `8443/TCP` | `8443/TCP`，使用管理用戶端憑證 |
+| TAK 管理 API | `10043/TCP` | `8443/TCP`，使用管理用戶端憑證；ATAK Data Packages 仍會嘗試主機 `8443` |
 | Mumble | `40000/TCP`、`40000/UDP` | `64738/TCP`、`64738/UDP` |
 | MediaMTX RTSP | `8554/TCP`、`8000-8001/UDP` | TCP 控制／媒體、UDP RTP／RTCP |
 | MediaMTX RTSPS | `8322/TCP`、`8004-8005/UDP` | TLS 控制／TCP 媒體、UDP SRTP／SRTCP |
-| 分享下載與 QR | `8765/TCP`，綁定熱點 IP | 僅在 `sharing` profile 啟動 |
-| 分享與 Mumble 管理 | `127.0.0.1:8766/TCP` | 僅 Windows 主機可連；Mumble 操作需前景管理程式 |
+| 公開 WebRTC 觀看 | `8889/TCP`，綁定熱點 IP | 匿名 viewer gateway；控制台預覽只在 Compose 網路內 |
+| 分享下載與 QR | `10065/TCP`，綁定熱點 IP | 容器端 `8765/TCP`；僅在 `sharing` profile 啟動 |
+| 控制台管理 | `127.0.0.1:10066/TCP` | 容器端 `8766/TCP`；Windows 管理 worker 由登入後排程啟動 |
 | PostgreSQL | 不發布 | `5432/TCP`，限 `tak-backend` |
 | mDNS | `5353/UDP` | Windows multicast，非 Compose port mapping |
 
 `64400` 是歷史測試通訊埠。`40000` 避開 Windows 預設動態範圍 `49152–65535`，但仍須檢查實際占用及排除區間，不能保證所有主機都可使用。
+
+此主機因 Windows 排除原始 `8443`、`8765`、`8766`，目前 `.env` 分別映射 `10043`、`10065`、`10066`；`.env.example` 提供相同覆寫範例。未建立 `.env` 時，Compose 仍使用原始主機通訊埠。ATAK Data Packages 曾實測固定連向 `takbox.local:8443`，不能只調整 Docker 映射就視為下載可用。
 
 `8446` 與 Federation 通訊埠仍未發布。MediaMTX 的 TCP 入口已由 Android 確認可達；UDP 對外媒體尚待實機驗收，見[MediaMTX 實測](../validation/2026-09-23-mediamtx.md)。
 

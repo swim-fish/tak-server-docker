@@ -8,6 +8,13 @@ let clockOffsetMs = Date.now() - Number(byId("share-rows").dataset.serverNow) * 
 let currentQrShareId = null;
 let recordItems = [];
 let recordPage = 1;
+let shareStatusFilter = "all";
+
+function shareStatusCategory(item) {
+  if (item.status === "已手動停止") return "stopped";
+  if (item.status === "時間到期" || item.status === "次數額滿") return "expired";
+  return "active";
+}
 
 function remainingText(seconds) {
   const days = Math.floor(seconds / 86400);
@@ -51,11 +58,11 @@ function cell(label, child, id) {
 function makeRow(item) {
   const row = element("tr");
   row.id = `row-${item.id}`;
-  const name = element("span", item.filename);
-  const kind = element("small", item.kind);
+  const name = element("strong", item.display_name);
+  const kind = element("span", item.kind === "icu" ? "ICU 設定" : "TAK 套件", "badge text-bg-secondary");
   const file = cell("檔案", name);
   file.append(element("br"), kind);
-  const status = cell("狀態", element("span", "", "share-state"), `status-${item.id}`);
+  const status = cell("狀態", element("span", "", "share-state badge text-bg-secondary"), `status-${item.id}`);
   status.append(element("small", "", "share-countdown"));
   const count = cell("已使用／上限", "", `count-${item.id}`);
   const dates = cell("建立／截止時間", item.created_at);
@@ -65,7 +72,7 @@ function makeRow(item) {
   link.dataset.active = "";
   link.dataset.qrOpen = "";
   link.dataset.shareId = item.id;
-  link.dataset.qrName = item.filename;
+  link.dataset.qrName = item.display_name;
   link.dataset.qrImage = item.qr_image_url;
   link.href = item.qr_url;
   const ended = element("span", "已結束");
@@ -92,22 +99,25 @@ function makeRow(item) {
 function updateRow(row, item) {
   const stopped = item.inactive;
   row.classList.toggle("inactive", stopped);
+  row.querySelector("td:first-child strong").textContent = item.display_name;
   const status = byId(`status-${item.id}`);
-  status.querySelector(".share-state").textContent = item.status;
+  const badge = status.querySelector(".share-state");
+  badge.textContent = item.status;
+  badge.classList.toggle("text-bg-success", item.status === "分享中");
+  badge.classList.toggle("text-bg-secondary", item.status !== "分享中");
   status.dataset.expiry = item.expires_at_epoch ?? "";
   status.classList.toggle("status-live", item.status === "分享中");
   status.classList.toggle("status-muted", item.status !== "分享中");
   const view = row.querySelector("[data-qr-open]");
   view.href = item.qr_url;
   view.dataset.qrImage = item.qr_image_url;
-  view.dataset.qrName = item.filename;
+  view.dataset.qrName = item.display_name;
   view.hidden = item.status !== "分享中";
   if (currentQrShareId === String(item.id) && item.status !== "分享中") {
     bootstrap.Modal.getInstance(byId("share-qr-dialog"))?.hide();
   }
   const count = byId(`count-${item.id}`);
-  count.replaceChildren(document.createTextNode(`${item.accepted} / ${item.max_downloads ?? "∞"}`),
-    element("br"), element("small", `完成 ${item.completed}`));
+  count.textContent = `${item.accepted} / ${item.max_downloads ?? "∞"}`;
   for (const node of row.querySelectorAll("[data-active]")) node.hidden = stopped;
   const ended = row.querySelector("[data-ended]");
   ended.textContent = item.status === "全部暫停" ? "已暫停" : "已結束";
@@ -116,9 +126,8 @@ function updateRow(row, item) {
 
 function renderRecordPage() {
   const table = byId("share-rows");
-  const hideInactive = byId("share-hide-inactive").checked;
   const pageSize = Number(byId("share-page-size").value);
-  const filtered = hideInactive ? recordItems.filter((item) => !item.inactive) : recordItems;
+  const filtered = shareStatusFilter === "all" ? recordItems : recordItems.filter((item) => shareStatusCategory(item) === shareStatusFilter);
   const pages = Math.max(1, Math.ceil(filtered.length / pageSize));
   recordPage = Math.min(recordPage, pages);
   const start = (recordPage - 1) * pageSize;
@@ -136,11 +145,13 @@ function renderRecordPage() {
   empty.hidden = filtered.length > 0;
   empty.textContent = recordItems.length ? "沒有符合條件的分享紀錄。" : "目前沒有分享紀錄。";
   const shown = visible.length ? `顯示 ${start + 1}–${start + visible.length} / ${filtered.length} 筆` : "顯示 0 筆";
-  const hidden = hideInactive ? `；隱藏 ${recordItems.length - filtered.length} 筆已停用` : "";
+  const hidden = recordItems.length > filtered.length ? `；隱藏 ${recordItems.length - filtered.length} 筆` : "";
   byId("share-record-count").textContent = `${shown}（總計 ${recordItems.length} 筆${hidden}）`;
   byId("share-page-label").textContent = `第 ${recordPage} / ${pages} 頁`;
   byId("share-page-prev").disabled = recordPage === 1;
   byId("share-page-next").disabled = recordPage === pages;
+  byId("share-page-prev-item").classList.toggle("disabled", recordPage === 1);
+  byId("share-page-next-item").classList.toggle("disabled", recordPage === pages);
   updateCountdowns();
 }
 
@@ -165,15 +176,16 @@ function updateShares(items) {
       link.href = item.qr_url;
       link.dataset.qrOpen = "";
       link.dataset.shareId = item.id;
-      link.dataset.qrName = item.filename;
+      link.dataset.qrName = item.display_name;
       link.dataset.qrImage = item.qr_image_url;
-      entry.append(element("strong", item.filename), link);
+      entry.append(element("strong", item.display_name), link);
     }
     const link = entry.querySelector("a");
     link.textContent = item.qr_url;
     link.href = item.qr_url;
-    link.dataset.qrName = item.filename;
+    link.dataset.qrName = item.display_name;
     link.dataset.qrImage = item.qr_image_url;
+    entry.querySelector("strong").textContent = item.display_name;
     if (list.children[index] !== entry) list.insertBefore(entry, list.children[index] || null);
   });
   byId("live-count").textContent = live.length;
@@ -184,7 +196,13 @@ byId("share-page-size").addEventListener("change", () => {
   recordPage = 1;
   renderRecordPage();
 });
-byId("share-hide-inactive").addEventListener("change", () => {
+for (const button of document.querySelectorAll("[data-share-status]")) button.addEventListener("click", () => {
+  shareStatusFilter = button.dataset.shareStatus;
+  for (const option of document.querySelectorAll("[data-share-status]")) {
+    const selected = option === button;
+    option.classList.toggle("active", selected);
+    option.setAttribute("aria-pressed", String(selected));
+  }
   recordPage = 1;
   renderRecordPage();
 });
@@ -198,6 +216,7 @@ byId("share-page-next").addEventListener("click", () => {
 });
 
 function updateSources(groups) {
+  if (!byId("source-select")) return;
   const signature = JSON.stringify(groups);
   if (signature === lastSources) return;
   lastSources = signature;
@@ -251,8 +270,10 @@ async function refresh() {
     updateCountdowns();
     updateSources(data.sources);
     byId("live-sync").textContent = `已同步 ${new Date().toLocaleTimeString("zh-TW", {hour12: false})}`;
+    byId("live-sync").classList.remove("alert", "alert-warning");
   } catch (_) {
     byId("live-sync").textContent = "同步中斷，正在重試";
+    byId("live-sync").classList.add("alert", "alert-warning");
   } finally {
     clearTimeout(timer);
     requestPending = false;

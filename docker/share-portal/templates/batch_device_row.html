@@ -1,0 +1,10 @@
+<article class="batch-device-row">
+  <div class="batch-device-header"><h3 class="fs-5 m-0" data-device-title>裝置 1</h3><button class="btn btn-outline-danger remove-device" type="button">移除此裝置</button></div>
+  <div class="batch-device-identity">
+    <label>裝置顯示名稱<input class="form-control" name="name" maxlength="80" required placeholder="Field Tablet 01"></label>
+    <label>憑證 CN<input class="form-control" name="cn" pattern="[A-Za-z0-9][A-Za-z0-9._-]{1,62}" required placeholder="field-tablet-01"></label>
+  </div>
+  {% with group_catalog=group_choices, assigned_in=['local-test'], assigned_out=['local-test'], group_disabled=false, group_field_mode='csv', group_in_field='in_groups', group_out_field='out_groups' %}
+    {% include 'group_assignment.html' %}
+  {% endwith %}
+</article>

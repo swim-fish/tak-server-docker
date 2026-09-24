@@ -1,6 +1,6 @@
 # MediaMTX：RTSP、RTSPS 與 TAK ICU
 
-本服務以 [MediaMTX v1.21.1](https://github.com/bluenviron/mediamtx/releases/tag/v1.21.1) 接收影像。Compose 同時啟用 RTSP `8554/TCP`、RTSPS `8322/TCP`，以及對應的 RTP／RTCP `8000-8001/UDP`、SRTP／SRTCP `8004-8005/UDP`。只開放 `test` 與 `live/` 開頭的串流路徑；其他協定與管理 API 不啟用。設定來源是[範本](../../config/mediamtx/mediamtx.yml.template)，實際含帳密設定保存在忽略版控的 `runtime/mediamtx/mediamtx.yml`。
+本服務以 [MediaMTX v1.21.1](https://github.com/bluenviron/mediamtx/releases/tag/v1.21.1) 接收影像。Compose 同時啟用 RTSP `8554/TCP`、RTSPS `8322/TCP`，以及對應的 RTP／RTCP `8000-8001/UDP`、SRTP／SRTCP `8004-8005/UDP`。發布路徑限於 `test` 與 `live/` 開頭；MediaMTX 管理 API 只在 Compose 網路內使用。另有獨立的 WebRTC viewer 與控制台預覽服務，見[MediaMTX 管理](management.md)。設定來源是[範本](../../config/mediamtx/mediamtx.yml.template)，實際含帳密設定保存在忽略版控的 `runtime/mediamtx/mediamtx.yml`。
 
 ## 簽發憑證與啟動
 
@@ -25,7 +25,7 @@ MediaMTX 使用 TAK Root → 中繼簽發 CA 簽出的**獨立葉憑證及私鑰
 
 ## 發布及讀取權限
 
-帳號固定為 `atak-publisher` 和 `atak-viewer`。前者只有 `publish` 權限，後者只有 `read` 權限；密碼分別在 `runtime/secrets/mediamtx_publish_password` 和 `runtime/secrets/mediamtx_read_password`。初次執行簽發腳本時才產生密碼。需要手動輸入 ICU 時，在本機終端機讀取發布密碼，**不要把輸出貼到聊天、截圖或版控**：
+現行發布身分依 ICU 小隊或一般設備分配獨立帳密及完整路徑權限，由[管理頁](management.md)建立與輪替。舊的 `atak-publisher` 共用帳號暫時保留給既有裝置；`atak-viewer` 是 MediaMTX 上游讀取帳號。兩者密碼分別在 `runtime/secrets/mediamtx_publish_password` 和 `runtime/secrets/mediamtx_read_password`，初次執行簽發腳本時產生。只有手動維護舊 ICU 設定時才在本機終端機讀取共用發布密碼，**不要把輸出貼到聊天、截圖或版控**：
 
 ```powershell
 Get-Content ./runtime/secrets/mediamtx_publish_password
@@ -37,7 +37,7 @@ Get-Content ./runtime/secrets/mediamtx_publish_password
 
 若要透過 ICU 專屬 QR Code 佈建這些欄位，請見[ICU QR Code 格式與驗證](icu-qrcode.md)。
 
-本機 TAK ICU 7.5.1 的 `Use SSL?` 設定會選擇 RTSPS。2026-09-23 實機已使用 RTSPS 與發布帳密成功送出 `live/VIDEO_1`，再由獨立讀取帳號經 RTSPS 讀取；這不證明 ICU 內部是否嚴格檢查了憑證鏈。設定如下：
+本機 TAK ICU 7.5.1 的 `Use SSL?` 設定會選擇 RTSPS。2026-09-23 實機以舊共用帳密成功送出 `live/VIDEO_1`，再由獨立讀取帳號經 RTSPS 讀取；2026-09-24 另以 Alpha 小隊 QR 成功發布 `live/alpha/1/VIDEO_1` 並在 Chrome 觀看。這不證明 ICU 內部是否嚴格檢查了憑證鏈。下表保留早期手動測試值；新裝置建議由控制台取得小隊 QR：
 
 | ICU 欄位 | RTSPS 測試值 | RTSP 回退測試值 |
 | --- | --- | --- |

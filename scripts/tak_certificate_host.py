@@ -25,6 +25,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import ExtendedKeyUsageOID, ExtensionOID, NameOID
 
 import tak_api_client
+import tak_vx_package_host
 
 
 PROJECT = Path(__file__).resolve().parents[1]
@@ -38,6 +39,7 @@ PACKAGES = RUNTIME / "packages" / "atak"
 REGISTRY = CONTROL / "registry.json"
 AUDIT = CONTROL / "audit.jsonl"
 LAST_RESULT = CONTROL / "last-result.json"
+BATCH_JOBS = CONTROL / "batch-jobs"
 TAIPEI = timezone(timedelta(hours=8), "Asia/Taipei")
 GROUP = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.:-]{0,63}\Z")
 COMMON_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{1,62}\Z")
@@ -159,6 +161,12 @@ def inventory(now: datetime | None = None) -> list[dict]:
             "revoked": fields[0] == "R", "revoked_at": fields[2] if fields[0] == "R" else None,
             "package": package, "registered": metadata.get("registered"),
             "username": metadata.get("username"),
+            "in_groups": [group for group in metadata.get("in_groups", [])
+                          if isinstance(group, str) and GROUP.fullmatch(group)]
+            if isinstance(metadata.get("in_groups", []), list) else [],
+            "out_groups": [group for group in metadata.get("out_groups", [])
+                           if isinstance(group, str) and GROUP.fullmatch(group)]
+            if isinstance(metadata.get("out_groups", []), list) else [],
         })
     return sorted(records, key=lambda item: (item["expires_iso"], item["serial"]))
 
@@ -234,10 +242,10 @@ def groups_from_api(data: dict) -> tuple[list[str], list[str]]:
     return sorted(set(both + in_only)), sorted(set(both + out_only))
 
 
-def register_authentication(record: dict, in_groups: list[str], out_groups: list[str]) -> None:
+def add_authentication_user(tree: ElementTree.ElementTree, record: dict,
+                            in_groups: list[str], out_groups: list[str]) -> None:
     if not re.fullmatch(r"[0-9a-f]{64}", record["fingerprint"]):
         raise ValueError("Invalid certificate fingerprint")
-    tree = authentication_tree()
     user = authentication_user(tree, record["cn"])
     if user is not None:
         if user.get("fingerprint", "").replace(":", "").lower() != record["fingerprint"]:
@@ -258,6 +266,9 @@ def register_authentication(record: dict, in_groups: list[str], out_groups: list
                         ("groupListOUT", sorted(set(out_groups) - set(both)))):
         for value in values:
             ElementTree.SubElement(user, f"{{{AUTH_NAMESPACE}}}{tag}").text = value
+
+
+def write_authentication_tree(tree: ElementTree.ElementTree) -> None:
     ElementTree.register_namespace("", AUTH_NAMESPACE)
     payload = ElementTree.tostring(tree.getroot(), encoding="utf-8", xml_declaration=True)
     # Compose bind-mounts this file. Preserve its inode so the container sees the update.
@@ -267,10 +278,17 @@ def register_authentication(record: dict, in_groups: list[str], out_groups: list
         output.truncate()
         output.flush()
         os.fsync(output.fileno())
+
+
+def restart_for_authentication() -> None:
     command([require_tool("docker"), "compose", "restart", "tak-server"], timeout=180)
     if not wait_for_cot_listener():
         raise RuntimeError("TAK did not reopen its CoT listener after authentication update")
-    deadline = time.monotonic() + 90
+
+
+def wait_for_groups(record: dict, in_groups: list[str], out_groups: list[str],
+                    timeout: int = 90) -> None:
+    deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
         try:
             groups = groups_from_api(tak_api_client.get_groups(record["cn"]))
@@ -280,6 +298,14 @@ def register_authentication(record: dict, in_groups: list[str], out_groups: list
             pass
         time.sleep(2)
     raise RuntimeError("TAK API did not confirm the new certificate groups after restart")
+
+
+def register_authentication(record: dict, in_groups: list[str], out_groups: list[str]) -> None:
+    tree = authentication_tree()
+    add_authentication_user(tree, record, in_groups, out_groups)
+    write_authentication_tree(tree)
+    restart_for_authentication()
+    wait_for_groups(record, in_groups, out_groups)
 
 
 def status(record: dict) -> dict:
@@ -318,6 +344,43 @@ def set_groups(serial: str, fingerprint: str, in_values: object, out_values: obj
     return details
 
 
+def set_group_batch(changes: object) -> dict:
+    if not isinstance(changes, list) or not 1 <= len(changes) <= 100:
+        raise ValueError("Select between 1 and 100 certificate group changes")
+    prepared = []
+    seen = set()
+    for change in changes:
+        if not isinstance(change, dict):
+            raise ValueError("Invalid certificate group change")
+        record = checked_record(change.get("serial"), change.get("fingerprint"), active=True)
+        if record["serial"] in seen or record.get("registered") is not True:
+            raise ValueError("Select distinct registered certificates")
+        seen.add(record["serial"])
+        expected_in = checked_group_list(change.get("expected_in"))
+        expected_out = checked_group_list(change.get("expected_out"))
+        in_groups = checked_group_list(change.get("in_groups"))
+        out_groups = checked_group_list(change.get("out_groups"))
+        group_flags(in_groups, out_groups)
+        current = status(record)
+        if current["role"] == "ROLE_ADMIN":
+            raise ValueError("Administrator certificates cannot be changed in this console")
+        if current["in_groups"] != expected_in or current["out_groups"] != expected_out:
+            raise RuntimeError("Certificate groups changed in TAK; refresh the group page")
+        prepared.append((record, in_groups, out_groups))
+    results = []
+    for record, in_groups, out_groups in prepared:
+        try:
+            set_groups(record["serial"], record["fingerprint"], in_groups, out_groups)
+            results.append({"serial": record["serial"], "cn": record["cn"], "state": "updated"})
+        except (RuntimeError, OSError, ValueError) as exc:
+            results.append({"serial": record["serial"], "cn": record["cn"],
+                            "state": "failed", "error": str(exc)})
+    audit("group_batch", [record["serial"] for record, _, _ in prepared],
+          "complete" if all(item["state"] == "updated" for item in results) else "partial")
+    return {"results": results, "state": "complete" if all(item["state"] == "updated" for item in results)
+            else "partial"}
+
+
 def ca_backup() -> str:
     backup = CONTROL / "backups" / (datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
                                     + "-" + uuid.uuid4().hex[:8])
@@ -349,7 +412,7 @@ def secret_env(**values: str) -> dict[str, str]:
     return env
 
 
-def issue(request: dict) -> dict:
+def issue(request: dict, *, defer_registration: bool = False) -> dict:
     name = request.get("name", "")
     cn = request.get("cn", "")
     if not isinstance(name, str) or not 1 <= len(name.strip()) <= 80 or any(ord(c) < 32 for c in name):
@@ -410,7 +473,8 @@ def issue(request: dict) -> dict:
     registry[serial] = {"name": name.strip(), "cn": cn,
                         "created_at": datetime.now(timezone.utc).isoformat(),
                         "package": None, "key_dir": identity, "registered": False,
-                        "in_groups": in_groups, "out_groups": out_groups, "backup": backup}
+                        "in_groups": in_groups, "out_groups": out_groups, "backup": backup,
+                        "batch_job": request.get("_batch_job_id") if defer_registration else None}
     save_registry(registry)
     client_store = directory / "clientCert.p12"
     ca_store = directory / "caCert.p12"
@@ -472,6 +536,9 @@ def issue(request: dict) -> dict:
     registry[serial]["package"] = package_name
     registry[serial]["sha256"] = hashlib.sha256(package.read_bytes()).hexdigest()
     save_registry(registry)
+    if defer_registration:
+        audit("issue", [serial], "signed-awaiting-batch-registration")
+        return {"serial": serial, "package": package_name}
     try:
         register_authentication(checked_record(serial, cert.fingerprint(hashes.SHA256()).hex()),
                                 in_groups, out_groups)
@@ -486,6 +553,156 @@ def issue(request: dict) -> dict:
         raise RuntimeError(f"Certificate {serial} was signed and DPK created, but TAK registration is unverified")
     audit("issue", [serial], "registered")
     return {"serial": serial, "package": package_name}
+
+
+def batch_job_path(job_id: str) -> Path:
+    if not isinstance(job_id, str) or not re.fullmatch(r"[0-9a-f]{32}", job_id):
+        raise ValueError("Invalid batch operation ID")
+    return BATCH_JOBS / (job_id + ".json")
+
+
+def read_batch_job(job_id: str) -> dict:
+    path = batch_job_path(job_id)
+    if not path.is_file():
+        raise ValueError("Batch operation does not exist")
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def save_batch_job(job_id: str, data: dict) -> None:
+    path = batch_job_path(job_id)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    pending = path.with_suffix(".pending")
+    pending.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    os.replace(pending, path)
+
+
+def validate_batch_items(items: object) -> list[dict]:
+    if not isinstance(items, list) or not 1 <= len(items) <= 10:
+        raise ValueError("Select between 1 and 10 devices")
+    checked = []
+    seen = set()
+    for item in items:
+        if not isinstance(item, dict):
+            raise ValueError("Invalid device entry")
+        name, cn = item.get("name"), item.get("cn")
+        if not isinstance(name, str) or not 1 <= len(name.strip()) <= 80 or any(ord(c) < 32 for c in name):
+            raise ValueError("Device display name must contain 1–80 printable characters")
+        if not isinstance(cn, str) or not COMMON_NAME.fullmatch(cn) or cn in seen:
+            raise ValueError("Each device requires a unique, valid certificate CN")
+        in_groups = checked_group_list(item.get("in_groups"))
+        out_groups = checked_group_list(item.get("out_groups"))
+        group_flags(in_groups, out_groups)
+        seen.add(cn)
+        checked.append({"name": name.strip(), "cn": cn,
+                        "in_groups": in_groups, "out_groups": out_groups})
+    return checked
+
+
+def signed_batch_record(job_id: str, item: dict) -> dict | None:
+    matches = [record for record in inventory() if record["cn"] == item["cn"] and not record["revoked"]]
+    if len(matches) > 1:
+        raise RuntimeError("Multiple active certificates use a batch CN")
+    if not matches:
+        return None
+    record = matches[0]
+    metadata = load_registry().get(record["serial"], {})
+    if (metadata.get("batch_job") != job_id or metadata.get("name") != item["name"] or
+            metadata.get("in_groups") != item["in_groups"] or
+            metadata.get("out_groups") != item["out_groups"] or
+            not record.get("package")):
+        raise RuntimeError(f"Certificate CN {item['cn']} already exists outside this batch or is incomplete")
+    return record
+
+
+def issue_batch(job_id: str, items: object) -> dict:
+    checked = validate_batch_items(items)
+    path = batch_job_path(job_id)
+    if path.is_file():
+        job = read_batch_job(job_id)
+        if [entry["request"] for entry in job["items"]] != checked:
+            raise RuntimeError("Batch parameters changed after the operation started")
+    else:
+        check_server_running()
+        registered = {item.get("identifier") for item in authentication_tree().getroot()
+                      if item.tag == f"{{{AUTH_NAMESPACE}}}User"}
+        active = {record["cn"] for record in inventory() if not record["revoked"]}
+        if any(item["cn"] in registered or item["cn"] in active for item in checked):
+            raise ValueError("A batch CN is already registered or has an active certificate")
+        issuing_ca = x509.load_pem_x509_certificate((PUBLIC / "intermediate.crt.pem").read_bytes())
+        if issuing_ca.not_valid_after_utc - datetime.now(timezone.utc) < timedelta(days=731):
+            raise RuntimeError("Issuing CA expires too soon for a two-year client certificate")
+        job = {"job_id": job_id, "state": "signing", "created_at": datetime.now(timezone.utc).isoformat(),
+               "items": [{"request": item, "state": "pending"} for item in checked]}
+        save_batch_job(job_id, job)
+    if job["state"] == "complete":
+        return job
+    check_server_running()
+    for entry in job["items"]:
+        if entry["state"] in {"registered", "signed"}:
+            continue
+        item = entry["request"]
+        try:
+            previous = signed_batch_record(job_id, item)
+            result = ({"serial": previous["serial"], "package": previous["package"]}
+                      if previous else issue({**item, "_batch_job_id": job_id}, defer_registration=True))
+            entry.update(result, state="signed")
+            entry.pop("error", None)
+        except (ValueError, RuntimeError, OSError, subprocess.TimeoutExpired) as exc:
+            entry.update(state="failed", error=str(exc)[:300])
+        save_batch_job(job_id, job)
+    pending = [entry for entry in job["items"] if entry["state"] == "signed"]
+    for entry in pending:
+        try:
+            record = next(item for item in inventory() if item["serial"] == entry["serial"])
+            details = status(record)
+            selected = entry["request"]
+            if (details["in_groups"] == selected["in_groups"] and
+                    details["out_groups"] == selected["out_groups"]):
+                registry = load_registry()
+                registry[entry["serial"]]["registered"] = True
+                registry[entry["serial"]]["username"] = selected["cn"]
+                save_registry(registry)
+                entry["state"] = "registered"
+                entry["expires_at"] = record["expires_at"]
+                entry.pop("error", None)
+                save_batch_job(job_id, job)
+        except (RuntimeError, OSError, StopIteration):
+            pass
+    pending = [entry for entry in job["items"] if entry["state"] == "signed"]
+    if pending:
+        job["state"] = "registering"
+        save_batch_job(job_id, job)
+        try:
+            tree = authentication_tree()
+            for entry in pending:
+                record = next(item for item in inventory() if item["serial"] == entry["serial"])
+                selected = entry["request"]
+                add_authentication_user(tree, record, selected["in_groups"], selected["out_groups"])
+            write_authentication_tree(tree)
+            restart_for_authentication()
+            for entry in pending:
+                record = checked_record(entry["serial"], next(
+                    item["fingerprint"] for item in inventory() if item["serial"] == entry["serial"]))
+                selected = entry["request"]
+                try:
+                    wait_for_groups(record, selected["in_groups"], selected["out_groups"], timeout=20)
+                    registry = load_registry()
+                    registry[entry["serial"]]["registered"] = True
+                    registry[entry["serial"]]["username"] = selected["cn"]
+                    save_registry(registry)
+                    entry["state"] = "registered"
+                    entry["expires_at"] = record["expires_at"]
+                    entry.pop("error", None)
+                except (RuntimeError, OSError) as exc:
+                    entry["error"] = str(exc)[:300]
+                save_batch_job(job_id, job)
+        except (ValueError, RuntimeError, OSError, subprocess.TimeoutExpired) as exc:
+            job["error"] = str(exc)[:300]
+            save_batch_job(job_id, job)
+    job["state"] = "complete" if all(entry["state"] == "registered" for entry in job["items"]) else "partial"
+    save_batch_job(job_id, job)
+    audit("issue_batch", [entry["serial"] for entry in job["items"] if "serial" in entry], job["state"])
+    return job
 
 
 def selected_records(items: object) -> list[dict]:
@@ -662,14 +879,28 @@ def execute(request: dict) -> dict:
     if action == "groups":
         return {"status": set_groups(request.get("serial"), request.get("fingerprint"),
                                       request.get("in_groups"), request.get("out_groups"))}
+    if action == "group_batch":
+        return {"batch": set_group_batch(request.get("changes"))}
     if action == "issue":
         return issue(request)
+    if action == "batch_issue":
+        return {"batch": issue_batch(request.get("job_id"), request.get("items"))}
+    if action == "batch_status":
+        return {"batch": read_batch_job(request.get("job_id"))}
     if action == "validate_selection":
         return {"certificates": selected_records(request.get("selected"))}
     if action == "revoke":
         return revoke(request.get("selected"))
     if action == "republish":
         return republish()
+    if action == "vx_prepare":
+        return {"package": tak_vx_package_host.prepare(request.get("job_id"))}
+    if action == "vx_status":
+        return {"package": tak_vx_package_host.read_job(request.get("job_id"))}
+    if action == "vx_replace":
+        return {"package": tak_vx_package_host.replace(request.get("job_id"))}
+    if action == "vx_restore":
+        return {"package": tak_vx_package_host.restore(request.get("job_id"))}
     raise ValueError("Unsupported TAK certificate action")
 
 
@@ -693,17 +924,20 @@ def main() -> None:
                     if payload.get("id") != operation_id:
                         raise ValueError("Invalid request ID")
                     result = {"ok": True, **execute(payload)}
-                    if payload.get("action") in {"issue", "groups", "revoke", "republish"}:
+                    if payload.get("action") in {"issue", "groups", "group_batch", "revoke", "republish"}:
                         LAST_RESULT.write_text(json.dumps({"action": payload["action"],
                                                           "at": datetime.now(timezone.utc).isoformat(),
                                                           "result": result}, ensure_ascii=False), encoding="utf-8")
                 except Exception as error:
                     print(f"TAK certificate operation failed: {type(error).__name__}: {error}", flush=True)
-                    if isinstance(payload, dict) and payload.get("action") in {"issue", "groups", "revoke", "republish"}:
+                    if isinstance(payload, dict) and payload.get("action") in {"issue", "groups", "group_batch", "revoke", "republish"}:
                         candidates = [payload.get("serial")]
                         selected = payload.get("selected")
                         if isinstance(selected, list):
                             candidates.extend(item.get("serial") for item in selected if isinstance(item, dict))
+                        changes = payload.get("changes")
+                        if isinstance(changes, list):
+                            candidates.extend(item.get("serial") for item in changes if isinstance(item, dict))
                         serials = [value for value in candidates
                                    if isinstance(value, str) and SERIAL.fullmatch(value)]
                         audit(payload["action"], serials, f"failed:{type(error).__name__}")

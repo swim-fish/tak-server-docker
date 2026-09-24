@@ -13,6 +13,12 @@ authInternalUsers:
     permissions:
       - action: read
         path: '~^(live/.+|test)$'
+  - user: tak-console
+    pass: __API_PASSWORD__
+    ips: []
+    permissions:
+      - action: api
+__DYNAMIC_USERS__
 
 rtsp: true
 rtspTransports: [tcp, udp]
@@ -32,7 +38,8 @@ hls: false
 webrtc: false
 srt: false
 moq: false
-api: false
+api: true
+apiAddress: :9997
 metrics: false
 pprof: false
 playback: false
@@ -40,3 +47,4 @@ playback: false
 paths:
   '~^(live/.+|test)$':
     source: publisher
+    rtspDemuxMpegts: true

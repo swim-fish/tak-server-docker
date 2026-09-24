@@ -1,4 +1,5 @@
-<div class="group-board full" data-group-board data-readonly="{{ 'true' if group_disabled else 'false' }}">
+{% set field_mode = group_field_mode|default('multiple') %}
+<div class="group-board full" data-group-board data-readonly="{{ 'true' if group_disabled else 'false' }}" data-group-field-mode="{{ field_mode }}" data-group-in-field="{{ group_in_field|default('in_group') }}" data-group-out-field="{{ group_out_field|default('out_group') }}">
   <p class="group-help">點選一個或多個群組，再選擇目的清單並按「移動」；也可將群組拖曳到目的清單。In 可寫入，Out 可讀取。</p>
   <div class="group-lanes">
     {% for lane, title, description in [
@@ -40,8 +41,13 @@
   </div>
   <p class="group-message" data-group-message role="status" aria-live="polite"></p>
   <div data-group-fields>
-    {% for group in assigned_in %}<input type="hidden" name="in_group" value="{{ group }}">{% endfor %}
-    {% for group in assigned_out %}<input type="hidden" name="out_group" value="{{ group }}">{% endfor %}
+    {% if field_mode == 'csv' %}
+      <input type="hidden" name="{{ group_in_field }}" value="{{ assigned_in|join(',') }}">
+      <input type="hidden" name="{{ group_out_field }}" value="{{ assigned_out|join(',') }}">
+    {% else %}
+      {% for group in assigned_in %}<input type="hidden" name="{{ group_in_field|default('in_group') }}" value="{{ group }}">{% endfor %}
+      {% for group in assigned_out %}<input type="hidden" name="{{ group_out_field|default('out_group') }}" value="{{ group }}">{% endfor %}
+    {% endif %}
   </div>
   <noscript><p>群組移動需要啟用 JavaScript；目前顯示的是原始權限。</p></noscript>
 </div>

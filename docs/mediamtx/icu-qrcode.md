@@ -10,10 +10,10 @@ ICU 接受 Android `ACTION_VIEW` 的 `icu:` scheme。APK 中 `ICUCamera` 只在 
 icu://download?url=<完整百分比編碼的 HTTP(S) 設定檔 URL>
 ```
 
-目前建議由[分享管理頁](../sharing/portal.md)建立短效 ICU 分享。每筆的 URL 為 `http://takbox.local:8765/d/<token>`，QR 內容形如：
+目前建議由[引導式佈建](../plans/guided-provisioning.md)建立標準或 Advanced ICU 設定，再產生短效分享。以目前本機 `.env` 的主機映射為例，每筆 URL 是 `http://takbox.local:10065/d/<token>`，QR 內容形如：
 
 ```text
-icu://download?url=http%3A%2F%2Ftakbox.local%3A8765%2Fd%2FTOKEN
+icu://download?url=http%3A%2F%2Ftakbox.local%3A10065%2Fd%2FTOKEN
 ```
 
 `download` 是 `icu:` URI 的 **host**；HTTP 檔案路徑是 `/d/<token>`，由管理頁實際產生。不能寫成 `icu:///download`。下載回應須為 `200`；APK 以 `HttpURLConnection` 取得內容，未實作 DPK 解壓或其他路由。每台裝置須與 Windows 熱點連線，並能把 `takbox.local` 解析到熱點位址；這個流程不使用 USB 或 ADB reverse。

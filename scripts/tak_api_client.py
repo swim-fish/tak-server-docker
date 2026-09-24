@@ -9,6 +9,7 @@ import os
 import re
 import socket
 import ssl
+import hashlib
 from pathlib import Path
 from urllib.parse import quote
 
@@ -70,6 +71,39 @@ def request(method: str, path: str, payload: dict | None = None) -> object:
         if not 200 <= response.status < 300:
             raise RuntimeError(f"TAK API returned HTTP {response.status}")
         return json.loads(content) if content.strip() else None
+    finally:
+        connection.close()
+
+
+def package_request(method: str, path: str, body: bytes | None = None,
+                    content_type: str | None = None) -> bytes:
+    """Limit raw TAK package calls to the endpoints needed by the Vx worker."""
+    file_path = re.fullmatch(r"/Marti/api/files/[0-9a-fA-F]{64}", path)
+    metadata_path = re.fullmatch(r"/Marti/api/sync/metadata/[0-9a-fA-F]{64}/(?:tool|keywords)", path)
+    search_path = path.startswith("/Marti/api/sync/search?")
+    allowed = ((method == "GET" and (file_path or search_path)) or
+               (method == "DELETE" and file_path) or
+               (method == "POST" and path == "/Marti/sync/upload") or
+               (method == "PUT" and metadata_path))
+    if not allowed or (body is not None and len(body) > 12 * 1024 * 1024):
+        raise ValueError("Unsupported TAK package request")
+    context = ssl.create_default_context(cafile=str(CERTS / "root-ca.pem"))
+    context.minimum_version = ssl.TLSVersion.TLSv1_2
+    context.load_cert_chain(certfile=str(CERTS / "admin.pem"), keyfile=str(KEY),
+                            password=KEY_PASSWORD.read_text(encoding="ascii").strip())
+    headers = {"Content-Type": content_type} if content_type else {}
+    connection = TakConnection(HOST, api_port(), context=context, timeout=30)
+    try:
+        connection.request(method, path, body=body, headers=headers)
+        response = connection.getresponse()
+        content = response.read(12 * 1024 * 1024 + 1)
+        if len(content) > 12 * 1024 * 1024:
+            raise RuntimeError("TAK package response exceeded the size limit")
+        if not 200 <= response.status < 300:
+            raise RuntimeError(f"TAK package API returned HTTP {response.status}")
+        if method == "GET" and file_path and hashlib.sha256(content).hexdigest().lower() != path.rsplit("/", 1)[-1].lower():
+            raise RuntimeError("Downloaded TAK package SHA-256 does not match its hash")
+        return content
     finally:
         connection.close()
 
