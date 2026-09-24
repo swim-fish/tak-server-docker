@@ -87,7 +87,8 @@ def unregister(admin: manager.Admin, endpoint: dict, selected: object) -> dict:
 
 def recreate_mumble() -> None:
     result = subprocess.run(["docker", "compose", "up", "-d", "--force-recreate", "--no-deps", "mumble"],
-                            cwd=PROJECT, capture_output=True, timeout=90)
+                            cwd=PROJECT, capture_output=True, timeout=90,
+                            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
     if result.returncode:
         raise RuntimeError("Docker could not recreate the Mumble container; check Docker Desktop")
 
@@ -176,7 +177,10 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    from host_worker_lock import exclusive_worker
+
     try:
-        main()
+        with exclusive_worker(CONTROL):
+            main()
     except KeyboardInterrupt:
         print("Mumble management worker stopped.", flush=True)

@@ -99,10 +99,20 @@ class SharePortalTests(unittest.TestCase):
             self.assertIn('class="certificate-list" role="list" data-view="cards"', response.data.decode())
             self.assertIn('id="hide-revoked"', response.data.decode())
             self.assertIn('id="count-total">1</strong>', response.data.decode())
+            self.assertIn('/static/bootstrap/bootstrap.min.css', response.data.decode())
+            self.assertIn('class="modal fade" id="revoke-dialog"', response.data.decode())
         stylesheet = client.get("/static/group_assignment.css", headers=headers)
         self.assertEqual(stylesheet.status_code, 200)
         self.assertIn(b".group-lanes", stylesheet.data)
         stylesheet.close()
+        bootstrap_css = client.get("/static/bootstrap/bootstrap.min.css", headers=headers)
+        self.assertEqual(bootstrap_css.status_code, 200)
+        self.assertIn(b"v5.3.8", bootstrap_css.data[:500])
+        bootstrap_css.close()
+        theme_css = client.get("/static/console.css", headers=headers)
+        self.assertEqual(theme_css.status_code, 200)
+        self.assertIn(b".certificate-list", theme_css.data)
+        theme_css.close()
         with patch.object(admin, "cert_control", side_effect=[
                 {"certificates": [record], "last_result": None},
                 {"status": {"username": "device-01", "in_groups": ["local-test"],
@@ -168,6 +178,10 @@ class SharePortalTests(unittest.TestCase):
         self.assertEqual(client.get("/healthz").status_code, 200)
         self.assertIn(b"example.dpk", client.get(f"/q/{row['token']}").data)
         self.assertEqual(client.get(f"/qr.png/{row['token']}").data[:8], b"\x89PNG\r\n\x1a\n")
+        public_css = client.get("/static/bootstrap/bootstrap.min.css")
+        self.assertEqual(public_css.status_code, 200)
+        self.assertIn("style-src 'self'", public_css.headers["Content-Security-Policy"])
+        public_css.close()
         qr = urlparse(portal.qr_value(row))
         self.assertEqual((qr.scheme, qr.netloc, qr.path),
                          ("tak", "com.atakmap.app", "/import"))
@@ -197,6 +211,10 @@ class SharePortalTests(unittest.TestCase):
         self.assertEqual(client.post("/resume", data={"csrf": "wrong"}, headers=headers).status_code, 403)
         self.assertEqual(client.post("/resume", data={"csrf": admin.CSRF}, headers={
             **headers, "Sec-Fetch-Site": "cross-site"}).status_code, 403)
+        with patch.object(admin, "control") as control:
+            self.assertEqual(client.post("/mumble/restart", data={"csrf": admin.CSRF},
+                                         headers=headers).status_code, 400)
+            control.assert_not_called()
 
     def test_admin_live_state_includes_new_shares_and_sources(self) -> None:
         import share_admin_flask as admin
@@ -218,10 +236,22 @@ class SharePortalTests(unittest.TestCase):
         self.assertEqual(after["shares"][0]["id"], row["id"])
         self.assertEqual(after["shares"][0]["filename"], "example.dpk")
         self.assertTrue(after["shares"][0]["qr_url"].endswith(f"/q/{row['token']}"))
+        self.assertEqual(after["shares"][0]["qr_image_url"], f"/qr.png/{row['token']}")
+        self.assertEqual(after["shares"][0]["expires_at_epoch"], row["expires_at"])
+        self.assertIsInstance(after["server_now"], int)
         self.assertEqual(after["shares"][0]["status"], "分享中")
+        self.assertEqual(client.get(f"/qr.png/{row['token']}").status_code, 401)
+        self.assertEqual(client.get(f"/qr.png/{row['token']}", headers=auth).data[:8],
+                         b"\x89PNG\r\n\x1a\n")
+        self.assertEqual(portal.get_share(row["token"])["accepted"], 0)
+        portal.set_paused(True)
+        self.assertEqual(client.get(f"/qr.png/{row['token']}", headers=auth).status_code, 410)
+        self.assertIn("已暫停", client.get("/", headers=auth).data.decode())
+        portal.set_paused(False)
         portal.update_status(row["id"])
         self.assertEqual(client.get("/stats", headers=auth).json["shares"][0]["status"],
                          "已手動停止")
+        self.assertEqual(client.get(f"/qr.png/{row['token']}", headers=auth).status_code, 410)
 
     def test_icu_profile_uses_secret_without_putting_it_in_qr(self) -> None:
         portal.create_share("icu", "", 10, 2)
@@ -253,6 +283,12 @@ class SharePortalTests(unittest.TestCase):
         active_markup = portal.admin_page("test-csrf").decode("utf-8")
         self.assertIn(f"<li id='active-{row['id']}'", active_markup)
         self.assertIn(f"/q/{row['token']}", active_markup)
+        self.assertIn("id='share-qr-dialog'", active_markup)
+        self.assertIn("/static/bootstrap/bootstrap.bundle.min.js", active_markup)
+        self.assertIn(f"data-qr-image='/qr.png/{row['token']}'", active_markup)
+        self.assertIn("class='share-countdown'", active_markup)
+        self.assertIn("剩餘", active_markup)
+        self.assertIn(f"data-expiry='{row['expires_at']}'", active_markup)
         portal.update_status(row["id"])
         markup = portal.admin_page("test-csrf").decode("utf-8")
         self.assertIn(f"<tr id='row-{row['id']}' class='inactive'>", markup)

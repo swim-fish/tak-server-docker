@@ -1,43 +1,25 @@
 <!doctype html>
-<html lang="zh-Hant-TW">
+<html lang="zh-Hant-TW" data-bs-theme="dark">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>TAK 用戶端憑證</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='group_assignment.css') }}"><script defer src="{{ url_for('static', filename='group_assignment.js') }}"></script>
-<style>
-:root{color-scheme:dark;--bg:#101820;--panel:#182630;--line:#35505b;--text:#eef5f4;--muted:#b8c9cc;--cyan:#80d7e6;--red:#e88580;--green:#74d6a5;--amber:#f2c879}
-*{box-sizing:border-box}body{font:16px/1.5 system-ui,sans-serif;max-width:1920px;margin:0 auto;padding:clamp(.75rem,2vw,2rem);background:var(--bg);color:var(--text)}
-main,section{min-width:0}h1{font-size:1.7rem}h2{font-size:1.1rem;color:var(--cyan);margin-top:0}a{color:var(--cyan)}
-section{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--cyan);padding:1.2rem;margin:1rem 0}
-.warning{border-left-color:var(--amber);color:var(--amber)}.error{border-left-color:var(--red);color:var(--red)}.success{border-left-color:var(--green);color:var(--green)}
-.muted{color:var(--muted)}.expired,.revoked{opacity:.62;filter:grayscale(.8)}.tag{display:inline-block;padding:.18rem .45rem;border:1px solid var(--line);white-space:nowrap}
-.tag.warn{border-color:var(--amber);color:var(--amber)}.tag.bad{border-color:var(--red);color:var(--red)}
-input{font:inherit;padding:.55rem;background:#0c151c;color:var(--text);border:1px solid #58727b;border-radius:2px;max-width:100%}
-input[type=checkbox]{width:1.2rem;height:1.2rem;accent-color:var(--cyan)}button{font:inherit;font-weight:700;background:var(--cyan);color:#08212b;border:1px solid var(--cyan);border-radius:2px;padding:.55rem .9rem;cursor:pointer;min-height:42px}
-button.danger{background:var(--red);border-color:var(--red);color:#1c1010}button:disabled,button.danger:disabled{background:#46535a;color:#adb9bb;border-color:#46535a;cursor:not-allowed}
-.row{display:flex;flex-wrap:wrap;gap:.75rem;align-items:center;margin:.9rem 0}.row label{display:flex;align-items:center;gap:.4rem}.issue-grid{display:grid;gap:1rem;grid-template-columns:repeat(2,minmax(0,1fr))}.issue-grid>label{display:grid;gap:.3rem}.issue-grid>label.option{display:flex;align-items:center;gap:.6rem}
-.issue-grid .full{grid-column:1/-1}
-code{overflow-wrap:anywhere}dialog{background:var(--panel);color:var(--text);border:2px solid var(--red);width:min(95vw,560px);padding:1.3rem}dialog::backdrop{background:rgba(0,0,0,.75)}dialog menu{display:flex;gap:.6rem;justify-content:flex-end;padding:0}
-.certificate-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:1rem;margin:1rem 0}.cert-card{min-width:0;background:#13212a;border:1px solid #48616b;border-left:4px solid var(--cyan);padding:1rem 1.15rem}.cert-card[hidden]{display:none}.cert-card.revoked,.cert-card.expired{border-left-color:#87969a;opacity:.7;filter:grayscale(.8)}.cert-card-head{display:flex;gap:.8rem;align-items:flex-start}.select-cert{display:flex;align-items:center;gap:.4rem;flex:none;padding-top:.15rem}.cert-identity{min-width:0;flex:1}.cert-identity h3{font-size:1.1rem;margin:0;overflow-wrap:anywhere}.cert-identity p{color:var(--muted);margin:.1rem 0 0;overflow-wrap:anywhere}.cert-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.8rem 1rem;margin:1rem 0}.cert-facts div{min-width:0}.cert-facts .full{grid-column:1/-1}.cert-facts dt{font-size:.83rem;color:var(--muted)}.cert-facts dd{margin:.15rem 0 0;overflow-wrap:anywhere}.cert-facts code{word-break:break-all}.cert-card-foot{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.7rem;padding-top:.8rem;border-top:1px solid var(--line)}.card-action{display:inline-block;padding:.5rem .75rem;border:1px solid var(--cyan);text-decoration:none;font-weight:700}.card-action:hover,.card-action:focus-visible{background:#24414b}.share-active{color:var(--amber)}
-.certificate-list>p{grid-column:1/-1}.view-switch{display:inline-flex;gap:.25rem;margin-left:auto;padding:.2rem;border:1px solid var(--line);background:#0c151c}.view-switch button{min-height:38px;padding:.35rem .85rem;background:transparent;border-color:transparent;color:var(--muted)}.view-switch button[aria-pressed="true"]{background:var(--cyan);border-color:var(--cyan);color:#08212b}.view-switch button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
-.inventory-stats{display:flex;flex-wrap:wrap;gap:.5rem;margin:.5rem 0 .8rem}.inventory-stats span{display:inline-flex;gap:.4rem;align-items:center;padding:.3rem .6rem;background:#13212a;border:1px solid var(--line);color:var(--muted)}.inventory-stats span[hidden]{display:none}.inventory-stats strong{color:var(--text);font-variant-numeric:tabular-nums}
-.certificate-list[data-view="list"]{grid-template-columns:1fr;gap:.65rem}.certificate-list[data-view="list"] .cert-card{display:grid;grid-template-columns:minmax(13rem,1.1fr) minmax(0,2fr) minmax(11rem,.8fr);gap:1rem;align-items:center;padding:.75rem 1rem}.certificate-list[data-view="list"] .cert-card[hidden]{display:none}.certificate-list[data-view="list"] .cert-card-head{align-items:center}.certificate-list[data-view="list"] .cert-facts{grid-template-columns:7rem 7rem minmax(10rem,1fr);gap:.45rem .8rem;margin:0}.certificate-list[data-view="list"] .cert-card-foot{justify-content:flex-end;padding:0;border:0}.certificate-list[data-view="list"] .cert-card-foot>div{min-width:0;overflow-wrap:anywhere}
-@media(max-width:1150px){.certificate-list[data-view="list"] .cert-card{grid-template-columns:minmax(12rem,1fr) minmax(0,2fr)}.certificate-list[data-view="list"] .cert-card-foot{grid-column:1/-1;justify-content:space-between;padding-top:.5rem;border-top:1px solid var(--line)}}
-@media(min-width:1100px){.layout{display:grid;grid-template-columns:1.25fr .75fr;gap:1rem;align-items:start}.layout .wide{grid-column:1/-1}.layout section{margin:0}}
-@media(max-width:700px){.issue-grid{grid-template-columns:1fr}.issue-grid .full{grid-column:auto}.cert-facts{grid-template-columns:1fr}.cert-facts .full{grid-column:auto}.cert-card-head{display:grid;grid-template-columns:auto minmax(0,1fr)}.cert-card-head .tag{grid-column:2;justify-self:start}.certificate-list[data-view="list"] .cert-card{grid-template-columns:1fr}.certificate-list[data-view="list"] .cert-facts{grid-template-columns:repeat(2,minmax(0,1fr))}.certificate-list[data-view="list"] .cert-card-foot{grid-column:auto}dialog menu{flex-wrap:wrap}}
-</style>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='bootstrap/bootstrap.min.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='console.css') }}">
+<script defer src="{{ url_for('static', filename='bootstrap/bootstrap.bundle.min.js') }}"></script>
 </head>
-<body><main class="layout">
-<header class="wide"><p><a href="/">檔案分享</a>　<a href="/mumble">Mumble 管理</a>　<strong>用戶端憑證</strong></p><h1>TAK 用戶端憑證</h1></header>
-<section class="warning wide"><strong>撤銷範圍：</strong>第一版只對 8089 進行 CRL 驗證流程。8443 尚未納入停權驗證；畫面上的「已撤銷」只代表 CA 資料庫狀態。</section>
-{% if error %}<section class="error wide">憑證管理程式無法取得資料：{{ error }}</section>{% endif %}
-{% if result %}<section class="success wide">操作已完成，請核對下方狀態與紀錄。</section>{% endif %}
+<body class="portal-page"><main class="certificate-layout">
+<header class="wide page-header"><nav class="portal-nav nav nav-pills" aria-label="控制台頁面"><a class="nav-link" href="/">檔案分享</a><a class="nav-link" href="/mumble">Mumble 管理</a><a class="nav-link active" aria-current="page" href="/certificates">用戶端憑證</a></nav><h1>TAK 用戶端憑證</h1></header>
+<section class="card warning wide"><strong>撤銷範圍：</strong>第一版只對 8089 進行 CRL 驗證流程。8443 尚未納入停權驗證；畫面上的「已撤銷」只代表 CA 資料庫狀態。</section>
+{% if error %}<section class="card error wide">憑證管理程式無法取得資料：{{ error }}</section>{% endif %}
+{% if result %}<section class="card success wide">操作已完成，請核對下方狀態與紀錄。</section>{% endif %}
 {% if snapshot %}
 {% set last = snapshot.last_result %}
-{% if last and last.action in ['revoke', 'republish'] %}<section class="warning wide"><strong>最近一次{{ '撤銷' if last.action == 'revoke' else 'CRL 重新發布' }}：</strong>CA 已撤銷 {{ last.result.results|selectattr('ca_revoked')|list|length }} 筆；CRL {{ '已發布' if last.result.crl_published else '未確認發布' }}；TAK {{ '已重啟' if last.result.tak_restarted else '未確認重啟' }}；8443 暫不處理。{% if last.result.backup %}備份 {{ last.result.backup }}。{% endif %}<ul>{% for item in last.result.results %}<li>{% if item.serial %}{{ item.serial }}：CA {{ '已撤銷' if item.ca_revoked else '失敗' }}、發布 CRL {{ '已確認' if item.in_published_crl else '未確認' }}、8089 {{ '已拒絕撤銷憑證' if item.validation_8089 == 'rejected-revoked' else '意外接受憑證' if item.validation_8089 == 'unexpectedly-accepted' else '未驗證（' ~ item.validation_8089 ~ '）' }}{% else %}{{ item.error }}{% endif %}</li>{% endfor %}</ul></section>{% endif %}
-<section class="wide">
+{% if last and last.action in ['revoke', 'republish'] %}<section class="card warning wide"><strong>最近一次{{ '撤銷' if last.action == 'revoke' else 'CRL 重新發布' }}：</strong>CA 已撤銷 {{ last.result.results|selectattr('ca_revoked')|list|length }} 筆；CRL {{ '已發布' if last.result.crl_published else '未確認發布' }}；TAK {{ '已重啟' if last.result.tak_restarted else '未確認重啟' }}；8443 暫不處理。{% if last.result.backup %}備份 {{ last.result.backup }}。{% endif %}<ul>{% for item in last.result.results %}<li>{% if item.serial %}{{ item.serial }}：CA {{ '已撤銷' if item.ca_revoked else '失敗' }}、發布 CRL {{ '已確認' if item.in_published_crl else '未確認' }}、8089 {{ '已拒絕撤銷憑證' if item.validation_8089 == 'rejected-revoked' else '意外接受憑證' if item.validation_8089 == 'unexpectedly-accepted' else '未驗證（' ~ item.validation_8089 ~ '）' }}{% else %}{{ item.error }}{% endif %}</li>{% endfor %}</ul></section>{% endif %}
+<section class="card wide">
   <h2>憑證清冊</h2>
-  <div class="row"><label>搜尋 <input id="search" type="search" placeholder="裝置、CN、序號或指紋"></label><label><input id="expiring" type="checkbox">只看 30 天內到期</label><label><input id="hide-revoked" type="checkbox">隱藏已撤銷</label><button type="button" id="select-visible">選取目前結果</button><button type="button" id="select-all">全選</button><button type="button" id="select-none">全部不選</button><div class="view-switch" role="group" aria-label="憑證顯示方式"><button type="button" id="view-cards" aria-pressed="true">卡片</button><button type="button" id="view-list" aria-pressed="false">清單</button></div></div>
+  <div class="filter-row"><label>搜尋 <input class="form-control" id="search" type="search" placeholder="裝置、CN、序號或指紋"></label><label><input class="form-check-input" id="expiring" type="checkbox">只看 30 天內到期</label><label><input class="form-check-input" id="hide-revoked" type="checkbox">隱藏已撤銷</label><button class="btn btn-outline-info" type="button" id="select-visible">選取目前結果</button><button class="btn btn-outline-info" type="button" id="select-all">全選</button><button class="btn btn-outline-info" type="button" id="select-none">全部不選</button><div class="view-switch" role="group" aria-label="憑證顯示方式"><button class="btn btn-outline-info" type="button" id="view-cards" aria-pressed="true">卡片</button><button class="btn btn-outline-info" type="button" id="view-list" aria-pressed="false">清單</button></div></div>
   <div class="inventory-stats" role="status" aria-live="polite"><span>顯示 <strong id="count-visible">{{ snapshot.certificates|length }}</strong></span><span>隱藏 <strong id="count-hidden">0</strong></span><span>總計 <strong id="count-total">{{ snapshot.certificates|length }}</strong></span><span id="search-stat" hidden>符合搜尋 <strong id="count-search">0</strong></span><span id="expiring-stat" hidden>符合 30 天內到期 <strong id="count-expiring">0</strong></span><span id="revoked-stat" hidden>其中已撤銷 <strong id="count-revoked">0</strong></span></div>
   <form method="post" action="/certificates/revoke" id="revoke-form">
     <input type="hidden" name="csrf" value="{{ csrf }}">
@@ -45,37 +27,39 @@ code{overflow-wrap:anywhere}dialog{background:var(--panel);color:var(--text);bor
     {% for item in snapshot.certificates %}
       <article class="cert-card {% if item.revoked %}revoked{% elif item.expired %}expired{% endif %}" role="listitem" data-search="{{ item.name }} {{ item.cn }} {{ item.serial }} {{ item.fingerprint }}" data-expiring="{{ 'yes' if item.expiring_soon else 'no' }}" data-revoked="{{ 'yes' if item.revoked else 'no' }}">
         <div class="cert-card-head">
-          <label class="select-cert"><input type="checkbox" name="certificate" value="{{ item.serial }}:{{ item.fingerprint }}" aria-label="選取 {{ item.name }} 的憑證" {% if item.revoked %}disabled{% endif %}><span>選取</span></label>
+          <label class="select-cert"><input class="form-check-input" type="checkbox" name="certificate" value="{{ item.serial }}:{{ item.fingerprint }}" aria-label="選取 {{ item.name }} 的憑證" {% if item.revoked %}disabled{% endif %}><span>選取</span></label>
           <div class="cert-identity"><h3>{{ item.name }}</h3><p>CN：{{ item.cn }}</p></div>
-          {% if item.revoked %}<span class="tag bad">CA 已撤銷</span>{% elif item.expired %}<span class="tag bad">已過期</span>{% elif item.expiring_soon %}<span class="tag warn">即將到期</span>{% else %}<span class="tag">有效期內</span>{% endif %}
+          {% if item.revoked %}<span class="badge text-bg-secondary">CA 已撤銷</span>{% elif item.expired %}<span class="badge text-bg-secondary">已過期</span>{% elif item.expiring_soon %}<span class="badge text-bg-warning">即將到期</span>{% else %}<span class="badge text-bg-success">有效期內</span>{% endif %}
         </div>
         <dl class="cert-facts"><div><dt>序號／CRL ID</dt><dd><code>{{ item.serial }}</code></dd></div><div><dt>剩餘天數</dt><dd>{{ item.days_left }}</dd></div><div><dt>到期日（台灣時間）</dt><dd>{{ item.expires_at }}</dd></div><div class="full"><dt>SHA-256 指紋</dt><dd><code>{{ item.fingerprint }}</code></dd></div></dl>
-        <div class="cert-card-foot"><div>{% if shares[item.serial] %}<strong class="share-active">QR 分享中</strong>{% for share in shares[item.serial] %}<br><a href="{{ share.url }}" target="_blank" rel="noreferrer">查看 QR（已下載 {{ share.accepted }} 次）</a>{% endfor %}{% endif %}</div><a class="card-action" href="/certificates/{{ item.serial }}">檢視群組與交付</a></div>
+        <div class="cert-card-foot"><div>{% if shares[item.serial] %}<strong class="share-active">QR 分享中</strong>{% for share in shares[item.serial] %}<br><a href="{{ share.url }}" target="_blank" rel="noreferrer">查看 QR（已下載 {{ share.accepted }} 次）</a>{% endfor %}{% endif %}</div><a class="btn btn-outline-info card-action" href="/certificates/{{ item.serial }}">檢視群組與交付</a></div>
       </article>
     {% else %}<p>沒有找到用戶端憑證。</p>{% endfor %}
     <p id="no-results" hidden>沒有符合目前篩選條件的憑證。</p>
     </div>
     <p class="muted">可搜尋後多選。撤銷不可逆，已下載的 DPK 不會從裝置消失。</p>
-    <button type="button" class="danger" id="open-revoke" disabled>撤銷選取的憑證</button>
-    <dialog id="revoke-dialog"><h2>確認撤銷憑證</h2><p>將停止關聯 QR 分享、逐筆撤銷、更新 CRL 並重啟 TAK Server。8089 驗證結果需另行確認；8443 暫不處理。</p>
-      <label class="row"><input id="revoke-confirm" type="checkbox" name="confirmation" value="yes">我確認撤銷選取的憑證</label>
-      <menu><button type="button" id="cancel-revoke">取消</button><button type="submit" class="danger" id="submit-revoke" disabled>確認撤銷</button></menu></dialog>
+    <button type="button" class="btn btn-danger danger" id="open-revoke" disabled>撤銷選取的憑證</button>
+    <div class="modal fade" id="revoke-dialog" tabindex="-1" aria-labelledby="revoke-title" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+      <div class="modal-header"><h2 class="modal-title fs-5" id="revoke-title">確認撤銷憑證</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button></div>
+      <div class="modal-body"><p>將停止關聯 QR 分享、逐筆撤銷、更新 CRL 並重啟 TAK Server。8089 驗證結果需另行確認；8443 暫不處理。</p><label class="d-flex align-items-start gap-2"><input class="form-check-input" id="revoke-confirm" type="checkbox" name="confirmation" value="yes">我確認撤銷選取的憑證</label></div>
+      <div class="modal-footer"><button class="btn btn-outline-info" type="button" id="cancel-revoke" data-bs-dismiss="modal">取消</button><button type="submit" class="btn btn-danger danger" id="submit-revoke" disabled>確認撤銷</button></div>
+    </div></div></div>
   </form>
 </section>
-<section class="warning wide"><h2>CRL 復原操作</h2><p>若撤銷後 CRL 發布或 TAK 重啟失敗，可重新發布目前的 CRL，並重啟 TAK Server。此操作會中斷既有連線。</p>
-  <form method="post" action="/certificates/republish"><input type="hidden" name="csrf" value="{{ csrf }}"><p><label><input type="checkbox" name="confirmation" value="yes" required>我確認重新發布 CRL 並重啟 TAK Server</label></p><button class="danger">重新發布 CRL 並重啟</button></form>
+<section class="card warning wide"><h2>CRL 復原操作</h2><p>若撤銷後 CRL 發布或 TAK 重啟失敗，可重新發布目前的 CRL，並重啟 TAK Server。此操作會中斷既有連線。</p>
+  <form method="post" action="/certificates/republish"><input type="hidden" name="csrf" value="{{ csrf }}"><p><label><input class="form-check-input" type="checkbox" name="confirmation" value="yes" required>我確認重新發布 CRL 並重啟 TAK Server</label></p><button class="btn btn-danger danger">重新發布 CRL 並重啟</button></form>
 </section>
 {% endif %}
-<section class="wide">
+<section class="card wide">
   <h2>建立裝置憑證</h2>
   <form method="post" action="/certificates/issue" class="issue-grid">
     <input type="hidden" name="csrf" value="{{ csrf }}">
-    <label>裝置顯示名稱<input name="name" maxlength="80" required placeholder="例如：Field Tablet 01"></label>
-    <label>憑證 CN<input name="cn" pattern="[A-Za-z0-9][A-Za-z0-9._-]{1,62}" maxlength="63" required placeholder="例如：field-tablet-01"></label>
+    <label>裝置顯示名稱<input class="form-control" name="name" maxlength="80" required placeholder="例如：Field Tablet 01"></label>
+    <label>憑證 CN<input class="form-control" name="cn" pattern="[A-Za-z0-9][A-Za-z0-9._-]{1,62}" maxlength="63" required placeholder="例如：field-tablet-01"></label>
     {% set choices = snapshot.get('group_choices', ['local-test']) if snapshot else ['local-test'] %}
     {% with group_catalog=choices, assigned_in=['local-test'], assigned_out=['local-test'], group_disabled=false %}{% include 'group_assignment.html' %}{% endwith %}
     <p class="muted full">簽發後建立專屬私鑰、PKCS#12 與 DPK。必須先啟動 TAK Server；未經你點選交付，不會自動分享私鑰套件。</p>
-    <button type="submit">簽發並註冊裝置憑證</button>
+    <button class="btn btn-primary" type="submit">簽發並註冊裝置憑證</button>
   </form>
 </section>
 </main>
@@ -87,11 +71,11 @@ const wideScreen=matchMedia('(min-width: 1100px)');
 function viewKey(){return `tak-cert-inventory-view-${wideScreen.matches?'wide':'narrow'}`}
 function preferredView(){let saved=null;try{saved=localStorage.getItem(viewKey())}catch{}return saved==='cards'||saved==='list'?saved:wideScreen.matches?'list':'cards'}
 function setView(view,persist=false){inventory.dataset.view=view;for(const [name,button] of Object.entries(viewButtons))button.setAttribute('aria-pressed',String(name===view));if(persist)try{localStorage.setItem(viewKey(),view)}catch{}}
-setView(preferredView());wideScreen.addEventListener('change',()=>setView(preferredView()));
+setView(preferredView());if(wideScreen.addEventListener)wideScreen.addEventListener('change',()=>setView(preferredView()));else wideScreen.addListener(()=>setView(preferredView()));
 for(const [view,button] of Object.entries(viewButtons))button.addEventListener('click',()=>setView(view,true));
 function update(){let visible=0,searchMatches=0,expiringMatches=0,revokedHidden=0;const query=search.value.trim().toLocaleLowerCase();for(const row of rows){const matchesSearch=row.dataset.search.toLocaleLowerCase().includes(query),matchesExpiry=row.dataset.expiring==='yes',inScope=matchesSearch&&(!expiring.checked||matchesExpiry),hiddenByRevocation=inScope&&hideRevoked.checked&&row.dataset.revoked==='yes';if(matchesSearch)searchMatches++;if(matchesSearch&&matchesExpiry)expiringMatches++;if(hiddenByRevocation)revokedHidden++;row.hidden=!inScope||hiddenByRevocation;if(row.hidden){const box=row.querySelector('input[type=checkbox]');box.checked=false}else visible++}document.getElementById('count-visible').textContent=visible;document.getElementById('count-hidden').textContent=rows.length-visible;document.getElementById('count-total').textContent=rows.length;document.getElementById('count-search').textContent=searchMatches;document.getElementById('search-stat').hidden=!query;document.getElementById('count-expiring').textContent=expiringMatches;document.getElementById('expiring-stat').hidden=!expiring.checked;document.getElementById('count-revoked').textContent=revokedHidden;document.getElementById('revoked-stat').hidden=!hideRevoked.checked||revokedHidden===0;document.getElementById('no-results').hidden=visible!==0||rows.length===0;open.disabled=!form.querySelector('.cert-card input[type=checkbox]:checked')}
 try{hideRevoked.checked=localStorage.getItem('tak-cert-hide-revoked')==='true'}catch{}
 search.addEventListener('input',update);expiring.addEventListener('change',update);hideRevoked.addEventListener('change',()=>{try{localStorage.setItem('tak-cert-hide-revoked',String(hideRevoked.checked))}catch{}update()});form.addEventListener('change',update);
 for(const [id,mode] of [['select-visible','visible'],['select-all','all'],['select-none','none']])document.getElementById(id).addEventListener('click',()=>{for(const row of rows){const box=row.querySelector('input[type=checkbox]');if(!box.disabled)box.checked=mode==='none'?false:mode==='all'||!row.hidden}update()});
-const dialog=document.getElementById('revoke-dialog'),check=document.getElementById('revoke-confirm'),submit=document.getElementById('submit-revoke');open.addEventListener('click',()=>{check.checked=false;submit.disabled=true;dialog.showModal()});check.addEventListener('change',()=>submit.disabled=!check.checked);document.getElementById('cancel-revoke').addEventListener('click',()=>dialog.close());update()}
+const dialog=document.getElementById('revoke-dialog'),check=document.getElementById('revoke-confirm'),submit=document.getElementById('submit-revoke');open.addEventListener('click',()=>{check.checked=false;submit.disabled=true;bootstrap.Modal.getOrCreateInstance(dialog).show()});check.addEventListener('change',()=>submit.disabled=!check.checked);update()}
 </script></body></html>

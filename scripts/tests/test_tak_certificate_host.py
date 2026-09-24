@@ -33,11 +33,31 @@ def certificate(serial: int, cn: str, expires: datetime) -> bytes:
 
 
 class CertificateHostTests(unittest.TestCase):
-    def test_user_manager_status_accepts_stderr_output(self):
-        completed = subprocess.CompletedProcess(["docker"], 0, b"", b"\tUsername: 'device-01'\n")
-        with patch.object(host, "command", return_value=completed), \
-             patch.object(host, "require_tool", return_value="docker"):
-            self.assertIn("device-01", host.user_manager("certmod", "-s", "certs/files/client.pem"))
+    def test_commands_do_not_open_a_console_window(self):
+        completed = subprocess.CompletedProcess(["docker"], 0, b"ok", b"")
+        with patch.object(host.subprocess, "run", return_value=completed) as launch:
+            self.assertEqual(host.command(["docker", "compose", "ps"]).stdout, b"ok")
+        self.assertEqual(launch.call_args.kwargs["creationflags"],
+                         getattr(host.subprocess, "CREATE_NO_WINDOW", 0))
+
+    def test_api_status_checks_authentication_fingerprint(self):
+        with tempfile.TemporaryDirectory() as temp:
+            runtime = Path(temp)
+            (runtime / "tak").mkdir()
+            auth = runtime / "tak/UserAuthenticationFile.xml"
+            auth.write_text('<UserAuthenticationFile xmlns="http://bbn.com/marti/xml/bindings">'
+                            '<User identifier="device-01" fingerprint="0A:0B"/></UserAuthenticationFile>')
+            record = {"cn": "device-01", "fingerprint": "0a0b"}
+            with patch.object(host, "RUNTIME", runtime), \
+                 patch.object(host.tak_api_client, "get_groups", return_value={
+                     "username": "device-01", "groupList": ["shared"],
+                     "groupListIN": ["publish"], "groupListOUT": ["observe"]}):
+                result = host.status(record)
+                self.assertEqual(result["in_groups"], ["publish", "shared"])
+                self.assertEqual(result["out_groups"], ["observe", "shared"])
+                record["fingerprint"] = "abcd"
+                with self.assertRaisesRegex(RuntimeError, "fingerprint"):
+                    host.status(record)
 
     def test_inventory_excludes_admin_and_keeps_expiry_separate_from_revocation(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -72,20 +92,44 @@ class CertificateHostTests(unittest.TestCase):
                 with self.assertRaises(RuntimeError):
                     host.checked_record("1002", "0" * 64)
 
-    def test_user_manager_readback_splits_in_and_out_groups(self):
-        sample = ("\tUsername:      'device-01'\n"
-                  "\tRole:          ROLE_ANONYMOUS\n"
-                  "\tFingerprint:   0A:0B\n"
-                  "\tGroups (read and write permission):\n\t\tshared\n"
-                  "\tGroups (write permission):\n\t\tpublish\n"
-                  "\tGroups (read permission):\n\t\tobserve\n")
-        result = host.parse_status(sample)
-        self.assertTrue(result["recognized"])
-        self.assertEqual(result["username"], "device-01")
-        self.assertEqual(result["in_groups"], ["publish", "shared"])
-        self.assertEqual(result["out_groups"], ["observe", "shared"])
-        self.assertEqual(host.group_flags(result["in_groups"], result["out_groups"]),
+    def test_group_flags_map_in_and_out_groups(self):
+        self.assertEqual(host.group_flags(["publish", "shared"], ["observe", "shared"]),
                          ["-g", "shared", "-ig", "publish", "-og", "observe"])
+
+    def test_volume_registration_preserves_bind_mounted_file(self):
+        with tempfile.TemporaryDirectory() as temp:
+            runtime = Path(temp)
+            (runtime / "tak").mkdir()
+            auth = runtime / "tak/UserAuthenticationFile.xml"
+            auth.write_text('<UserAuthenticationFile xmlns="http://bbn.com/marti/xml/bindings">'
+                            '<User identifier="admin" role="ROLE_ADMIN" fingerprint="AA"/>'
+                            '</UserAuthenticationFile>')
+            inode = auth.stat().st_ino
+            completed = subprocess.CompletedProcess(["docker"], 0, b"", b"")
+            with patch.object(host, "RUNTIME", runtime), \
+                 patch.object(host, "command", return_value=completed) as command, \
+                 patch.object(host, "require_tool", return_value="docker"), \
+                 patch.object(host, "wait_for_cot_listener", return_value=True), \
+                 patch.object(host.tak_api_client, "get_groups", return_value={
+                     "username": "device-01", "groupList": ["shared"],
+                     "groupListIN": ["publish"], "groupListOUT": ["observe"]}) as groups_api:
+                host.register_authentication({"cn": "device-01", "fingerprint": "0a" * 32},
+                                             ["shared", "publish"], ["shared", "observe"])
+                self.assertEqual(auth.stat().st_ino, inode)
+                tree = ElementTree.parse(auth)
+                user = host.authentication_user(tree, "device-01")
+                self.assertEqual(user.get("fingerprint"), ":".join(["0A"] * 32))
+                self.assertEqual([child.tag.rsplit("}", 1)[-1] for child in user],
+                                 ["groupList", "groupListIN", "groupListOUT"])
+                self.assertEqual(command.call_args.args[0][1:], ["compose", "restart", "tak-server"])
+                groups_api.return_value = {"username": "device-01", "groupList": ["shared"],
+                                           "groupListIN": [], "groupListOUT": []}
+                host.register_authentication({"cn": "device-01", "fingerprint": "0a" * 32},
+                                             ["shared"], ["shared"])
+                self.assertEqual(len(list(host.authentication_user(ElementTree.parse(auth), "device-01"))), 1)
+                with self.assertRaisesRegex(RuntimeError, "another certificate"):
+                    host.register_authentication({"cn": "device-01", "fingerprint": "0b" * 32},
+                                                 ["shared"], ["shared"])
 
     def test_invalid_group_and_empty_permissions_are_rejected(self):
         for value in (["anonymous", "anonymous"], ["../../admin"], ["name with space"]):
@@ -99,10 +143,10 @@ class CertificateHostTests(unittest.TestCase):
         with patch.object(host, "checked_record", return_value=record), \
              patch.object(host, "load_registry", return_value={}), \
              patch.object(host, "status", side_effect=RuntimeError("TAK unavailable")), \
-             patch.object(host, "user_manager") as manager:
+             patch.object(host.tak_api_client, "update_groups") as update:
             with self.assertRaisesRegex(RuntimeError, "TAK unavailable"):
                 host.set_groups("1002", "a" * 64, ["local-test"], ["local-test"])
-            manager.assert_not_called()
+            update.assert_not_called()
 
     def test_issue_builds_device_specific_dpk_with_temporary_ca(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -187,12 +231,14 @@ emailAddress = optional
             paths = {"PROJECT": root, "RUNTIME": runtime, "PRIVATE": private, "PUBLIC": public,
                      "CA_DB": ca_db, "CONTROL": control, "REGISTRY": control / "registry.json",
                      "AUDIT": control / "audit.jsonl", "PACKAGES": packages, "TAK_CERTS": tak_certs}
+            (runtime / "tak/UserAuthenticationFile.xml").write_text(
+                '<UserAuthenticationFile xmlns="http://bbn.com/marti/xml/bindings"/>')
             def status(record):
                 return {"username": "tablet-01", "in_groups": ["local-test"],
                         "out_groups": ["local-test"], "fingerprint": record["fingerprint"]}
 
             with patch.multiple(host, **paths), patch.object(host, "check_server_running"), \
-                 patch.object(host, "user_manager", return_value=""), \
+                 patch.object(host, "register_authentication"), \
                  patch.object(host, "status", side_effect=status):
                 result = host.issue({"name": "Field Tablet 01", "cn": "tablet-01",
                                      "in_groups": ["local-test"], "out_groups": ["local-test"]})

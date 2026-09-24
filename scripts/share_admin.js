@@ -5,6 +5,31 @@ const terminalStatuses = new Set(["已手動停止", "時間到期", "次數額�
 const csrf = document.querySelector("#master-form input[name=csrf]").value;
 let requestPending = false;
 let lastSources = "";
+let clockOffsetMs = Date.now() - Number(byId("share-rows").dataset.serverNow) * 1000;
+let currentQrShareId = null;
+
+function remainingText(seconds) {
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor(seconds % 86400 / 3600);
+  const minutes = Math.floor(seconds % 3600 / 60);
+  const rest = seconds % 60;
+  const pair = (number) => String(number).padStart(2, "0");
+  if (days) return `剩餘 ${days} 天 ${pair(hours)}:${pair(minutes)}:${pair(rest)}`;
+  if (hours) return `剩餘 ${hours}:${pair(minutes)}:${pair(rest)}`;
+  return `剩餘 ${pair(minutes)}:${pair(rest)}`;
+}
+
+function updateCountdowns() {
+  for (const status of document.querySelectorAll("#share-rows td[data-expiry]")) {
+    const countdown = status.querySelector(".share-countdown");
+    const live = status.querySelector(".share-state").textContent === "分享中";
+    countdown.hidden = !live;
+    if (!live) continue;
+    const expiry = Number(status.dataset.expiry);
+    countdown.textContent = expiry ? remainingText(Math.max(0,
+      Math.ceil((expiry * 1000 + clockOffsetMs - Date.now()) / 1000))) : "無時間限制";
+  }
+}
 
 function element(tag, text, className) {
   const node = document.createElement(tag);
@@ -29,16 +54,19 @@ function makeRow(item) {
   const kind = element("small", item.kind);
   const file = cell("檔案", name);
   file.append(element("br"), kind);
-  const status = cell("狀態", "", `status-${item.id}`);
+  const status = cell("狀態", element("span", "", "share-state"), `status-${item.id}`);
+  status.append(element("small", "", "share-countdown"));
   const count = cell("已使用／上限", "", `count-${item.id}`);
   const dates = cell("建立／截止時間", item.created_at);
   dates.append(element("br"), element("span", `截止：${item.expires_at}`));
-  const view = cell("查看", element("a", "檢視 QR", "button view"));
+  const view = cell("查看", element("a", "檢視 QR", "btn btn-outline-info view"));
   const link = view.querySelector("a");
   link.dataset.active = "";
+  link.dataset.qrOpen = "";
+  link.dataset.shareId = item.id;
+  link.dataset.qrName = item.filename;
+  link.dataset.qrImage = item.qr_image_url;
   link.href = item.qr_url;
-  link.target = "_blank";
-  link.rel = "noreferrer noopener";
   const ended = element("span", "已結束");
   ended.dataset.ended = "";
   view.append(ended);
@@ -55,7 +83,7 @@ function makeRow(item) {
     input.value = value;
     form.append(input);
   }
-  form.append(element("button", "停止此分享", "stop"));
+  form.append(element("button", "停止此分享", "btn btn-danger stop"));
   row.append(file, status, count, dates, view, action);
   return row;
 }
@@ -64,14 +92,25 @@ function updateRow(row, item) {
   const stopped = terminalStatuses.has(item.status);
   row.classList.toggle("inactive", stopped);
   const status = byId(`status-${item.id}`);
-  status.textContent = item.status;
+  status.querySelector(".share-state").textContent = item.status;
+  status.dataset.expiry = item.expires_at_epoch ?? "";
   status.classList.toggle("status-live", item.status === "分享中");
   status.classList.toggle("status-muted", item.status !== "分享中");
+  const view = row.querySelector("[data-qr-open]");
+  view.href = item.qr_url;
+  view.dataset.qrImage = item.qr_image_url;
+  view.dataset.qrName = item.filename;
+  view.hidden = item.status !== "分享中";
+  if (currentQrShareId === String(item.id) && item.status !== "分享中") {
+    bootstrap.Modal.getInstance(byId("share-qr-dialog"))?.hide();
+  }
   const count = byId(`count-${item.id}`);
   count.replaceChildren(document.createTextNode(`${item.accepted} / ${item.max_downloads ?? "∞"}`),
     element("br"), element("small", `完成 ${item.completed}`));
   for (const node of row.querySelectorAll("[data-active]")) node.hidden = stopped;
-  row.querySelector("[data-ended]").hidden = !stopped;
+  const ended = row.querySelector("[data-ended]");
+  ended.textContent = item.status === "全部暫停" ? "已暫停" : "已結束";
+  ended.hidden = item.status === "分享中";
 }
 
 function updateShares(items) {
@@ -96,10 +135,17 @@ function updateShares(items) {
       entry.id = `active-${item.id}`;
       const link = element("a", item.qr_url);
       link.href = item.qr_url;
-      link.target = "_blank";
-      link.rel = "noreferrer noopener";
+      link.dataset.qrOpen = "";
+      link.dataset.shareId = item.id;
+      link.dataset.qrName = item.filename;
+      link.dataset.qrImage = item.qr_image_url;
       entry.append(element("strong", item.filename), link);
     }
+    const link = entry.querySelector("a");
+    link.textContent = item.qr_url;
+    link.href = item.qr_url;
+    link.dataset.qrName = item.filename;
+    link.dataset.qrImage = item.qr_image_url;
     if (list.children[index] !== entry) list.insertBefore(entry, list.children[index] || null);
   });
   byId("live-count").textContent = live.length;
@@ -141,7 +187,8 @@ function updateMaster(paused) {
   const button = byId("master-button");
   button.textContent = paused ? "恢復所有分享下載" : "暫停所有分享下載";
   button.classList.toggle("stop", !paused);
-  button.classList.toggle("button", paused);
+  button.classList.toggle("btn-danger", !paused);
+  button.classList.toggle("btn-primary", paused);
 }
 
 async function refresh() {
@@ -153,8 +200,10 @@ async function refresh() {
     const response = await fetch("/stats", {cache: "no-store", signal: timeout.signal});
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const data = await response.json();
+    clockOffsetMs = Date.now() - data.server_now * 1000;
     updateMaster(data.paused);
     updateShares(data.shares);
+    updateCountdowns();
     updateSources(data.sources);
     byId("live-sync").textContent = `已同步 ${new Date().toLocaleTimeString("zh-TW", {hour12: false})}`;
   } catch (_) {
@@ -165,6 +214,24 @@ async function refresh() {
   }
 }
 
+document.addEventListener("click", (event) => {
+  const link = event.target.closest("[data-qr-open]");
+  if (!link || !window.bootstrap?.Modal) return;
+  event.preventDefault();
+  currentQrShareId = link.dataset.shareId;
+  byId("share-qr-name").textContent = link.dataset.qrName;
+  byId("share-qr-image").src = link.dataset.qrImage;
+  const url = byId("share-qr-url");
+  url.textContent = link.href;
+  url.href = link.href;
+  bootstrap.Modal.getOrCreateInstance(byId("share-qr-dialog")).show();
+});
+byId("share-qr-dialog").addEventListener("hidden.bs.modal", () => {
+  currentQrShareId = null;
+  byId("share-qr-image").removeAttribute("src");
+});
+updateCountdowns();
+setInterval(updateCountdowns, 1000);
 refresh();
 setInterval(refresh, 2000);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh(); });

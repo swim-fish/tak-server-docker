@@ -23,9 +23,10 @@ flowchart LR
 | `mumble` | Vx 語音及頻道 | 在 `tak-edge`，獨立於 TAK 的健康狀態 |
 | `mediamtx` | RTSP／RTSPS 影像發布及讀取 | 在 `tak-edge`，獨立於 TAK 的健康狀態 |
 | `share-public` | Flask 短效檔案下載與 QR 頁 | `sharing` profile，僅綁定熱點 IP 的 TCP 8765 |
-| `share-admin` | Flask 分享、Mumble 與用戶端憑證管理頁 | `sharing` profile，僅綁定 Windows `127.0.0.1:8766` |
-| Windows Mumble 管理程式 | 執行受限的 Mumble 管理動作 | 前景執行；容器不持有 Docker socket |
-| Windows TAK 憑證管理程式 | 操作中繼 CA、TAK 群組、DPK 與 CRL | 前景執行；CA 私鑰與 Docker socket 不掛進 Flask 容器 |
+| `share-admin` | Flask 分享、Mumble 與用戶端憑證管理頁 | 預設 Compose 服務，自動重啟；僅綁定 Windows `127.0.0.1:8766` |
+| Windows Mumble 管理程式 | 使用 Mumble 原生協定管理 session 與註冊身分，重建 Mumble | 登入後排程工作；Flask 容器不持有 Docker socket |
+| `mumble-db-helper` | 透過 `mumble-data` volume 唯讀列出註冊及製作 SQLite 一致性備份 | 按需啟動的 Compose 維護容器，沒有網路 |
+| Windows TAK 憑證管理程式 | 操作中繼 CA、TAK API、共用驗證檔、DPK 與 CRL | 登入後排程工作；CA 私鑰與 Docker socket 不掛進 Flask 容器 |
 | Windows mDNS responder | 將固定名稱解析到主機 LAN IP | 在 Windows 執行，不公告 Docker bridge IP |
 
 TAK 等待資料庫健康後啟動。Windows 防火牆限制 LAN 存取；Docker Desktop／WSL2 執行 Linux 容器。專案設定以 Windows 路徑掛載，資料庫與 Mumble 資料儲存在 Docker named volume；原始計畫的全 WSL 檔案系統布局未直接套用。
@@ -35,6 +36,8 @@ TAK 等待資料庫健康後啟動。Windows 防火牆限制 LAN 存取；Docker
 本專案必須使用 Root CA → 中繼 CA → 葉憑證的簽發階層。TAK、Mumble 與 MediaMTX 使用同一 CA 階層下的獨立伺服器憑證與私鑰；MediaMTX 的純 RTSP 入口沒有 TLS。
 
 Vx 檢查 Mumble 憑證的信任鏈及 SAN。mDNS 負責名稱解析；伺服器憑證通過檢查後，再進行 Mumble 使用者驗證。TAK client certificate 與 Mumble 註冊身分分開管理，見[憑證](security/certificates.md)與[Mumble 使用者](mumble/users.md)。
+
+TAK 用戶端群組的日常讀寫使用 5.8 管理 API；新憑證的指紋綁定寫入 bind mount 的 `UserAuthenticationFile.xml`，重啟 TAK 後由 API 讀回。`UserManager.jar` 只保留在首次初始化及人工修復流程。CRL 發布仍需重啟 TAK；Mumble 的 session／註冊管理走原生協定，資料庫清單與備份走共用 volume。控制台不執行 `docker compose exec`。
 
 ## 已完成與待驗項目
 

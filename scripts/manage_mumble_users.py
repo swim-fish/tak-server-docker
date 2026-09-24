@@ -22,7 +22,8 @@ ADMIN_DIR = PROJECT / "runtime" / "mumble-admin"
 
 
 def run(*args: str) -> str:
-    result = subprocess.run(args, cwd=PROJECT, capture_output=True, timeout=45)
+    result = subprocess.run(args, cwd=PROJECT, capture_output=True, timeout=45,
+                            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
     if result.returncode:
         # Docker/database diagnostics may contain local deployment details.
         raise RuntimeError(f"{args[0]} operation failed (exit {result.returncode}). Check Docker and the mumble service.")
@@ -55,25 +56,20 @@ def fingerprints(rows: list[dict], info: list[dict]) -> dict[int, dict]:
     return output
 
 
-def database_users(cid: str) -> dict[int, dict]:
-    rows = json.loads(run("docker", "exec", cid, "sqlite3", "-readonly", "-json",
-        "/data/mumble-server.sqlite", "SELECT user_id,name,pw,salt,kdfiterations FROM users WHERE server_id=1 AND user_id>0") or "[]")
-    info = json.loads(run("docker", "exec", cid, "sqlite3", "-readonly", "-json",
-        "/data/mumble-server.sqlite", "SELECT user_id,key,value FROM user_info WHERE server_id=1 AND user_id>0") or "[]")
-    return fingerprints(rows, info)
+def database_users(_cid: str) -> dict[int, dict]:
+    rows = json.loads(run("docker", "compose", "run", "--rm", "--no-deps",
+                          "mumble-db-helper", "list") or "[]")
+    return {item["id"]: item for item in rows}
 
 
-def backup_database(cid: str) -> Path:
+def backup_database(_cid: str) -> Path:
     ADMIN_DIR.mkdir(parents=True, exist_ok=True)
     name = f"before-unregister-{time.strftime('%Y%m%d-%H%M%S')}-{uuid.uuid4().hex}.sqlite"
-    remote = "/tmp/" + name
     output = ADMIN_DIR / name
-    run("docker", "exec", cid, "sqlite3", "-readonly", "/data/mumble-server.sqlite", f".backup '{remote}'")
-    run("docker", "cp", f"{cid}:{remote}", str(output))
+    run("docker", "compose", "run", "--rm", "--no-deps", "mumble-db-helper", "backup", name)
     with sqlite3.connect(output.as_uri() + "?mode=ro", uri=True) as db:
         if db.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
             raise RuntimeError("Backup integrity check failed; no registrations were removed.")
-    run("docker", "exec", cid, "rm", "--", remote)
     return output
 
 

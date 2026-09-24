@@ -6,13 +6,19 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import mumble_control_host as worker
 
 
 class MumbleControlHostTests(unittest.TestCase):
+    def test_recreate_does_not_open_a_console_window(self) -> None:
+        with patch.object(worker.subprocess, "run", return_value=Mock(returncode=0)) as launch:
+            worker.recreate_mumble()
+        self.assertEqual(launch.call_args.kwargs["creationflags"],
+                         getattr(worker.subprocess, "CREATE_NO_WINDOW", 0))
+
     def test_selection_rejects_stale_or_duplicate_identity(self) -> None:
         current = {3: {"id": 3, "fingerprint": "a" * 64}}
         self.assertEqual(worker.checked_selection([{"id": 3, "fingerprint": "a" * 64}], current), [3])
