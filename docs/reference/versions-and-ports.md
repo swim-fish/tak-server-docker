@@ -22,7 +22,7 @@ Vx 標籤中的 `[5.6.0]` 是套件標示；與 ATAK 5.7 的可用性以本次�
 | Windows 行動熱點 | `192.168.137.1`／`192.168.137.0/24` | 裝置需在允許子網路內 |
 | 名稱 | `takbox.local` | mDNS 指向主機 LAN IP |
 | TAK CoT TLS | `8089/TCP` | `8089/TCP` |
-| TAK 管理 API | `10043/TCP` | `8443/TCP`，使用管理用戶端憑證；ATAK Data Packages 仍會嘗試主機 `8443` |
+| TAK 管理 API | `8443/TCP` | `8443/TCP`，使用管理用戶端憑證；ATAK Data Packages 會連向主機 `8443` |
 | Mumble | `40000/TCP`、`40000/UDP` | `64738/TCP`、`64738/UDP` |
 | MediaMTX RTSP | `8554/TCP`、`8000-8001/UDP` | TCP 控制／媒體、UDP RTP／RTCP |
 | MediaMTX RTSPS | `8322/TCP`、`8004-8005/UDP` | TLS 控制／TCP 媒體、UDP SRTP／SRTCP |
@@ -34,7 +34,7 @@ Vx 標籤中的 `[5.6.0]` 是套件標示；與 ATAK 5.7 的可用性以本次�
 
 `64400` 是歷史測試通訊埠。`40000` 避開 Windows 預設動態範圍 `49152–65535`，但仍須檢查實際占用及排除區間，不能保證所有主機都可使用。
 
-此主機因 Windows 排除原始 `8443`、`8765`、`8766`，目前 `.env` 分別映射 `10043`、`10065`、`10066`；`.env.example` 提供相同覆寫範例。未建立 `.env` 時，Compose 仍使用原始主機通訊埠。ATAK Data Packages 曾實測固定連向 `takbox.local:8443`，不能只調整 Docker 映射就視為下載可用。
+此主機的 Windows 排除範圍曾包含 `8443`、`8765`、`8766`；重開機釋放 `8443` 後，目前 `.env` 將 TAK HTTPS 映射回 `8443`，分享與管理頁維持 `10065`、`10066`。未建立 `.env` 時，Compose 使用原始主機通訊埠。ATAK Data Packages 已實測固定連向 `takbox.local:8443`，不能只調整 Docker 映射就視為下載可用。
 
 `8446` 與 Federation 通訊埠仍未發布。MediaMTX 的 TCP 入口已由 Android 確認可達；UDP 對外媒體尚待實機驗收，見[MediaMTX 實測](../validation/2026-09-23-mediamtx.md)。
 
