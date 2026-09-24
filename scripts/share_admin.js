@@ -1,12 +1,13 @@
 "use strict";
 
 const byId = (id) => document.getElementById(id);
-const terminalStatuses = new Set(["已手動停止", "時間到期", "次數額滿"]);
 const csrf = document.querySelector("#master-form input[name=csrf]").value;
 let requestPending = false;
 let lastSources = "";
 let clockOffsetMs = Date.now() - Number(byId("share-rows").dataset.serverNow) * 1000;
 let currentQrShareId = null;
+let recordItems = [];
+let recordPage = 1;
 
 function remainingText(seconds) {
   const days = Math.floor(seconds / 86400);
@@ -89,7 +90,7 @@ function makeRow(item) {
 }
 
 function updateRow(row, item) {
-  const stopped = terminalStatuses.has(item.status);
+  const stopped = item.inactive;
   row.classList.toggle("inactive", stopped);
   const status = byId(`status-${item.id}`);
   status.querySelector(".share-state").textContent = item.status;
@@ -113,16 +114,43 @@ function updateRow(row, item) {
   ended.hidden = item.status === "分享中";
 }
 
-function updateShares(items) {
+function renderRecordPage() {
   const table = byId("share-rows");
-  const current = new Set(items.map((item) => `row-${item.id}`));
+  const hideInactive = byId("share-hide-inactive").checked;
+  const pageSize = Number(byId("share-page-size").value);
+  const filtered = hideInactive ? recordItems.filter((item) => !item.inactive) : recordItems;
+  const pages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  recordPage = Math.min(recordPage, pages);
+  const start = (recordPage - 1) * pageSize;
+  const visible = filtered.slice(start, start + pageSize);
+  const current = new Set(visible.map((item) => `row-${item.id}`));
   for (const row of [...table.children]) if (!current.has(row.id)) row.remove();
-  items.forEach((item, index) => {
+  visible.forEach((item, index) => {
     let row = byId(`row-${item.id}`);
     if (!row) row = makeRow(item);
     if (table.children[index] !== row) table.insertBefore(row, table.children[index] || null);
     updateRow(row, item);
   });
+  table.closest("table").hidden = filtered.length === 0;
+  const empty = byId("share-record-empty");
+  empty.hidden = filtered.length > 0;
+  empty.textContent = recordItems.length ? "沒有符合條件的分享紀錄。" : "目前沒有分享紀錄。";
+  const shown = visible.length ? `顯示 ${start + 1}–${start + visible.length} / ${filtered.length} 筆` : "顯示 0 筆";
+  const hidden = hideInactive ? `；隱藏 ${recordItems.length - filtered.length} 筆已停用` : "";
+  byId("share-record-count").textContent = `${shown}（總計 ${recordItems.length} 筆${hidden}）`;
+  byId("share-page-label").textContent = `第 ${recordPage} / ${pages} 頁`;
+  byId("share-page-prev").disabled = recordPage === 1;
+  byId("share-page-next").disabled = recordPage === pages;
+  updateCountdowns();
+}
+
+function updateShares(items) {
+  recordItems = items;
+  renderRecordPage();
+  if (currentQrShareId && !items.some((item) =>
+    String(item.id) === currentQrShareId && item.status === "分享中")) {
+    bootstrap.Modal.getInstance(byId("share-qr-dialog"))?.hide();
+  }
 
   const live = items.filter((item) => item.status === "分享中");
   const list = byId("live-links");
@@ -151,6 +179,23 @@ function updateShares(items) {
   byId("live-count").textContent = live.length;
   byId("live-empty").hidden = live.length > 0;
 }
+
+byId("share-page-size").addEventListener("change", () => {
+  recordPage = 1;
+  renderRecordPage();
+});
+byId("share-hide-inactive").addEventListener("change", () => {
+  recordPage = 1;
+  renderRecordPage();
+});
+byId("share-page-prev").addEventListener("click", () => {
+  recordPage -= 1;
+  renderRecordPage();
+});
+byId("share-page-next").addEventListener("click", () => {
+  recordPage += 1;
+  renderRecordPage();
+});
 
 function updateSources(groups) {
   const signature = JSON.stringify(groups);
