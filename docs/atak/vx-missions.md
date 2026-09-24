@@ -28,6 +28,8 @@
 3. 點 Download → 同一台 TAK Server，選對套件名稱，下載並確認完成。
 4. 開啟 TAK Voice → Missions，確認目標任務出現，開啟並選擇預期頻道。需要時輸入密碼。
 
+ATAK 的 Data Packages 下載器會查詢 `https://takbox.local:8443/Marti/sync/search?keywords=missionpackage`。`8089` 顯示已連線仍不足以證明此查詢可達；若畫面在 Querying 後退出或清單為空，先查 Android log 是否為 8443 逾時，並確認 Docker 對外映射及熱點防火牆。2026-09-24 實測中，把 HTTPS 主機通訊埠從 `10043` 恢復到 `8443` 後，原本已有正確 `missionpackage` 標籤的套件才出現在清單，見[當日紀錄](../validation/2026-09-24-qr-e2e-revocation.md)。
+
 成功條件是任務、Channel Pool 與連線資料均正確；真正登入還需看到 Mumble 驗證成功及加入目標頻道。下載本身不會證明麥克風已啟動。
 
 若任務未出現，先確認走的是 Server Download，並檢查紀錄是否收到 `sharing.downloaded` 及處理 Protobuf Mission。不要先重設整個 ATAK；比對名稱／套件 SHA-256 與[格式參考](../reference/vx-package-format.md)。重建套件會產生新 UUID，可能新增同名任務；既有同 UUID 的覆寫規則尚未驗收。
@@ -41,6 +43,8 @@ Vx 在嘗試連線時可能顯示 **Enter Password for takbox.local**。此時�
 圖為 2026-09-22 實機對話框裁切，只保留主機名稱與空白密碼欄。已儲存密碼時可能直接登入；已註冊身分通過驗證時，也可能不再檢查共用密碼。
 
 Vx 的加密密碼快取以主機字串索引，不含通訊埠。刪除 Mission 不等於清除密碼；一般 `.pref` 也不能直接建立此加密快取。更換伺服器密碼後仍登入，先看[註冊身分](../mumble/users.md)，不要據此判定輪替失敗。
+
+實機曾在快速略過密碼提示後無法連線。ATAK **Settings → Tool Preferences → TAK Voice Preferences → DATA → Clear Database** 可清除 Voice 資料庫，但也會移除 `vx-local`，之後必須再從 TAK Server 的 Data Packages 下載。尚未驗證此操作是否清除加密密碼快取；不要把它視為只重設 Mumble 密碼的按鈕。
 
 ## 多頻道與 PTT
 

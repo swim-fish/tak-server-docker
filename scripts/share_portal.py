@@ -258,75 +258,40 @@ def qr_value(row: sqlite3.Row) -> str:
     return "tak://com.atakmap.app/import?url=" + quote(file_url(row), safe="")
 
 
+def qr_png(row: sqlite3.Row) -> bytes:
+    output = io.BytesIO()
+    qrcode.make(qr_value(row)).save(output, format="PNG")
+    return output.getvalue()
+
+
+def remaining_text(seconds: int) -> str:
+    days, remainder = divmod(max(0, seconds), 86400)
+    hours, remainder = divmod(remainder, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    if days:
+        return f"剩餘 {days} 天 {hours:02}:{minutes:02}:{seconds:02}"
+    if hours:
+        return f"剩餘 {hours}:{minutes:02}:{seconds:02}"
+    return f"剩餘 {minutes:02}:{seconds:02}"
+
+
 def page(title: str, body: str, script: str = "", layout: str = "public") -> bytes:
-    return (f"<!doctype html><html lang='zh-Hant-TW'><head><meta charset='utf-8'>"
+    return (f"<!doctype html><html lang='zh-Hant-TW' data-bs-theme='dark'><head><meta charset='utf-8'>"
             f"<meta name='viewport' content='width=device-width,initial-scale=1'>"
-            f"<title>{esc(title)}</title><style>"
-            ":root{color-scheme:dark;--bg:#101820;--panel:#182630;--line:#35505b;"
-            "--text:#eef5f4;--muted:#b8c9cc;--cyan:#80d7e6;--red:#e88580;--green:#74d6a5}"
-            "*{box-sizing:border-box}body{font-family:system-ui,sans-serif;width:100%;max-width:1920px;"
-            "margin:0 auto;padding:clamp(.75rem,2vw,2rem);color:var(--text);background:var(--bg)}"
-            "body.layout-public{max-width:760px}main,section{min-width:0}"
-            "h1{font-size:1.7rem;letter-spacing:.02em}h2{font-size:1.1rem;margin-top:0;color:var(--cyan)}"
-            "section{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--cyan);"
-            "padding:1.25rem;margin:1rem 0}section.danger{border-left-color:var(--red)}"
-            ".page-header{margin-bottom:1rem}.page-header p:last-child{margin-bottom:0}"
-            "a{color:var(--cyan)}label{display:block;margin:.7rem 0;color:var(--muted)}"
-            "input,select{font:inherit;padding:.55rem;background:#0c151c;color:var(--text);"
-            "border:1px solid #58727b;border-radius:2px;max-width:100%}"
-            "button,.button{font:inherit;font-weight:700;background:var(--cyan);color:#08212b;"
-            "border:1px solid var(--cyan);border-radius:2px;padding:.6rem 1rem;cursor:pointer;"
-            "text-decoration:none;display:inline-block;min-height:42px}button:hover,.button:hover{filter:brightness(1.12)}"
-            "button.stop{background:var(--red);border-color:var(--red);color:#1c1010}"
-            "[hidden]{display:none!important}tr.inactive{background:#202b30;color:#94a4a8}"
-            "tr.inactive td{border-bottom-color:#34454b}tr.inactive small{color:#8d9da1}"
-            "td.status-live{color:var(--green);font-weight:700}td.status-muted{color:#899b9f}"
-            "section.live{border-left-color:var(--green)}ul.live-links{list-style:none;padding:0;margin:0}"
-            "ul.live-links li{border-top:1px solid var(--line);padding:.75rem 0}"
-            "ul.live-links a{display:block;margin-top:.25rem;overflow-wrap:anywhere}"
-            "section.master{border-left-color:var(--green);display:grid;grid-template-columns:5.5rem 1fr auto;"
-            "align-items:center;gap:1rem}section.master.paused{border:2px solid var(--red);"
-            "border-left:8px solid var(--red);background:#372124;box-shadow:0 0 0 3px #e8858033}"
-            ".master-icon{width:5.5rem;height:5.5rem;display:grid;place-items:center;border-radius:50%;"
-            "background:#163c32;color:var(--green);font-size:3.4rem;line-height:1;font-weight:800}"
-            ".master.paused .master-icon{background:#71332f;color:#fff;font-size:3.6rem}"
-            ".master-status{font-size:1.55rem;font-weight:800;line-height:1.2;margin:.2rem 0}"
-            ".master.paused .master-status{color:#ffb1a9;font-size:1.8rem}"
-            ".master-detail{color:var(--muted);margin:.2rem 0}.master.paused .master-detail{color:#f5d4d0}"
-            ".master form{margin:0}.master button{white-space:nowrap}"
-            "table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:.65rem;"
-            "border-bottom:1px solid var(--line)}th{color:var(--cyan);font-size:.84rem}"
-            "td{overflow-wrap:anywhere}code{overflow-wrap:anywhere}.muted{color:var(--muted)}"
-            "td.action-danger{border-left:1px solid var(--line);padding-left:1.3rem}"
-            "a.button.view{background:transparent;color:var(--cyan)}"
-            "img.qr{width:min(100%,360px);image-rendering:pixelated;background:white;padding:1rem}"
-            "@media(min-width:640px){.create-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));"
-            "gap:.25rem 1rem;align-items:end}.create-form .field-source,.create-form p{grid-column:1/-1}"
-            ".create-form button{justify-self:start}}"
-            "@media(min-width:1100px){.layout-admin main{display:grid;"
-            "grid-template-columns:minmax(0,1fr) minmax(360px,.75fr);gap:1rem;align-items:start}"
-            ".layout-admin .page-header,.layout-admin .master,.layout-admin .records{grid-column:1/-1}"
-            ".layout-admin section{margin:0}}"
-            "@media(min-width:1600px){.layout-admin main{grid-template-columns:minmax(0,1.4fr) minmax(400px,.6fr)}}"
-            "@media(max-width:700px){section.master{grid-template-columns:4.5rem 1fr}"
-            ".master-icon{width:4.5rem;height:4.5rem;font-size:2.8rem}"
-            ".master.paused .master-icon{font-size:3rem}.master form{grid-column:1/-1}}"
-            "@media(max-width:639px){section{padding:1rem}.master-status,.master.paused .master-status{font-size:1.35rem}"
-            ".master button,.create-form button{width:100%}.layout-admin table,.layout-admin tbody,"
-            ".layout-admin tr,.layout-admin td{display:block;width:100%}.layout-admin thead{display:none}"
-            ".layout-admin tbody tr{border:1px solid var(--line);margin:.75rem 0;padding:.25rem .5rem}"
-            ".layout-admin td{padding:.5rem .25rem}.layout-admin td::before{content:attr(data-label);"
-            "display:block;color:var(--muted);font-size:.8rem;margin-bottom:.15rem}"
-            ".layout-admin td.action-danger{border-left:0;padding-left:.25rem}}"
-            "</style></head><body class='layout-" + esc(layout) + "'><main>" + body + "</main>" + script + "</body></html>").encode("utf-8")
+            f"<title>{esc(title)}</title>"
+            "<link rel='stylesheet' href='/static/bootstrap/bootstrap.min.css'>"
+            "<link rel='stylesheet' href='/static/console.css'>"
+            "</head><body class='portal-page layout-" + esc(layout) + "'><main>" + body
+            + "</main>" + script + "</body></html>").encode("utf-8")
 
 
 def admin_page(csrf: str) -> bytes:
     rows, paused = list_shares()
+    now = int(time.time())
     active_rows = [row for row in rows if share_status(row, paused) == "分享中"]
     live_links = "".join(
         f"<li id='active-{row['id']}'><strong>{esc(row['filename'])}</strong>"
-        f"<a href='{esc(PUBLIC_BASE)}/q/{esc(row['token'])}' target='_blank' rel='noreferrer'>"
+        f"<a data-qr-open data-share-id='{row['id']}' data-qr-name='{esc(row['filename'])}' data-qr-image='/qr.png/{esc(row['token'])}' href='{esc(PUBLIC_BASE)}/q/{esc(row['token'])}'>"
         f"{esc(PUBLIC_BASE)}/q/{esc(row['token'])}</a></li>" for row in active_rows)
     options = "<optgroup label='即時產生'><option value='icu:new'>使用目前發布密碼建立 ICU 設定</option></optgroup>" + "".join(
         f"<optgroup label='{esc(group)}'>" + "".join(
@@ -335,17 +300,19 @@ def admin_page(csrf: str) -> bytes:
     table = "".join(
         f"<tr id='row-{row['id']}' class='{'inactive' if terminal else ''}'>"
         f"<td data-label='檔案'>{esc(row['filename'])}<br><small>{esc(row['kind'])}</small></td>"
-        f"<td data-label='狀態' class='{'status-live' if share_status(row, paused) == '分享中' else 'status-muted'}' id='status-{row['id']}'>{esc(share_status(row, paused))}</td>"
+        f"<td data-label='狀態' class='{'status-live' if status == '分享中' else 'status-muted'}' id='status-{row['id']}' data-expiry='{row['expires_at'] or ''}'><span class='share-state'>{esc(status)}</span>"
+        f"<small class='share-countdown' {'hidden' if status != '分享中' else ''}>{remaining_text(row['expires_at'] - now) if row['expires_at'] else '無時間限制'}</small></td>"
         f"<td data-label='已使用／上限' id='count-{row['id']}'>{row['accepted']} / {row['max_downloads'] or '∞'}"
         f"<br><small>完成 {row['completed']}</small></td>"
         f"<td data-label='建立／截止時間'>{esc(local_time(row['created_at']))}<br>截止：{esc(local_time(row['expires_at']))}</td>"
-        f"<td data-label='查看'><a class='button view' data-active href='{esc(PUBLIC_BASE)}/q/{esc(row['token'])}' target='_blank' rel='noreferrer' {'hidden' if terminal else ''}>檢視 QR</a>"
-        f"<span data-ended {'hidden' if not terminal else ''}>已結束</span></td>"
+        f"<td data-label='查看'><a class='btn btn-outline-info view' data-qr-open data-share-id='{row['id']}' data-qr-name='{esc(row['filename'])}' data-qr-image='/qr.png/{esc(row['token'])}' href='{esc(PUBLIC_BASE)}/q/{esc(row['token'])}' {'hidden' if status != '分享中' else ''}>檢視 QR</a>"
+        f"<span data-ended {'hidden' if status == '分享中' else ''}>{'已暫停' if status == '全部暫停' else '已結束'}</span></td>"
         f"<td data-label='控制' class='action-danger'><form data-active method='post' action='/stop' {'hidden' if terminal else ''}><input type='hidden' name='csrf' value='{csrf}'>"
         f"<input type='hidden' name='id' value='{row['id']}'>"
-        f"<button class='stop'>停止此分享</button></form></td></tr>"
-        for row in rows for terminal in [share_status(row, False) != "分享中"])
-    master = (f"<section id='master-panel' class='master{' paused' if paused else ''}'>"
+        f"<button class='btn btn-danger stop'>停止此分享</button></form></td></tr>"
+        for row in rows for status in [share_status(row, paused, now)]
+        for terminal in [share_status(row, False, now) != "分享中"])
+    master = (f"<section id='master-panel' class='card master{' paused' if paused else ''}'>"
             f"<div id='master-icon' class='master-icon' aria-hidden='true'>{'⏸' if paused else '✓'}</div>"
             "<div><h2>總開關</h2><p id='master-status' class='master-status' role='status'>"
             + ("所有分享下載已暫停" if paused else "分享下載開放中") + "</p>"
@@ -353,47 +320,58 @@ def admin_page(csrf: str) -> bytes:
             + ("公開下載已停止" if paused else "公開連結可正常下載") + "</p></div>"
             f"<form id='master-form' method='post' action='/{'resume' if paused else 'pause'}'>"
             f"<input type='hidden' name='csrf' value='{csrf}'>"
-            f"<button id='master-button' class='{'button' if paused else 'stop'}'>{'恢復所有分享下載' if paused else '暫停所有分享下載'}</button>"
+            f"<button id='master-button' class='btn {'btn-primary' if paused else 'btn-danger stop'}'>{'恢復所有分享下載' if paused else '暫停所有分享下載'}</button>"
             "</form></section>")
-    body = ("<header class='page-header'><h1>TAK 控制台</h1><p><strong>檔案分享</strong>　<a href='/mumble'>Mumble 管理 →</a>　<a href='/certificates'>用戶端憑證 →</a></p>"
+    body = ("<header class='page-header'><nav class='portal-nav nav nav-pills' aria-label='控制台頁面'><a class='nav-link active' aria-current='page' href='/'>檔案分享</a><a class='nav-link' href='/mumble'>Mumble 管理</a><a class='nav-link' href='/certificates'>用戶端憑證</a></nav><h1>TAK 控制台</h1>"
             "<p class='muted'>公開入口 <code>" + esc(PUBLIC_BASE) + "</code>　｜　管理入口僅限本機　｜　"
             "<span id='live-sync' role='status' aria-live='polite'>正在同步狀態…</span></p></header>"
             + master +
-            "<section class='live'><h2>目前分享中的連結　<span id='live-count'>" + str(len(active_rows)) + "</span></h2>"
+            "<section class='card live'><h2>目前分享中的連結　<span id='live-count'>" + str(len(active_rows)) + "</span></h2>"
             "<p id='live-empty' class='muted' " + ("hidden" if active_rows else "") + ">目前沒有可下載的連結。</p>"
             "<ul id='live-links' class='live-links'>" + live_links + "</ul></section>"
-            "<section class='create'><h2>新增分享</h2><form class='create-form' method='post' action='/create'>"
+            "<section class='card create'><h2>新增分享</h2><form class='create-form' method='post' action='/create'>"
             f"<input type='hidden' name='csrf' value='{csrf}'>"
-            "<label class='field-source'>檔案來源 <select id='source-select' name='source' required>" + options + "</select></label>"
-            "<label>停止時間（分鐘） <input name='ttl' type='number' min='1' max='10080' value='15'></label>"
-            "<label>下載上限（次） <input name='limit' type='number' min='1' max='10000' value='3'></label>"
+            "<label class='field-source'>檔案來源 <select class='form-select' id='source-select' name='source' required>" + options + "</select></label>"
+            "<label>停止時間（分鐘） <input class='form-control' name='ttl' type='number' min='1' max='10080' value='15'></label>"
+            "<label>下載上限（次） <input class='form-control' name='limit' type='number' min='1' max='10000' value='3'></label>"
             "<p class='muted'>可只填一項；同時填寫時先達到者停止。Vx Mission 套件須從 TAK Server Data Packages 下載，不列入此 QR 分享。</p>"
-            "<button>啟用這筆分享</button></form></section>"
-            "<section class='records'><h2>分享紀錄</h2><table><thead><tr><th>檔案</th><th>狀態</th>"
-            "<th>已使用／上限</th><th>建立／截止時間</th><th>查看</th><th>控制</th></tr></thead><tbody id='share-rows'>"
-            + table + "</tbody></table></section>")
-    script = "<script src='/admin.js' defer></script>"
+            "<button class='btn btn-primary'>啟用這筆分享</button></form></section>"
+            "<section class='card records share-records'><h2>分享紀錄</h2><table class='table responsive-table align-middle'><thead><tr><th>檔案</th><th>狀態</th>"
+            "<th>已使用／上限</th><th>建立／截止時間</th><th>查看</th><th>控制</th></tr></thead><tbody id='share-rows' data-server-now='" + str(now) + "'>"
+            + table + "</tbody></table></section>"
+            "<div class='modal fade' id='share-qr-dialog' tabindex='-1' aria-labelledby='share-qr-title' aria-hidden='true'>"
+            "<div class='modal-dialog modal-dialog-centered'><div class='modal-content'>"
+            "<div class='modal-header'><h2 class='modal-title fs-5' id='share-qr-title'>分享 QR Code</h2>"
+            "<button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='關閉'></button></div>"
+            "<div class='modal-body share-qr-body'><strong id='share-qr-name'></strong>"
+            "<img id='share-qr-image' class='qr img-fluid rounded' alt='分享 QR Code'>"
+            "<a id='share-qr-url' target='_blank' rel='noreferrer noopener'></a>"
+            "<p class='muted'>掃描後請點相機顯示的完整連結。</p></div></div></div></div>")
+    script = "<script src='/static/bootstrap/bootstrap.bundle.min.js' defer></script><script src='/admin.js' defer></script>"
     return page("TAK 分享管理", body, script, layout="admin")
 
 
 def public_page(row: sqlite3.Row, qr: bool) -> bytes:
     kind = "TAK ICU 設定" if row["kind"] == "icu" else "ATAK Data Package／ZIP"
     uri = qr_value(row)
-    body = (f"<h1>{esc(kind)}</h1><section><p>檔案：{esc(row['filename'])}</p>"
+    body = (f"<h1>{esc(kind)}</h1><section class='card'><p>檔案：{esc(row['filename'])}</p>"
             f"<p>截止時間：{esc(local_time(row['expires_at']))}</p>"
             f"<p>下載上限：{row['max_downloads'] or '未設定'}</p>")
     if qr:
-        body += (f"<img class='qr' src='/qr.png/{esc(row['token'])}' alt='分享 QR Code'>"
-                 f"<p><a class='button' href='{esc(uri)}'>"
+        body += (f"<img class='qr img-fluid rounded'  src='/qr.png/{esc(row['token'])}' alt='分享 QR Code'>"
+                 f"<p><a class='btn btn-primary' href='{esc(uri)}'>"
                  + ("開啟 TAK ICU" if row["kind"] == "icu" else "交給 ATAK 匯入") + "</a></p>"
                  "<p class='muted'>掃描後請點相機顯示的完整連結。</p>")
     else:
-        body += (f"<p><a class='button' href='{esc(file_url(row))}'>下載檔案</a></p>"
+        body += (f"<p><a class='btn btn-primary' href='{esc(file_url(row))}'>下載檔案</a></p>"
                  "<p class='muted'>一般瀏覽器下載後仍需手動匯入；請使用 QR 連結測試 ATAK 匯入流程。</p>")
     return page(kind, body + "</section>")
 
 
-app = Flask(__name__)
+STATIC_DIR = Path(__file__).resolve().parent / "static"
+if not STATIC_DIR.is_dir():
+    STATIC_DIR = Path(__file__).resolve().parents[1] / "docker/share-portal/static"
+app = Flask(__name__, static_folder=str(STATIC_DIR))
 _init_lock = threading.Lock()
 _initialized = False
 
@@ -415,7 +393,7 @@ def public_security_headers(response: Response) -> Response:
     response.headers["Referrer-Policy"] = "no-referrer"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["Content-Security-Policy"] = (
-        "default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; "
+        "default-src 'none'; img-src 'self'; style-src 'self'; "
         "script-src 'unsafe-inline'; connect-src 'self'; form-action 'self'; base-uri 'none'")
     return response
 
@@ -484,9 +462,7 @@ def public_route(action: str, token: str) -> Response:
     if action == "s" and row["kind"] == "file":
         return Response(public_page(row, False), content_type="text/html; charset=utf-8")
     if action == "qr.png":
-        output = io.BytesIO()
-        qrcode.make(qr_value(row)).save(output, format="PNG")
-        return Response(output.getvalue(), content_type="image/png")
+        return Response(qr_png(row), content_type="image/png")
     if action == "d":
         return download_response(row, token)
     return Response("Not found", 404)

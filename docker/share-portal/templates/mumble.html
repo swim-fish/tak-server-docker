@@ -1,96 +1,83 @@
 <!doctype html>
-<html lang="zh-Hant-TW">
+<html lang="zh-Hant-TW" data-bs-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Mumble 管理</title>
-<style>
-:root{color-scheme:dark;--bg:#101820;--panel:#182630;--line:#35505b;--text:#eef5f4;--muted:#b8c9cc;--cyan:#80d7e6;--red:#e88580;--green:#74d6a5}
-*{box-sizing:border-box}body{font-family:system-ui,sans-serif;width:100%;max-width:1920px;margin:0 auto;padding:clamp(.75rem,2vw,2rem);background:var(--bg);color:var(--text)}
-h1{font-size:1.7rem}h2{color:var(--cyan);font-size:1.1rem;margin-top:0}section{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--cyan);padding:1.25rem;margin:1rem 0}
-section.danger{border-left-color:var(--red)}a{color:var(--cyan)}button{font:inherit;font-weight:700;background:var(--cyan);color:#08212b;border:1px solid var(--cyan);border-radius:2px;padding:.55rem .9rem;cursor:pointer;margin:.25rem;min-height:42px}
-button.danger{background:var(--red);border-color:var(--red);color:#1c1010}button:hover{filter:brightness(1.12)}input{font:inherit;padding:.55rem;background:#0c151c;color:var(--text);border:1px solid #58727b;border-radius:2px;max-width:100%}input[type=checkbox]{width:1.2rem;height:1.2rem;accent-color:var(--cyan)}table{width:100%;border-collapse:collapse}
-button:disabled,button.danger:disabled{background:#46535a;color:#adb9bb;border-color:#46535a;cursor:not-allowed;filter:none;opacity:.8}
-th,td{text-align:left;padding:.65rem;border-bottom:1px solid var(--line);overflow-wrap:anywhere}th{color:var(--cyan);font-size:.84rem}
-.muted{color:var(--muted)}.error{color:var(--red)}.success{color:var(--green)}
-dialog{background:var(--panel);color:var(--text);border:2px solid var(--red);padding:1.5rem;width:min(95vw,560px)}
-dialog::backdrop{background:rgba(0,0,0,.75)}dialog h3{margin-top:0;color:var(--red)}
-dialog menu{display:flex;gap:.75rem;justify-content:flex-end;padding:0;margin:1.5rem 0 0}
-dialog button:disabled{opacity:.45;cursor:not-allowed}.dialog-check{display:flex;align-items:flex-start;gap:.6rem}
-main,section{min-width:0}.page-header{margin-bottom:1rem}.page-header p:first-child{margin-top:0}
-input[type=search]{width:min(100%,24rem)}.selection-tools{display:flex;flex-wrap:wrap;gap:.35rem;margin:.75rem 0}
-.selection-tools button{margin:0}.server-control form{margin:.5rem 0}
-@media(min-width:1250px){.mumble-layout{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;align-items:start}
-.page-header,.mumble-layout>.error,.mumble-layout>.success,.server-control{grid-column:1/-1}
-.mumble-layout section{margin:0}}
-@media(max-width:639px){section{padding:1rem}.selection-tools button{flex:1 1 8rem}
-table,tbody,tr,td{display:block;width:100%}thead{display:none}
-tbody tr{border:1px solid var(--line);margin:.75rem 0;padding:.25rem .5rem}
-td{padding:.5rem .25rem}td::before{content:attr(data-label);display:block;color:var(--muted);font-size:.8rem;margin-bottom:.15rem}
-td.empty-row::before{display:none}form [data-selection-action],.server-control button{width:100%;margin:.4rem 0}
-dialog menu{flex-wrap:wrap}dialog menu button{flex:1 1 8rem}}
-</style>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='bootstrap/bootstrap.min.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='console.css') }}">
+<script defer src="{{ url_for('static', filename='bootstrap/bootstrap.bundle.min.js') }}"></script>
 </head>
-<body>
+<body class="portal-page">
 <main class="mumble-layout">
 <header class="page-header">
-<p><a href="/">← 檔案分享</a>　<strong>Mumble 管理</strong></p>
+<nav class="portal-nav nav nav-pills" aria-label="控制台頁面"><a class="nav-link" href="/">檔案分享</a><a class="nav-link active" aria-current="page" href="/mumble">Mumble 管理</a><a class="nav-link" href="/certificates">用戶端憑證</a></nav>
 <h1>語音伺服器控制台</h1>
 </header>
-{% if error %}<section class="error">Mumble 控制服務無法取得資料：{{ error }}</section>{% endif %}
-{% if result %}<section class="success">操作已送出並完成，請核對下方最新清單。</section>{% endif %}
+{% if error %}<section class="card error">Mumble 控制服務無法取得資料：{{ error }}</section>{% endif %}
+{% if result %}<section class="card success">操作已送出並完成，請核對下方最新清單。</section>{% endif %}
 {% if snapshot %}
-<section class="sessions">
+<section class="card sessions">
   <h2>線上連線　{{ snapshot.sessions|length }}</h2>
-  <label>搜尋名稱或 ID <input type="search" data-filter="sessions" placeholder="輸入名稱或 ID"></label>
+  <label>搜尋名稱或 ID <input class="form-control" type="search" data-filter="sessions" placeholder="輸入名稱或 ID"></label>
   <form method="post" action="/mumble/kick" data-list="sessions">
     <input type="hidden" name="csrf" value="{{ csrf }}">
-    <div class="selection-tools"><button type="button" data-select="visible">選取搜尋結果</button><button type="button" data-select="all">全選</button><button type="button" data-select="none">全部不選</button></div>
-    <table><thead><tr><th>選取</th><th>Session ID</th><th>名稱</th><th>註冊 ID</th></tr></thead><tbody>
+    <div class="selection-tools"><button class="btn btn-outline-info" type="button" data-select="visible">選取搜尋結果</button><button class="btn btn-outline-info" type="button" data-select="all">全選</button><button class="btn btn-outline-info" type="button" data-select="none">全部不選</button></div>
+    <table class="table responsive-table align-middle"><thead><tr><th>選取</th><th>Session ID</th><th>名稱</th><th>註冊 ID</th></tr></thead><tbody>
     {% for item in snapshot.sessions %}
-      <tr data-search="{{ item.id }} {{ item.name }} {{ item.registered_id or '' }}"><td data-label="選取"><input type="checkbox" name="session" value="{{ item.id }}:{{ item.fingerprint }}"></td><td data-label="Session ID">{{ item.id }}</td><td data-label="名稱">{{ item.name }}</td><td data-label="註冊 ID">{{ item.registered_id or '未註冊' }}</td></tr>
+      <tr data-search="{{ item.id }} {{ item.name }} {{ item.registered_id or '' }}"><td data-label="選取"><input class="form-check-input" type="checkbox" name="session" value="{{ item.id }}:{{ item.fingerprint }}"></td><td data-label="Session ID">{{ item.id }}</td><td data-label="名稱">{{ item.name }}</td><td data-label="註冊 ID">{{ item.registered_id or '未註冊' }}</td></tr>
     {% else %}<tr><td class="empty-row" colspan="4">目前沒有一般使用者連線。</td></tr>{% endfor %}
     </tbody></table>
-    <button class="danger" type="submit" data-selection-action disabled>中斷選取的連線（可重新登入）</button>
+    <button class="btn btn-danger danger" type="submit" data-selection-action disabled>中斷選取的連線（可重新登入）</button>
   </form>
 </section>
-<section class="registrations">
+<section class="card registrations">
   <h2>已註冊身分　{{ snapshot.registrations|length }}</h2>
   <p class="muted">Vx 名稱由 ATAK 呼號與裝置 UUID 產生。取消註冊會先備份資料庫。</p>
-  <label>搜尋名稱或 ID <input type="search" data-filter="registrations" placeholder="輸入名稱或 ID"></label>
+  <label>搜尋名稱或 ID <input class="form-control" type="search" data-filter="registrations" placeholder="輸入名稱或 ID"></label>
   <form method="post" action="/mumble/unregister" data-list="registrations">
     <input type="hidden" name="csrf" value="{{ csrf }}">
-    <div class="selection-tools"><button type="button" data-select="visible">選取搜尋結果</button><button type="button" data-select="all">全選</button><button type="button" data-select="none">全部不選</button></div>
-    <table><thead><tr><th>選取</th><th>註冊 ID</th><th>名稱</th><th>線上連線數</th></tr></thead><tbody>
+    <div class="selection-tools"><button class="btn btn-outline-info" type="button" data-select="visible">選取搜尋結果</button><button class="btn btn-outline-info" type="button" data-select="all">全選</button><button class="btn btn-outline-info" type="button" data-select="none">全部不選</button></div>
+    <table class="table responsive-table align-middle"><thead><tr><th>選取</th><th>註冊 ID</th><th>名稱</th><th>線上連線數</th></tr></thead><tbody>
     {% for item in snapshot.registrations %}
-      <tr data-search="{{ item.id }} {{ item.name }}"><td data-label="選取"><input type="checkbox" name="registration" value="{{ item.id }}:{{ item.fingerprint }}"></td><td data-label="註冊 ID">{{ item.id }}</td><td data-label="名稱">{{ item.name }}</td><td data-label="線上連線數">{{ item.online }}</td></tr>
+      <tr data-search="{{ item.id }} {{ item.name }}"><td data-label="選取"><input class="form-check-input" type="checkbox" name="registration" value="{{ item.id }}:{{ item.fingerprint }}"></td><td data-label="註冊 ID">{{ item.id }}</td><td data-label="名稱">{{ item.name }}</td><td data-label="線上連線數">{{ item.online }}</td></tr>
     {% else %}<tr><td class="empty-row" colspan="4">沒有已註冊身分。</td></tr>{% endfor %}
     </tbody></table>
-    <button class="danger" type="button" data-open-dialog="unregister-confirm" data-require-selection="registration" data-selection-action disabled>刪除選取的註冊身分並中斷連線</button>
-    <dialog id="unregister-confirm">
-      <h3>確認刪除註冊身分</h3>
-      <p>所選身分將取消註冊，現有連線會中斷。操作前會備份 Mumble 資料庫。</p>
-      <label class="dialog-check"><input type="checkbox" name="confirmation" value="yes">我確認刪除選取的註冊身分</label>
-      <menu><button type="button" data-close-dialog>取消</button><button class="danger" type="submit" disabled>確認刪除</button></menu>
-    </dialog>
+    <button class="btn btn-danger danger" type="button" data-open-dialog="unregister-confirm" data-require-selection="registration" data-selection-action disabled>刪除選取的註冊身分並中斷連線</button>
+    <div class="modal fade" id="unregister-confirm" tabindex="-1" aria-labelledby="unregister-title" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+        <div class="modal-header"><h3 class="modal-title fs-5" id="unregister-title">確認刪除註冊身分</h3><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button></div>
+        <div class="modal-body"><p>所選身分將取消註冊，現有連線會中斷。操作前會備份 Mumble 資料庫。</p><label class="d-flex align-items-start gap-2"><input class="form-check-input" type="checkbox" name="confirmation" value="yes">我確認刪除選取的註冊身分</label></div>
+        <div class="modal-footer"><button class="btn btn-outline-info" type="button" data-bs-dismiss="modal">取消</button><button class="btn btn-danger danger" type="submit" disabled>確認刪除</button></div>
+      </div></div>
+    </div>
   </form>
 </section>
 {% endif %}
-<section class="danger server-control">
+<section class="card danger server-control">
   <h2>伺服器控制</h2>
-  <form method="post" action="/mumble/restart" onsubmit="return confirm('確定要重新啟動 Mumble？目前連線會中斷。')">
-    <input type="hidden" name="csrf" value="{{ csrf }}"><button class="danger">重新啟動 Mumble（中斷所有連線）</button>
+  <form method="post" action="/mumble/restart">
+    <input type="hidden" name="csrf" value="{{ csrf }}"><button class="btn btn-danger danger" type="button" data-open-dialog="restart-confirm">重新啟動 Mumble（中斷所有連線）</button>
+    <div class="modal fade" id="restart-confirm" tabindex="-1" aria-labelledby="restart-title" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+        <div class="modal-header"><h3 class="modal-title fs-5" id="restart-title">確認重新啟動 Mumble</h3><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button></div>
+        <div class="modal-body"><p>重新啟動會中斷所有目前連線。</p><label class="d-flex align-items-start gap-2"><input class="form-check-input" type="checkbox" name="confirmation" value="yes">我確認中斷目前連線</label></div>
+        <div class="modal-footer"><button class="btn btn-outline-info" type="button" data-bs-dismiss="modal">取消</button><button class="btn btn-danger danger" type="submit" disabled>確認重新啟動</button></div>
+      </div></div>
+    </div>
   </form>
   <form method="post" action="/mumble/reset-password">
     <input type="hidden" name="csrf" value="{{ csrf }}">
     <p class="muted">產生新共用密碼並重啟。已註冊的 Vx 身分仍可能直接登入。</p>
-    <button class="danger" type="button" data-open-dialog="password-confirm">重設共用密碼並重新啟動</button>
-    <dialog id="password-confirm">
-      <h3>確認重設共用密碼</h3>
-      <p>Mumble 將重新啟動，所有目前連線會中斷。新密碼寫入本機 secret 檔。</p>
-      <label class="dialog-check"><input type="checkbox" name="confirmation" value="yes">我確認重設密碼並中斷連線</label>
-      <menu><button type="button" data-close-dialog>取消</button><button class="danger" type="submit" disabled>確認重設並重啟</button></menu>
-    </dialog>
+    <button class="btn btn-danger danger" type="button" data-open-dialog="password-confirm">重設共用密碼並重新啟動</button>
+    <div class="modal fade" id="password-confirm" tabindex="-1" aria-labelledby="password-title" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+        <div class="modal-header"><h3 class="modal-title fs-5" id="password-title">確認重設共用密碼</h3><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button></div>
+        <div class="modal-body"><p>Mumble 將重新啟動，所有目前連線會中斷。新密碼寫入本機 secret 檔。</p><label class="d-flex align-items-start gap-2"><input class="form-check-input" type="checkbox" name="confirmation" value="yes">我確認重設密碼並中斷連線</label></div>
+        <div class="modal-footer"><button class="btn btn-outline-info" type="button" data-bs-dismiss="modal">取消</button><button class="btn btn-danger danger" type="submit" disabled>確認重設並重啟</button></div>
+      </div></div>
+    </div>
   </form>
 </section>
 </main>
@@ -116,12 +103,11 @@ for(const button of document.querySelectorAll('[data-open-dialog]')){
   button.addEventListener('click',()=>{const form=button.closest('form');const name=button.dataset.requireSelection;
     if(name&&!form.querySelector(`input[name="${name}"]:checked`)){window.alert('請先選取要操作的項目。');return;}
     const dialog=document.getElementById(button.dataset.openDialog);const checkbox=dialog.querySelector('input[type=checkbox]');
-    checkbox.checked=false;dialog.querySelector('button[type=submit]').disabled=true;dialog.showModal();});
+    checkbox.checked=false;dialog.querySelector('button[type=submit]').disabled=true;bootstrap.Modal.getOrCreateInstance(dialog).show();});
 }
-for(const dialog of document.querySelectorAll('dialog')){
+for(const dialog of document.querySelectorAll('.modal')){
   const checkbox=dialog.querySelector('input[type=checkbox]');const submit=dialog.querySelector('button[type=submit]');
   checkbox.addEventListener('change',()=>submit.disabled=!checkbox.checked);
-  dialog.querySelector('[data-close-dialog]').addEventListener('click',()=>dialog.close());
 }
 </script>
 </body>

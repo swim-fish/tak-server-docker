@@ -50,7 +50,7 @@ runtime/tak/
 
 | 路徑 | 用途 | 機密性 |
 | --- | --- | --- |
-| `runtime/tak/` | bind mount 到 TAK Server 的設定、JKS、管理憑證、CA 與 CRL。 | 高 |
+| `runtime/tak/` | bind mount 到 TAK Server 的設定、JKS、管理憑證、`UserAuthenticationFile.xml`、CA 與 CRL；新裝置註冊由 Windows 管理程式更新驗證檔並重啟 TAK。 | 高 |
 | `runtime/pki/private/` | Root／中繼 CA 私鑰、葉私鑰、CSR、CA database、serial 與簽發設定。 | 最高 |
 | `runtime/pki/private/clients/` | 控制台逐筆簽發的裝置私鑰、個別密碼、CSR 與 PKCS#12；每筆使用獨立目錄。 | 最高 |
 | `runtime/pki/public/` | CA、TAK、ATAK、Mumble、MediaMTX 的公開憑證與 CRL。 | 低，但仍屬部署資料 |
@@ -64,8 +64,8 @@ runtime/tak/
 | `runtime/packages/icu/` | 手動產生的 ICU `initial.prefs`、QR URI 與圖片；設定檔含 MediaMTX 發布密碼。 | 高 |
 | `runtime/packages/atak/` | TAK／Vx DPK、ZIP 範本、PKCS#12 與 checksum；TAK 包含裝置私鑰及匯入密碼。 | 依套件內容判定 |
 | `runtime/share-inbox/` | 舊測試目錄；分享服務不再讀取，現有檔案不會自動刪除。 | 依檔案內容判定 |
-| `runtime/share-control/` | Windows 前景 Mumble 管理程式與 Flask 頁面的佇列、心跳及密碼備份。 | 高 |
-| `runtime/tak-cert-control/` | 用戶端憑證控制台的主機佇列、簽發紀錄、CA 變更前備份、操作紀錄及撤銷後封存的 DPK。 | 最高 |
+| `runtime/share-control/` | Windows Mumble 管理程式與 Flask 頁面的佇列、心跳、程式紀錄及密碼備份。 | 高 |
+| `runtime/tak-cert-control/` | 用戶端憑證控制台的主機佇列、心跳、程式紀錄、簽發紀錄、CA 變更前備份、操作紀錄及撤銷後封存的 DPK。 | 最高 |
 | `runtime/mdns/` | Windows mDNS virtual environment、產生的設定與本機 log。 | 本機狀態 |
 | `runtime/mumble-admin/` | 註冊清單快照、資料庫備份與操作紀錄；資料庫含驗證資料。 | 最高 |
 | `runtime/analysis/` | 本機除錯或逆向檢查產物，不是啟動服務的必要輸入。 | 依內容判定 |

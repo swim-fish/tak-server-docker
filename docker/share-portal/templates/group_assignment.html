@@ -7,7 +7,7 @@
       ('out', 'Out／讀取', '只授予讀取'),
       ('both', 'In + Out／讀寫', '同時授予讀取與寫入')
     ] %}
-    <section class="group-lane" data-lane="{{ lane }}">
+    <section class="group-lane card" data-lane="{{ lane }}">
       <h3>{{ title }} <span class="group-count" data-count="{{ lane }}"></span></h3>
       <p>{{ description }}</p>
       <ul class="group-list" data-group-list="{{ lane }}" aria-label="{{ title }}群組清單">
@@ -27,16 +27,16 @@
   </div>
   <div class="group-controls">
     <label>移至清單
-      <select data-group-destination {% if group_disabled %}disabled{% endif %}>
+      <select class="form-select" data-group-destination {% if group_disabled %}disabled{% endif %}>
         <option value="in">In／寫入</option><option value="out">Out／讀取</option>
         <option value="both">In + Out／讀寫</option><option value="none">未指派</option>
       </select>
     </label>
-    <button type="button" data-group-move disabled>移動選取的群組</button>
+    <button class="btn btn-primary" type="button" data-group-move disabled>移動選取的群組</button>
     <label>新增群組
-      <input type="text" data-group-new maxlength="64" placeholder="例如：team-a" {% if group_disabled %}disabled{% endif %}>
+      <input class="form-control" type="text" data-group-new maxlength="64" placeholder="例如：team-a" {% if group_disabled %}disabled{% endif %}>
     </label>
-    <button type="button" data-group-add {% if group_disabled %}disabled{% endif %}>加入未指派清單</button>
+    <button class="btn btn-outline-info" type="button" data-group-add {% if group_disabled %}disabled{% endif %}>加入未指派清單</button>
   </div>
   <p class="group-message" data-group-message role="status" aria-live="polite"></p>
   <div data-group-fields>

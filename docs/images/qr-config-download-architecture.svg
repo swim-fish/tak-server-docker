@@ -1,0 +1,163 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1440" viewBox="0 0 1440 1440" role="img" aria-labelledby="title description">
+  <title id="title">TAK 設定檔交付架構：QR Code 與 TAK Server</title>
+  <desc id="description">手機先連上 Windows 分享 Wi-Fi 或路由器區域網路，並透過 mDNS 或 DNS 解析 takbox.local。ATAK 登入套件由 share-public 經 tak 深層連結下載。TAK ICU 設定由 share-public 經 icu download 深層連結自動下載與套用，再由使用者輸入 MediaMTX 發布密碼。Vx Plugin 的 Mission DPK 則由 ATAK 從 TAK Server Data Packages 下載後匯入。</desc>
+  <defs>
+    <marker id="arrow-cyan" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto">
+      <path d="M1 1 L11 6 L1 11 Z" fill="#80d7e6"/>
+    </marker>
+    <marker id="arrow-green" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto">
+      <path d="M1 1 L11 6 L1 11 Z" fill="#74d6a5"/>
+    </marker>
+    <style>
+      text { font-family: 'Noto Sans TC', 'Microsoft JhengHei', 'PingFang TC', Arial, sans-serif; }
+      .title { fill: #eef5f4; font-size: 36px; font-weight: 800; }
+      .subtitle { fill: #b8c9cc; font-size: 18px; }
+      .section { fill: #80d7e6; font-size: 16px; font-weight: 800; letter-spacing: 1px; }
+      .heading { fill: #eef5f4; font-size: 23px; font-weight: 800; }
+      .body { fill: #eef5f4; font-size: 18px; }
+      .small { fill: #b8c9cc; font-size: 16px; }
+      .mono { fill: #cdeaf0; font-family: Consolas, 'Cascadia Code', monospace; font-size: 16px; }
+      .label { fill: #101820; font-size: 15px; font-weight: 800; }
+      .panel { fill: #1b2932; stroke: #3b5661; stroke-width: 2; }
+      .cyan-line { fill: none; stroke: #80d7e6; stroke-width: 4; stroke-linecap: round; }
+      .green-line { fill: none; stroke: #74d6a5; stroke-width: 4; stroke-linecap: round; }
+    </style>
+  </defs>
+
+  <rect width="1440" height="1440" fill="#101820"/>
+  <rect x="0" y="0" width="1440" height="10" fill="#80d7e6"/>
+  <text x="72" y="72" class="title">TAK 設定檔交付架構</text>
+  <text x="72" y="106" class="subtitle">先連上同一網路；ATAK 與 TAK ICU 各掃自己的 QR，Vx Mission 從 TAK Server 下載。</text>
+
+  <!-- Shared network prerequisite -->
+  <rect x="72" y="140" width="1296" height="165" rx="20" class="panel" stroke="#74d6a5"/>
+  <rect x="92" y="160" width="116" height="28" rx="14" fill="#74d6a5"/>
+  <text x="113" y="180" class="label">01｜先連線</text>
+  <text x="232" y="182" class="heading">手機與伺服器位於可互通的區域網路</text>
+  <rect x="108" y="213" width="238" height="65" rx="13" fill="#263b45"/>
+  <text x="128" y="241" class="body">手機／平板</text>
+  <text x="128" y="265" class="small">ATAK、TAK ICU</text>
+  <path d="M346 245 H419" class="cyan-line" marker-end="url(#arrow-cyan)"/>
+  <rect x="430" y="213" width="330" height="65" rx="13" fill="#263b45"/>
+  <text x="448" y="240" class="body">Windows 分享 Wi-Fi</text>
+  <text x="448" y="265" class="small">或路由器的同一區域網路</text>
+  <path d="M760 245 H831" class="cyan-line" marker-end="url(#arrow-cyan)"/>
+  <rect x="842" y="213" width="486" height="65" rx="13" fill="#263b45"/>
+  <text x="860" y="240" class="body">mDNS 或路由器 DNS 解析</text>
+  <text x="860" y="265" class="mono">takbox.local → Windows Server IP</text>
+
+  <!-- ATAK QR delivery -->
+  <text x="72" y="350" class="section">02｜ATAK 登入套件：QR Code 下載</text>
+  <rect x="72" y="369" width="1296" height="278" rx="20" class="panel"/>
+
+  <rect x="96" y="398" width="280" height="223" rx="16" fill="#263b45"/>
+  <rect x="96" y="398" width="6" height="223" rx="3" fill="#80d7e6"/>
+  <text x="118" y="434" class="heading">裝置專屬 DPK</text>
+  <text x="118" y="469" class="small">ATAK 登入設定與憑證</text>
+  <text x="118" y="497" class="mono">runtime/packages/atak/</text>
+  <text x="118" y="526" class="small">管理員選擇 .dpk／.zip</text>
+  <text x="118" y="583" class="small">憑證套件可能含私鑰</text>
+
+  <path d="M376 509 H395" class="cyan-line" marker-end="url(#arrow-cyan)"/>
+  <rect x="406" y="398" width="280" height="223" rx="16" fill="#263b45"/>
+  <text x="429" y="434" class="heading">分享管理與下載</text>
+  <text x="429" y="470" class="mono">share-admin</text>
+  <text x="429" y="497" class="small">設定期限、次數並產生 QR</text>
+  <path d="M430 513 H660" stroke="#3b5661" stroke-width="2"/>
+  <text x="429" y="545" class="mono">share-public</text>
+  <text x="429" y="573" class="small">提供短效下載快照</text>
+  <text x="429" y="600" class="mono">takbox.local:&lt;port&gt;/d/…</text>
+
+  <path d="M686 509 H705" class="cyan-line" marker-end="url(#arrow-cyan)"/>
+  <rect x="716" y="398" width="280" height="223" rx="16" fill="#263b45"/>
+  <rect x="738" y="424" width="76" height="76" rx="10" fill="#e9f8f6"/>
+  <path d="M749 435 h18 v18 h-18 z M785 435 h18 v18 h-18 z M749 471 h18 v18 h-18 z" fill="none" stroke="#101820" stroke-width="5"/>
+  <text x="838" y="447" class="heading">系統相機</text>
+  <text x="838" y="477" class="small">掃 QR 並點連結</text>
+  <text x="738" y="548" class="mono">tak://…/import?url=…</text>
+  <text x="738" y="584" class="small">QR 圖樣僅為示意</text>
+
+  <path d="M996 509 H1015" class="cyan-line" marker-end="url(#arrow-cyan)"/>
+  <rect x="1026" y="398" width="318" height="223" rx="16" fill="#263b45"/>
+  <text x="1050" y="434" class="heading">ATAK 接手</text>
+  <text x="1050" y="473" class="body">向 share-public 下載</text>
+  <text x="1050" y="505" class="body">使用者確認匯入 DPK</text>
+  <text x="1050" y="561" class="small">完成 TAK Server 登入</text>
+  <text x="1050" y="590" class="small">下載需能解析 takbox.local</text>
+
+  <!-- TAK ICU QR delivery -->
+  <text x="72" y="694" class="section">03｜TAK ICU：icu:// QR 下載 MediaMTX 設定</text>
+  <rect x="72" y="714" width="1296" height="286" rx="20" class="panel" stroke="#74d6a5"/>
+
+  <rect x="96" y="744" width="280" height="225" rx="16" fill="#263b45"/>
+  <rect x="96" y="744" width="6" height="225" rx="3" fill="#74d6a5"/>
+  <text x="118" y="780" class="heading">ICU 設定 .prefs</text>
+  <text x="118" y="815" class="mono">runtime/packages/icu/</text>
+  <text x="118" y="844" class="mono">takbox.local:8322</text>
+  <text x="118" y="882" class="small">RTSPS、路徑與發布帳號</text>
+  <text x="118" y="911" class="small">使用不含密碼的設定檔</text>
+
+  <path d="M376 854 H395" class="green-line" marker-end="url(#arrow-green)"/>
+  <rect x="406" y="744" width="280" height="225" rx="16" fill="#263b45"/>
+  <text x="429" y="780" class="heading">分享管理與下載</text>
+  <text x="429" y="815" class="mono">share-admin</text>
+  <text x="429" y="846" class="small">建立短效 .prefs 分享</text>
+  <path d="M430 862 H660" stroke="#3b5661" stroke-width="2"/>
+  <text x="429" y="893" class="mono">share-public</text>
+  <text x="429" y="924" class="small">提供設定檔下載 URL</text>
+
+  <path d="M686 854 H705" class="green-line" marker-end="url(#arrow-green)"/>
+  <rect x="716" y="744" width="280" height="225" rx="16" fill="#263b45"/>
+  <rect x="738" y="770" width="76" height="76" rx="10" fill="#e9f8f6"/>
+  <path d="M749 781 h18 v18 h-18 z M785 781 h18 v18 h-18 z M749 817 h18 v18 h-18 z" fill="none" stroke="#101820" stroke-width="5"/>
+  <text x="838" y="793" class="heading">系統相機</text>
+  <text x="838" y="823" class="small">掃 QR 並點連結</text>
+  <text x="738" y="894" class="mono">icu://download?url=…</text>
+  <text x="738" y="930" class="small">QR 圖樣僅為示意</text>
+
+  <path d="M996 854 H1015" class="green-line" marker-end="url(#arrow-green)"/>
+  <rect x="1026" y="744" width="318" height="225" rx="16" fill="#263b45"/>
+  <text x="1050" y="780" class="heading">TAK ICU 接手</text>
+  <text x="1050" y="818" class="body">自動下載並套用 .prefs</text>
+  <text x="1050" y="852" class="body">使用者輸入發布密碼</text>
+  <text x="1050" y="908" class="small">連線至 MediaMTX 發布 RTSPS</text>
+
+  <!-- Vx Mission package via TAK Server -->
+  <text x="72" y="1041" class="section">04｜Vx Plugin：ATAK 從 TAK Server 下載 Mission DPK</text>
+  <rect x="72" y="1061" width="1296" height="259" rx="20" class="panel" stroke="#f2c879"/>
+
+  <rect x="96" y="1089" width="280" height="202" rx="16" fill="#263b45"/>
+  <rect x="96" y="1089" width="6" height="202" rx="3" fill="#f2c879"/>
+  <text x="118" y="1126" class="heading">Vx Mission DPK</text>
+  <text x="118" y="1164" class="small">Mumble 伺服器與頻道設定</text>
+  <text x="118" y="1201" class="mono">atak-local-vx.dpk</text>
+  <text x="118" y="1254" class="small">由管理員建立或更新</text>
+
+  <path d="M376 1190 H395" class="cyan-line" marker-end="url(#arrow-cyan)"/>
+  <rect x="406" y="1089" width="280" height="202" rx="16" fill="#263b45"/>
+  <text x="429" y="1126" class="heading">TAK Server</text>
+  <text x="429" y="1164" class="body">上傳 Mission DPK</text>
+  <text x="429" y="1201" class="small">Data Packages 提供下載</text>
+  <text x="429" y="1254" class="small">裝置須先連線 TAK Server</text>
+
+  <path d="M686 1190 H705" class="cyan-line" marker-end="url(#arrow-cyan)"/>
+  <rect x="716" y="1089" width="280" height="202" rx="16" fill="#263b45"/>
+  <text x="738" y="1126" class="heading">ATAK 下載</text>
+  <text x="738" y="1164" class="small">Data Packages → Download</text>
+  <text x="738" y="1201" class="body">選取 Vx Mission DPK</text>
+  <text x="738" y="1254" class="small">由 ATAK 接收並匯入</text>
+
+  <path d="M996 1190 H1015" class="cyan-line" marker-end="url(#arrow-cyan)"/>
+  <rect x="1026" y="1089" width="318" height="202" rx="16" fill="#263b45"/>
+  <text x="1050" y="1126" class="heading">Vx Plugin 生效</text>
+  <text x="1050" y="1164" class="mono">sharing.downloaded</text>
+  <text x="1050" y="1201" class="body">建立 Mission 與頻道</text>
+  <text x="1050" y="1254" class="small">再由使用者加入頻道</text>
+
+  <!-- Delivery distinction -->
+  <rect x="72" y="1344" width="1296" height="72" rx="17" fill="#263b45" stroke="#3b5661" stroke-width="2"/>
+  <rect x="93" y="1367" width="97" height="27" rx="13" fill="#f2c879"/>
+  <text x="108" y="1386" class="label">流程差異</text>
+  <text x="211" y="1376" class="small">Vx Mission 的一般 QR 匯入不會建立任務；須由 TAK Server Data Packages 下載。</text>
+  <text x="211" y="1401" class="small">ICU 使用 icu:// QR；目前即時產生的 ICU 設定會含密碼，若要手動輸入請分享不含密碼的 .prefs。</text>
+</svg>

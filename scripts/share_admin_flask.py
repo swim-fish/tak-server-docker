@@ -25,7 +25,14 @@ if len(ADMIN_PASSWORD) < 24:
     raise RuntimeError("Share admin password must contain at least 24 characters")
 CSRF = hmac.new(ADMIN_PASSWORD.encode(), b"share-admin-csrf-v1", hashlib.sha256).hexdigest()
 portal.initialize()
-app = Flask(__name__, template_folder="/app/templates")
+APP_DIR = Path(__file__).resolve().parent
+TEMPLATE_DIR = APP_DIR / "templates"
+STATIC_DIR = APP_DIR / "static"
+if not TEMPLATE_DIR.is_dir():
+    TEMPLATE_DIR = APP_DIR.parent / "docker/share-portal/templates"
+if not STATIC_DIR.is_dir():
+    STATIC_DIR = APP_DIR.parent / "docker/share-portal/static"
+app = Flask(__name__, template_folder=str(TEMPLATE_DIR), static_folder=str(STATIC_DIR))
 
 
 @app.after_request
@@ -163,15 +170,28 @@ def admin_script() -> Response:
     return send_file(Path(__file__).with_name("share_admin.js"), mimetype="text/javascript")
 
 
+@app.get("/qr.png/<token>")
+def admin_qr_image(token: str) -> Response:
+    row, error = portal.active_share(token)
+    if error is not None:
+        return error
+    assert row is not None
+    return Response(portal.qr_png(row), content_type="image/png")
+
+
 @app.get("/stats")
 def stats() -> Response:
     rows, paused = portal.list_shares()
-    return jsonify({"paused": paused, "sources": portal.import_choices(), "shares": [
+    now = int(time.time())
+    return jsonify({"paused": paused, "server_now": now,
+                    "sources": portal.import_choices(), "shares": [
         {"id": row["id"], "status": portal.share_status(row, paused),
          "filename": row["filename"], "kind": row["kind"],
          "created_at": portal.local_time(row["created_at"]),
          "expires_at": portal.local_time(row["expires_at"]),
+         "expires_at_epoch": row["expires_at"],
          "qr_url": f"{portal.PUBLIC_BASE}/q/{row['token']}",
+         "qr_image_url": f"/qr.png/{row['token']}",
          "accepted": row["accepted"], "completed": row["completed"],
          "max_downloads": row["max_downloads"]} for row in rows]})
 
@@ -240,6 +260,8 @@ def mumble_unregister() -> Response:
 
 @app.post("/mumble/restart")
 def mumble_restart() -> Response:
+    if request.form.get("confirmation") != "yes":
+        return Response("Confirm Mumble restart in the dialog", 400)
     try:
         control("restart")
     except (RuntimeError, OSError) as exc:

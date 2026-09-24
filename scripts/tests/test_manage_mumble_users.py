@@ -36,6 +36,12 @@ class RemovalTests(unittest.TestCase):
             with self.assertRaises(RuntimeError):
                 manager.validate_selection(self.snapshot, changed, [2])
 
+    def test_docker_queries_do_not_open_a_console_window(self):
+        with patch.object(manager.subprocess, "run", return_value=Mock(returncode=0, stdout=b"ok")) as launch:
+            self.assertEqual(manager.run("docker", "compose", "ps"), "ok")
+        self.assertEqual(launch.call_args.kwargs["creationflags"],
+                         getattr(manager.subprocess, "CREATE_NO_WINDOW", 0))
+
     def test_success_sends_only_selected_id_and_disconnects_only_selected_session(self):
         with patch.object(manager, "checked_users", side_effect=[self.current, self.current, {1: row(1)}]), \
              patch.object(manager, "backup_database", return_value=self.backup):

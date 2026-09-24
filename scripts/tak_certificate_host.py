@@ -17,11 +17,14 @@ import zipfile
 from datetime import datetime, timedelta, timezone
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from xml.etree import ElementTree
 from xml.sax.saxutils import escape
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import ExtendedKeyUsageOID, ExtensionOID, NameOID
+
+import tak_api_client
 
 
 PROJECT = Path(__file__).resolve().parents[1]
@@ -39,12 +42,15 @@ TAIPEI = timezone(timedelta(hours=8), "Asia/Taipei")
 GROUP = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.:-]{0,63}\Z")
 COMMON_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{1,62}\Z")
 SERIAL = re.compile(r"[0-9A-F]{1,40}\Z")
+AUTH_NAMESPACE = "http://bbn.com/marti/xml/bindings"
+AUTH_FILE_NAME = "UserAuthenticationFile.xml"
 
 
 def command(args: list[str], *, env: dict[str, str] | None = None,
             timeout: int = 90, input_bytes: bytes | None = None) -> subprocess.CompletedProcess:
     result = subprocess.run(args, cwd=PROJECT, env=env, input=input_bytes,
-                            capture_output=True, timeout=timeout)
+                            capture_output=True, timeout=timeout,
+                            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
     if result.returncode:
         detail = (result.stderr or result.stdout).decode("utf-8", "replace").strip()[-500:]
         raise RuntimeError(f"Command failed ({Path(args[0]).name}): {detail}")
@@ -192,69 +198,111 @@ def group_flags(in_groups: list[str], out_groups: list[str]) -> list[str]:
     return flags
 
 
-def tak_certificate_file(serial: str) -> str:
-    directory = TAK_CERTS / "clients"
-    directory.mkdir(parents=True, exist_ok=True)
-    target = directory / f"{serial}.pem"
-    shutil.copy2(certificate_path(serial), target)
-    return f"certs/files/clients/{serial}.pem"
+def authentication_file() -> Path:
+    return RUNTIME / "tak" / AUTH_FILE_NAME
 
 
-def user_manager(*args: str) -> str:
-    result = command([require_tool("docker"), "compose", "exec", "-T", "-w", "/opt/tak",
-                      "tak-server", "java", "-jar", "utils/UserManager.jar", *args], timeout=60)
-    return (result.stdout + result.stderr).decode("utf-8", "replace")
+def authentication_tree() -> ElementTree.ElementTree:
+    tree = ElementTree.parse(authentication_file())
+    if tree.getroot().tag != f"{{{AUTH_NAMESPACE}}}UserAuthenticationFile":
+        raise RuntimeError("Unexpected TAK user authentication file format")
+    return tree
 
 
-def parse_status(output: str) -> dict:
-    result = {"username": None, "role": None, "fingerprint": None,
-              "in_groups": [], "out_groups": [], "recognized": False}
-    group_mode = None
-    for line in output.splitlines():
-        text = line.strip()
-        if text.startswith("Username:"):
-            result["username"] = text.partition(":")[2].strip().strip("'")
-            group_mode = None
-        elif text.startswith("Role:"):
-            result["role"] = text.partition(":")[2].strip()
-            group_mode = None
-        elif text.startswith("Fingerprint:"):
-            result["fingerprint"] = text.partition(":")[2].strip().replace(":", "").lower()
-            group_mode = None
-        elif text.startswith("Groups ("):
-            label = text.split("(", 1)[1].split(")", 1)[0].lower()
-            group_mode = ("read" in label, "write" in label)
-            result["recognized"] = True
-        elif group_mode and text and GROUP.fullmatch(text):
-            if group_mode[1]:
-                result["in_groups"].append(text)
-            if group_mode[0]:
-                result["out_groups"].append(text)
-    result["in_groups"].sort()
-    result["out_groups"].sort()
-    return result
+def authentication_user(tree: ElementTree.ElementTree, username: str) -> ElementTree.Element | None:
+    matches = [item for item in tree.getroot()
+               if item.tag == f"{{{AUTH_NAMESPACE}}}User" and item.get("identifier") == username]
+    if len(matches) > 1:
+        raise RuntimeError("Duplicate TAK authentication username")
+    return matches[0] if matches else None
+
+
+def authentication_identity(record: dict) -> dict:
+    user = authentication_user(authentication_tree(), record["cn"])
+    if user is None or user.get("fingerprint", "").replace(":", "").lower() != record["fingerprint"]:
+        raise RuntimeError("TAK authentication fingerprint does not match this certificate")
+    return {"username": record["cn"], "role": user.get("role", "ROLE_ANONYMOUS"),
+            "fingerprint": record["fingerprint"]}
+
+
+def groups_from_api(data: dict) -> tuple[list[str], list[str]]:
+    both, in_only, out_only = (data.get(key) for key in ("groupList", "groupListIN", "groupListOUT"))
+    if any(not isinstance(items, list) or any(not isinstance(item, str) or not GROUP.fullmatch(item)
+                                              for item in items)
+           for items in (both, in_only, out_only)):
+        raise RuntimeError("TAK API returned invalid group data")
+    return sorted(set(both + in_only)), sorted(set(both + out_only))
+
+
+def register_authentication(record: dict, in_groups: list[str], out_groups: list[str]) -> None:
+    if not re.fullmatch(r"[0-9a-f]{64}", record["fingerprint"]):
+        raise ValueError("Invalid certificate fingerprint")
+    tree = authentication_tree()
+    user = authentication_user(tree, record["cn"])
+    if user is not None:
+        if user.get("fingerprint", "").replace(":", "").lower() != record["fingerprint"]:
+            raise RuntimeError("TAK authentication username belongs to another certificate")
+        if user.get("role", "ROLE_ANONYMOUS") != "ROLE_ANONYMOUS":
+            raise RuntimeError("TAK authentication user has a privileged role")
+        if "password" in user.attrib:
+            raise RuntimeError("TAK authentication user has password credentials")
+        user.clear()
+        user.attrib.update({"identifier": record["cn"]})
+    else:
+        user = ElementTree.SubElement(tree.getroot(), f"{{{AUTH_NAMESPACE}}}User", {
+            "identifier": record["cn"]})
+    user.set("fingerprint", ":".join(
+        record["fingerprint"][index:index + 2].upper() for index in range(0, 64, 2)))
+    both = sorted(set(in_groups) & set(out_groups))
+    for tag, values in (("groupList", both), ("groupListIN", sorted(set(in_groups) - set(both))),
+                        ("groupListOUT", sorted(set(out_groups) - set(both)))):
+        for value in values:
+            ElementTree.SubElement(user, f"{{{AUTH_NAMESPACE}}}{tag}").text = value
+    ElementTree.register_namespace("", AUTH_NAMESPACE)
+    payload = ElementTree.tostring(tree.getroot(), encoding="utf-8", xml_declaration=True)
+    # Compose bind-mounts this file. Preserve its inode so the container sees the update.
+    with authentication_file().open("r+b") as output:
+        output.seek(0)
+        output.write(payload)
+        output.truncate()
+        output.flush()
+        os.fsync(output.fileno())
+    command([require_tool("docker"), "compose", "restart", "tak-server"], timeout=180)
+    if not wait_for_cot_listener():
+        raise RuntimeError("TAK did not reopen its CoT listener after authentication update")
+    deadline = time.monotonic() + 90
+    while time.monotonic() < deadline:
+        try:
+            groups = groups_from_api(tak_api_client.get_groups(record["cn"]))
+            if groups == (sorted(set(in_groups)), sorted(set(out_groups))):
+                return
+        except (OSError, RuntimeError):
+            pass
+        time.sleep(2)
+    raise RuntimeError("TAK API did not confirm the new certificate groups after restart")
 
 
 def status(record: dict) -> dict:
-    details = parse_status(user_manager("certmod", "-s", tak_certificate_file(record["serial"])))
-    if not details["recognized"] or details["fingerprint"] != record["fingerprint"]:
-        raise RuntimeError("TAK status could not be matched to this certificate")
-    return details
+    identity = authentication_identity(record)
+    in_groups, out_groups = groups_from_api(tak_api_client.get_groups(identity["username"]))
+    return {**identity, "in_groups": in_groups, "out_groups": out_groups, "recognized": True}
 
 
 def set_groups(serial: str, fingerprint: str, in_values: object, out_values: object) -> dict:
     record = checked_record(serial, fingerprint, active=True)
     in_groups = checked_group_list(in_values)
     out_groups = checked_group_list(out_values)
-    flags = group_flags(in_groups, out_groups)
+    group_flags(in_groups, out_groups)
     previous_metadata = load_registry().get(serial, {})
     if previous_metadata.get("registered") is not False:
         previous = status(record)
         if previous["role"] == "ROLE_ADMIN":
             raise ValueError("Administrator certificates cannot be changed in this console")
-    path = tak_certificate_file(serial)
     backup = ca_backup()
-    user_manager("certmod", *flags, path)
+    if previous_metadata.get("registered") is False:
+        register_authentication(record, in_groups, out_groups)
+    else:
+        tak_api_client.update_groups(record["cn"], in_groups, out_groups)
     details = status(record)
     if details["in_groups"] != in_groups or details["out_groups"] != out_groups:
         audit("groups", [serial], "readback-mismatch")
@@ -310,8 +358,12 @@ def issue(request: dict) -> dict:
         raise ValueError("Certificate CN must use 2–63 ASCII letters, digits, dots, dashes or underscores")
     in_groups = checked_group_list(request.get("in_groups"))
     out_groups = checked_group_list(request.get("out_groups"))
-    flags = group_flags(in_groups, out_groups)
+    group_flags(in_groups, out_groups)
     check_server_running()
+    if authentication_user(authentication_tree(), cn) is not None:
+        raise ValueError("Certificate CN is already registered in TAK")
+    if any(item["cn"] == cn and not item["revoked"] for item in inventory()):
+        raise ValueError("Certificate CN is already used by an active certificate")
     openssl = require_tool("openssl")
     keytool = require_tool("keytool")
     issuing_ca = x509.load_pem_x509_certificate((PUBLIC / "intermediate.crt.pem").read_bytes())
@@ -421,8 +473,8 @@ def issue(request: dict) -> dict:
     registry[serial]["sha256"] = hashlib.sha256(package.read_bytes()).hexdigest()
     save_registry(registry)
     try:
-        path = tak_certificate_file(serial)
-        user_manager("certmod", *flags, path)
+        register_authentication(checked_record(serial, cert.fingerprint(hashes.SHA256()).hex()),
+                                in_groups, out_groups)
         details = status(checked_record(serial, cert.fingerprint(hashes.SHA256()).hex()))
         if details["in_groups"] != in_groups or details["out_groups"] != out_groups:
             raise RuntimeError("TAK group readback differs after issuance")
@@ -491,7 +543,8 @@ def probe_8089(record: dict, registry: dict) -> str:
              "-servername", "takbox.local", "-cert", str(certificate_path(record["serial"])),
              "-key", str(key), "-pass", "env:TAK_PROBE_KEY_PASS", "-CAfile",
              str(PUBLIC / "root-ca.crt.pem"), "-verify_return_error"],
-            cwd=PROJECT, env=env, input=b"\n", capture_output=True, timeout=12)
+            cwd=PROJECT, env=env, input=b"\n", capture_output=True, timeout=12,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
     except (OSError, subprocess.TimeoutExpired):
         return "connection-unavailable"
     output = (result.stdout + result.stderr).decode("utf-8", "replace").lower()
@@ -666,7 +719,10 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    from host_worker_lock import exclusive_worker
+
     try:
-        main()
+        with exclusive_worker(CONTROL):
+            main()
     except KeyboardInterrupt:
         print("TAK certificate worker stopped.", flush=True)

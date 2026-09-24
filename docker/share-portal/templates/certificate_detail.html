@@ -1,28 +1,26 @@
 <!doctype html>
-<html lang="zh-Hant-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>TAK 憑證 {{ record.serial }}</title><link rel="stylesheet" href="{{ url_for('static', filename='group_assignment.css') }}"><script defer src="{{ url_for('static', filename='group_assignment.js') }}"></script>
-<style>
-:root{color-scheme:dark;--bg:#101820;--panel:#182630;--line:#35505b;--text:#eef5f4;--muted:#b8c9cc;--cyan:#80d7e6;--red:#e88580;--green:#74d6a5;--amber:#f2c879}
-*{box-sizing:border-box}body{font-family:system-ui,sans-serif;max-width:1100px;margin:0 auto;padding:clamp(.75rem,2vw,2rem);background:var(--bg);color:var(--text)}h1{font-size:1.6rem}h2{font-size:1.1rem;color:var(--cyan)}a{color:var(--cyan)}section{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--cyan);padding:1.2rem;margin:1rem 0}.warn{border-left-color:var(--amber)}.success{color:var(--green)}.muted{color:var(--muted)}
-input{font:inherit;padding:.5rem;background:#0c151c;color:var(--text);border:1px solid #58727b;max-width:100%}input[type=checkbox]{width:1.2rem;height:1.2rem;accent-color:var(--cyan)}button{font:inherit;font-weight:700;background:var(--cyan);color:#08212b;border:0;padding:.65rem 1rem;min-height:42px;cursor:pointer}button:disabled{background:#46535a;color:#adb9bb;cursor:not-allowed}label{display:inline-flex;gap:.5rem;align-items:center}.meta{display:grid;grid-template-columns:11rem 1fr;gap:.5rem}.meta dt{color:var(--muted)}.meta dd{margin:0;overflow-wrap:anywhere}code{overflow-wrap:anywhere}
-@media(max-width:640px){.meta{grid-template-columns:1fr}.meta dt{margin-top:.4rem}}
-</style></head><body><main>
-<p><a href="/certificates">← 用戶端憑證</a>　<a href="/">檔案分享</a></p><h1>{{ record.name }}</h1>
-{% if result %}<p class="success">操作已完成；下列群組是 TAK 重新讀取的結果。</p>{% endif %}
-{% if status_error %}<section class="warn">TAK 使用者狀態尚未讀回：{{ status_error }}。{% if record.registered is false %}可在下方設定群組，重新嘗試註冊。{% else %}目前停用群組修改，避免覆寫未知的權限。{% endif %}</section>{% endif %}
+<html lang="zh-Hant-TW" data-bs-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>TAK 憑證 {{ record.serial }}</title><link rel="stylesheet" href="{{ url_for('static', filename='group_assignment.css') }}"><script defer src="{{ url_for('static', filename='group_assignment.js') }}"></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='bootstrap/bootstrap.min.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='console.css') }}">
+<script defer src="{{ url_for('static', filename='bootstrap/bootstrap.bundle.min.js') }}"></script>
+</head><body class="portal-page portal-detail"><main>
+<nav class="portal-nav nav nav-pills" aria-label="控制台頁面"><a class="nav-link" href="/">檔案分享</a><a class="nav-link" href="/mumble">Mumble 管理</a><a class="nav-link active" aria-current="page" href="/certificates">用戶端憑證</a></nav><h1>{{ record.name }}</h1>
+{% if result %}<div class="alert alert-success" role="status">操作已完成；下列群組是 TAK 重新讀取的結果。</div>{% endif %}
+{% if status_error %}<section class="card warn">TAK 使用者狀態尚未讀回：{{ status_error }}。{% if record.registered is false %}可在下方設定群組，重新嘗試註冊。{% else %}目前停用群組修改，避免覆寫未知的權限。{% endif %}</section>{% endif %}
 {% set can_edit = not record.revoked and not record.expired and (not status_error or record.registered is false) %}
-<section><h2>憑證身分</h2><dl class="meta"><dt>CN</dt><dd>{{ record.cn }}</dd><dt>簽發者</dt><dd>{{ record.issuer }}</dd><dt>序號（CRL ID）</dt><dd><code>{{ record.serial }}</code></dd><dt>SHA-256 指紋</dt><dd><code>{{ record.fingerprint }}</code></dd><dt>TAK 使用者</dt><dd>{{ details.username or '未取得' }}</dd><dt>到期日（台灣時間）</dt><dd>{{ record.expires_at }}</dd><dt>剩餘</dt><dd>{{ record.days_left }}</dd><dt>CA 狀態</dt><dd>{{ '已撤銷' if record.revoked else '未撤銷' }}</dd></dl></section>
-<section><h2>群組權限</h2><p class="muted">按「儲存」後會從 TAK 讀回核對。修改群組不需重做 DPK。</p>
+<section class="card"><h2>憑證身分</h2><dl class="meta"><dt>CN</dt><dd>{{ record.cn }}</dd><dt>簽發者</dt><dd>{{ record.issuer }}</dd><dt>序號（CRL ID）</dt><dd><code>{{ record.serial }}</code></dd><dt>SHA-256 指紋</dt><dd><code>{{ record.fingerprint }}</code></dd><dt>TAK 使用者</dt><dd>{{ details.username or '未取得' }}</dd><dt>到期日（台灣時間）</dt><dd>{{ record.expires_at }}</dd><dt>剩餘</dt><dd>{{ record.days_left }}</dd><dt>CA 狀態</dt><dd>{{ '已撤銷' if record.revoked else '未撤銷' }}</dd></dl></section>
+<section class="card"><h2>群組權限</h2><p class="muted">按「儲存」後會從 TAK 讀回核對。修改群組不需重做 DPK。</p>
   <form method="post" action="/certificates/groups">
     <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="serial" value="{{ record.serial }}"><input type="hidden" name="fingerprint" value="{{ record.fingerprint }}">
     {% with group_catalog=groups, assigned_in=details.in_groups, assigned_out=details.out_groups, group_disabled=not can_edit %}{% include 'group_assignment.html' %}{% endwith %}
-    <button {% if not can_edit %}disabled{% endif %}>儲存群組並讀回核對</button>
+    <button class="btn btn-primary" {% if not can_edit %}disabled{% endif %}>儲存群組並讀回核對</button>
   </form>
 </section>
-<section class="warn"><h2>DPK 交付</h2>
+<section class="card warn"><h2>DPK 交付</h2>
   {% if record.package and not record.revoked and not record.expired and record.registered is not false %}
   <p>套件：<code>{{ record.package }}</code>。內容包含此裝置的私鑰；公開下載目前使用熱點 HTTP。</p>
   <form method="post" action="/certificates/share"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="serial" value="{{ record.serial }}"><input type="hidden" name="fingerprint" value="{{ record.fingerprint }}">
-    <p><label><input type="checkbox" name="confirmation" value="yes" required>我確認要在受控熱點開放 20 分鐘、最多 3 次下載</label></p><button>建立短效 QR 分享</button></form>
+    <p><label><input class="form-check-input" type="checkbox" name="confirmation" value="yes" required>我確認要在受控熱點開放 20 分鐘、最多 3 次下載</label></p><button class="btn btn-primary">建立短效 QR 分享</button></form>
   {% else %}<p>此憑證目前沒有可交付的 DPK，或已撤銷／過期／註冊未驗證。</p>{% endif %}
   <p class="muted">停止 QR 分享只會使連結失效，無法從已下載的裝置刪除 DPK。</p>
 </section>

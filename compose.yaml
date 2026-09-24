@@ -137,6 +137,21 @@ services:
         max-size: 10m
         max-file: "3"
 
+  mumble-db-helper:
+    image: tak-local-share-portal:1
+    profiles: ["maintenance"]
+    entrypoint: ["python", "/app/mumble_db_helper.py"]
+    user: "10000:10000"
+    volumes:
+      - mumble-data:/data
+      - ./runtime/mumble-admin:/backup
+      - ./scripts/mumble_db_helper.py:/app/mumble_db_helper.py:ro
+    network_mode: none
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
   mediamtx:
     image: bluenviron/mediamtx:1.21.1
     command: ["/mediamtx.yml"]
@@ -168,7 +183,6 @@ services:
       context: .
       dockerfile: docker/share-portal/Dockerfile
     command: ["gunicorn", "--workers", "1", "--threads", "4", "--timeout", "300", "--bind", "0.0.0.0:8766", "share_admin_flask:app"]
-    profiles: ["sharing"]
     environment:
       SHARE_PUBLIC_BASE: http://takbox.local:${SHARE_PUBLIC_HOST_PORT:-8765}
       SHARE_ADMIN_HOST_PORT: ${SHARE_ADMIN_HOST_PORT:-8766}
@@ -198,7 +212,7 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
-    restart: "no"
+    restart: unless-stopped
     logging:
       driver: local
       options:
@@ -232,7 +246,7 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
-    restart: "no"
+    restart: unless-stopped
     logging:
       driver: local
       options:
