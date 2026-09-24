@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import base64
+import json
+from html.parser import HTMLParser
 import os
 import sys
 import tempfile
@@ -97,10 +99,23 @@ class SharePortalTests(unittest.TestCase):
             self.assertIn("data-group-board", response.data.decode())
             self.assertIn('id="view-list" aria-pressed="false"', response.data.decode())
             self.assertIn('class="certificate-list" role="list" data-view="cards"', response.data.decode())
-            self.assertIn('id="hide-revoked"', response.data.decode())
+            self.assertIn('data-cert-status="revoked"', response.data.decode())
+            self.assertIn('data-cert-status="all"', response.data.decode())
+            self.assertIn('data-cert-status="active" aria-pressed="true"', response.data.decode())
             self.assertIn('id="count-total">1</strong>', response.data.decode())
             self.assertIn('/static/bootstrap/bootstrap.min.css', response.data.decode())
             self.assertIn('class="modal fade" id="revoke-dialog"', response.data.decode())
+            self.assertNotIn("撤銷範圍：", response.data.decode())
+        recent = {"action": "revoke", "result": {"results": [
+            {"serial": "1002", "ca_revoked": True, "validation_8089": "rejected-revoked"},
+            {"serial": "1003", "ca_revoked": False, "error": "test failure"}]}}
+        with patch.object(admin, "cert_control", return_value={"certificates": [record],
+                                                             "last_result": recent}):
+            page = client.get("/certificates", headers=headers).data.decode()
+            self.assertIn("最近一次撤銷", page)
+            self.assertIn("<li>tablet <code>1002</code></li>", page)
+            self.assertNotIn("test failure", page)
+            self.assertNotIn("已拒絕撤銷憑證", page)
         stylesheet = client.get("/static/group_assignment.css", headers=headers)
         self.assertEqual(stylesheet.status_code, 200)
         self.assertIn(b".group-lanes", stylesheet.data)
@@ -267,18 +282,94 @@ class SharePortalTests(unittest.TestCase):
         self.assertTrue(qr.startswith("icu://download?url="))
         self.assertNotIn("test-publish-secret", qr)
 
+    def test_share_records_have_identifiable_labels(self) -> None:
+        portal.create_share("icu", "", 10, 3, media_owner="squad:alpha",
+                            media_path="live/alpha/1/", display_name="ICU-alpha-1")
+        portal.create_share("icu", "", 10, 3, media_owner="squad:alpha",
+                            media_path="live/command/camera/",
+                            display_name="ICU-ADV-live/command/camera")
+        portal.create_share("file", "atak:example.dpk", 10, 3,
+                            display_name="tablet-1002")
+        labels = {portal.share_label(row) for row in portal.list_shares()[0]}
+        self.assertEqual(labels, {"ICU-alpha-1", "ICU-ADV-live/command/camera", "tablet-1002"})
+        markup = portal.admin_page("test-csrf").decode("utf-8")
+        self.assertIn("ICU-alpha-1", markup)
+        self.assertIn("ICU-ADV-live/command/camera", markup)
+        self.assertIn("tablet-1002", markup)
+        self.assertNotIn("完成 0", markup)
+
+        import share_admin_flask as admin
+        auth = "Basic " + base64.b64encode(b"admin:test-admin-password-that-is-long-enough").decode()
+        data = admin.app.test_client().get("/stats", headers={"Authorization": auth}).json
+        self.assertEqual({item["display_name"] for item in data["shares"]}, labels)
+
+    def test_shared_navbar_marks_one_current_page_and_breadcrumb_escapes(self) -> None:
+        from console_ui import PAGES, breadcrumb, navbar
+
+        for path, _ in PAGES:
+            markup = navbar(path + "/result" if path != "/" else path)
+            self.assertEqual(markup.count('aria-current="page"'), 1)
+            for href, label in PAGES:
+                self.assertIn(f'href="{href}">{label}</a>', markup)
+        self.assertIn("&lt;script&gt;", breadcrumb([("用戶端憑證", "/certificates"),
+                                                    ("<script>", None)]))
+
+    def test_legacy_share_labels_use_available_metadata(self) -> None:
+        portal.create_share("icu", "", 10, 1, media_owner="squad:bravo",
+                            media_path="live/bravo/2/")
+        portal.create_share("icu", "", 10, 1)
+        with zipfile.ZipFile(portal.PACKAGE_DIR / "atak-field-tablet-100A.dpk", "w") as package:
+            package.writestr("example.txt", "example-package")
+        portal.create_share("file", "atak:atak-field-tablet-100A.dpk", 10, 1)
+        labels = {portal.share_label(row) for row in portal.list_shares()[0]}
+        self.assertEqual(labels, {"ICU-bravo-2", "ICU-預設", "field-tablet-100A"})
+
+    def test_icu_advanced_path_only_enabled_in_advanced_mode(self) -> None:
+        import share_admin_flask as admin
+
+        auth = "Basic " + base64.b64encode(b"admin:test-admin-password-that-is-long-enough").decode()
+        headers = {"Authorization": auth, "Host": "127.0.0.1:8766"}
+        client = admin.app.test_client()
+
+        class IcuFields(HTMLParser):
+            def __init__(self) -> None:
+                super().__init__()
+                self.section = {}
+                self.input = {}
+
+            def handle_starttag(self, tag, attrs) -> None:
+                attributes = dict(attrs)
+                if attributes.get("id") == "icu-advanced-path":
+                    self.section = attributes
+                elif attributes.get("id") == "icu-custom-path":
+                    self.input = attributes
+
+        for mode, is_advanced in (("", False), ("&mode=advanced", True)):
+            response = client.get(f"/provision?flow=icu{mode}", headers=headers)
+            self.assertEqual(response.status_code, 200)
+            markup = response.data.decode("utf-8")
+            fields = IcuFields()
+            fields.feed(markup)
+            self.assertEqual("hidden" in fields.section, not is_advanced)
+            self.assertEqual("disabled" in fields.input, not is_advanced)
+            self.assertEqual("required" in fields.input, is_advanced)
+            self.assertIn("input-group icu-url-group", markup)
+            self.assertIn("PATH 預覽", markup)
+            self.assertIn("/static/icu_path.js", markup)
+
     def test_source_folders_and_finished_row_layout(self) -> None:
         (portal.ICU_DIR / "initial.prefs").write_text("<preferences/>", encoding="utf-8")
         with zipfile.ZipFile(portal.PACKAGE_DIR / "atak.dpk", "w") as package:
             package.writestr("example.txt", "example")
         markup = portal.admin_page("test-csrf").decode("utf-8")
-        self.assertIn("runtime/packages/icu", markup)
-        self.assertIn("runtime/packages/atak", markup)
+        choices = portal.import_choices()
+        self.assertIn("runtime/packages/icu", [group for group, _ in choices])
+        self.assertIn("runtime/packages/atak", [group for group, _ in choices])
         self.assertNotIn("runtime/share-inbox", markup)
         with self.assertRaises(ValueError):
             portal.create_share("file", "inbox:example.dpk", 10, 1)
-        self.assertIn("value='icu:initial.prefs'", markup)
-        self.assertIn("value='atak:atak.dpk'", markup)
+        self.assertIn("開始引導式佈建", markup)
+        self.assertIn("/provision", markup)
         self.assertIn("<th>查看</th><th>控制</th>", markup)
         self.assertIn("目前分享中的連結", markup)
         portal.create_share("icu", "icu:initial.prefs", 10, 1)
@@ -310,6 +401,143 @@ class SharePortalTests(unittest.TestCase):
         self.assertNotIn("atak:voice.dpk", str(choices))
         with self.assertRaisesRegex(ValueError, "TAK Server Data Packages"):
             portal.create_share("file", "atak:voice.dpk", 10, 1)
+
+    def test_batch_certificate_preview_and_repeat_submission(self) -> None:
+        import share_admin_flask as admin
+
+        operation_dir = self.root / "operations"
+        operation_dir.mkdir()
+        auth = "Basic " + base64.b64encode(b"admin:test-admin-password-that-is-long-enough").decode()
+        headers = {"Authorization": auth, "Host": "127.0.0.1:8766"}
+        client = admin.app.test_client()
+        form = {"csrf": admin.CSRF, "name": ["Test One", "Test Two"],
+                "cn": ["test-one", "test-two"], "in_groups": ["local-test", "team-a"],
+                "out_groups": ["local-test", "team-b"], "ttl": "20", "limit": "3"}
+        preview = client.post("/provision/tak-new/preview", data=form, headers=headers)
+        self.assertEqual(preview.status_code, 200)
+        self.assertIn(b"test-one", preview.data)
+        self.assertIn(b"test-two", preview.data)
+        class HiddenValues(HTMLParser):
+            value = None
+
+            def handle_starttag(self, tag, attrs):
+                attributes = dict(attrs)
+                if tag == "input" and attributes.get("name") == "values":
+                    self.value = attributes.get("value")
+
+        hidden = HiddenValues()
+        hidden.feed(preview.data.decode("utf-8"))
+        self.assertEqual(json.loads(hidden.value)["items"][1]["cn"], "test-two")
+        values = {
+            "items": [{"name": "Test One", "cn": "test-one", "in_groups": ["local-test"],
+                       "out_groups": ["local-test"]},
+                      {"name": "Test Two", "cn": "test-two", "in_groups": ["team-a"],
+                       "out_groups": ["team-b"]}], "ttl": 20, "limit": 3}
+        entries = [{"request": item, "state": "registered", "serial": serial,
+                    "package": f"atak-{item['cn']}-{serial}.dpk"}
+                   for item, serial in zip(values["items"], ("100A", "100B"))]
+        job_id = "a" * 32
+        execution = {"csrf": admin.CSRF, "job_id": job_id, "confirmation": "yes",
+                     "values": json.dumps(values)}
+        with patch.object(admin, "OPERATIONS_DIR", operation_dir), \
+                patch.object(admin, "cert_control", return_value={"batch": {
+                    "state": "complete", "items": entries}}) as worker, \
+                patch.object(portal, "create_share", side_effect=[101, 102]) as create:
+            self.assertEqual(client.post("/provision/tak-new/execute", data=execution,
+                                         headers=headers).status_code, 303)
+            self.assertEqual(client.post("/provision/tak-new/execute", data=execution,
+                                         headers=headers).status_code, 303)
+            self.assertEqual(create.call_count, 2)
+            self.assertEqual(worker.call_count, 1)
+            receipt = admin.read_operation(job_id, "provision:tak-new")
+            self.assertEqual(receipt["state"], "complete")
+            self.assertEqual(len(receipt["results"]), 2)
+
+    def test_new_certificate_form_uses_group_board(self) -> None:
+        import share_admin_flask as admin
+
+        auth = "Basic " + base64.b64encode(b"admin:test-admin-password-that-is-long-enough").decode()
+        headers = {"Authorization": auth, "Host": "127.0.0.1:8766"}
+        with patch.object(admin, "cert_control", return_value={"group_choices": ["team-a"]}):
+            response = admin.app.test_client().get("/provision?flow=tak-new", headers=headers)
+        self.assertEqual(response.status_code, 200)
+        markup = response.data.decode("utf-8")
+        self.assertIn('data-group-field-mode="csv"', markup)
+        self.assertIn('name="in_groups" value="local-test"', markup)
+        self.assertIn('name="out_groups" value="local-test"', markup)
+        self.assertIn('data-group="team-a"', markup)
+        self.assertIn('data-lane="none"', markup)
+        self.assertIn('data-lane="both"', markup)
+
+    def test_certificate_group_overview_classifies_each_permission(self) -> None:
+        import share_admin_flask as admin
+
+        records = [
+            {"serial": "1001", "name": "Writer", "cn": "writer", "in_groups": ["team-a"],
+             "out_groups": [], "revoked": False, "expired": False},
+            {"serial": "1002", "name": "Reader", "cn": "reader", "in_groups": [],
+             "out_groups": ["team-a"], "revoked": False, "expired": False},
+            {"serial": "1003", "name": "Both", "cn": "both", "in_groups": ["team-a"],
+             "out_groups": ["team-a"], "revoked": True, "expired": False},
+            {"serial": "1004", "name": "Unknown", "cn": "unknown", "in_groups": [],
+             "out_groups": [], "revoked": False, "expired": True},
+        ]
+        groups, unassigned = admin.certificate_group_index(records)
+        self.assertEqual([item["serial"] for item in groups[0]["in"]], ["1001"])
+        self.assertEqual([item["serial"] for item in groups[0]["out"]], ["1002"])
+        self.assertEqual([item["serial"] for item in groups[0]["both"]], ["1003"])
+        self.assertEqual([item["serial"] for item in unassigned], ["1004"])
+        auth = "Basic " + base64.b64encode(b"admin:test-admin-password-that-is-long-enough").decode()
+        headers = {"Authorization": auth, "Host": "127.0.0.1:8766"}
+        with patch.object(admin, "cert_control", return_value={"certificates": records}):
+            response = admin.app.test_client().get("/certificates/groups", headers=headers)
+        self.assertEqual(response.status_code, 200)
+        markup = response.data.decode("utf-8")
+        self.assertIn("依群組檢視憑證", markup)
+        self.assertIn('id="group-records" type="application/json"', markup)
+        self.assertIn('data-group-card="team-a"', markup)
+        self.assertIn('data-lane="in"', markup)
+        self.assertIn('data-lane="out"', markup)
+        self.assertIn('data-lane="both"', markup)
+        self.assertIn("未記錄群組", markup)
+        self.assertIn('data-group-status="revoked"', markup)
+        self.assertIn('data-group-status="all"', markup)
+        self.assertIn('data-group-status="active" aria-pressed="true"', markup)
+        self.assertIn('id="group-add-dialog"', markup)
+        self.assertIn("搜尋尚未加入的使用中憑證", markup)
+
+    def test_certificate_group_batch_requires_confirmation(self) -> None:
+        import share_admin_flask as admin
+
+        auth = "Basic " + base64.b64encode(b"admin:test-admin-password-that-is-long-enough").decode()
+        headers = {"Authorization": auth, "Host": "127.0.0.1:8766"}
+        client = admin.app.test_client()
+        change = {"serial": "1001", "fingerprint": "f" * 64,
+                  "expected_in": ["local-test"], "expected_out": ["local-test"],
+                  "in_groups": ["team-a"], "out_groups": ["team-a"]}
+        form = {"csrf": admin.CSRF, "changes": json.dumps([change])}
+        with patch.object(admin, "cert_control") as worker:
+            self.assertEqual(client.post("/certificates/groups/batch", data=form,
+                                         headers=headers).status_code, 400)
+            worker.assert_not_called()
+            form["confirmation"] = "yes"
+            worker.return_value = {"batch": {"state": "complete", "results": []}}
+            response = client.post("/certificates/groups/batch", data=form, headers=headers)
+            self.assertEqual(response.status_code, 303)
+            self.assertIn("/certificates/groups?result=complete", response.headers["Location"])
+            worker.assert_called_once_with("group_batch", changes=[change])
+
+    def test_device_path_uses_url_input_group(self) -> None:
+        import share_admin_flask as admin
+
+        auth = "Basic " + base64.b64encode(b"admin:test-admin-password-that-is-long-enough").decode()
+        headers = {"Authorization": auth, "Host": "127.0.0.1:8766"}
+        response = admin.app.test_client().get("/provision?flow=device", headers=headers)
+        self.assertEqual(response.status_code, 200)
+        markup = response.data.decode("utf-8")
+        self.assertIn('id="device-url-base">rtsps://takbox.local:8322/', markup)
+        self.assertIn('id="device-path" name="path"', markup)
+        self.assertIn("/static/device_path.js", markup)
 
 
 if __name__ == "__main__":

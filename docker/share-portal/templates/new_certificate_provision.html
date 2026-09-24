@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="zh-Hant-TW" data-bs-theme="dark">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>新增 TAK 用戶端｜TAK 控制台</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap/bootstrap.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='console.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='group_assignment.css') }}">
+<script src="{{ url_for('static', filename='console_ui.js') }}" defer></script></head>
+<body class="portal-page"><main class="provision-layout">
+  <header class="page-header">{{ console_nav }}{{ console_breadcrumb([('引導式佈建', '/provision'), ('新增 TAK 用戶端', none)]) }}<h1>新增 TAK 用戶端</h1></header>
+  {% if step == 'configure' %}
+  {% if group_error %}<div class="alert alert-warning" role="alert">目前無法讀取 TAK 群組清單；可以使用預設群組或新增群組。{{ group_error }}</div>{% endif %}
+  <section class="card"><h2>裝置與群組</h2><form method="post" action="/provision/tak-new/preview" class="provision-form" id="batch-form">
+    <input type="hidden" name="csrf" value="{{ csrf }}"><div id="batch-rows">{% include 'batch_device_row.html' %}</div>
+    <template id="batch-device-template">{% include 'batch_device_row.html' %}</template>
+    <button class="btn btn-outline-info" type="button" id="add-device">新增裝置</button>
+    <div class="provision-limits"><label>QR 分享時間（分鐘）<input class="form-control" name="ttl" type="number" min="1" max="10080" value="20" required></label><label>QR 下載上限（次）<input class="form-control" name="limit" type="number" min="1" max="10000" value="3" required></label></div>
+    <p class="muted">最多 10 台。每台有獨立私鑰與 DPK；同一批憑證合併註冊，TAK Server 會重新啟動一次。</p><button class="btn btn-primary">預覽批次</button>
+  </form></section>
+  {% elif step == 'preview' %}
+  <section class="card"><h2>確認簽發與分享</h2><div class="provision-choices">{% for item in values['items'] %}<article class="provision-choice"><strong>{{ item.name }} · {{ item.cn }}</strong><span>In／寫入：{{ item.in_groups|join(', ') or '無' }}</span><span>Out／讀取：{{ item.out_groups|join(', ') or '無' }}</span></article>{% endfor %}</div>
+    <p>每台裝置簽發獨立憑證與 DPK；QR 分享 {{ values.ttl }} 分鐘、最多 {{ values.limit }} 次下載。</p><div class="alert alert-warning" role="note">註冊會重新啟動 TAK Server，短暫中斷既有連線。</div>
+    <form method="post" action="/provision/tak-new/execute" class="provision-form"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="job_id" value="{{ job_id }}"><input type="hidden" name="values" value='{{ values|tojson|forceescape }}'><label><input class="form-check-input" type="checkbox" name="confirmation" value="yes" required> 我確認簽發上述憑證並建立限時 QR 分享</label><button class="btn btn-danger">簽發並建立分享</button></form>
+  </section>
+  {% else %}
+  <section class="card {{ 'success' if receipt.state == 'complete' else 'warning' }}"><h2>作業狀態：{{ '完成' if receipt.state == 'complete' else '部分完成，需檢查' }}</h2><p>作業 ID：<code>{{ job_id }}</code></p>{% if receipt.error %}<div class="alert alert-warning" role="alert">{{ receipt.error }}</div>{% endif %}
+  {% if receipt.batch %}<div class="provision-choices">{% for item in receipt.batch['items'] %}<article class="provision-choice"><strong>{{ item.request.name }} · {{ item.request.cn }}</strong><span>狀態：{{ item.state }}{% if item.serial %} · 序號 {{ item.serial }}{% endif %}</span>{% if item.expires_at %}<span>憑證到期：{{ item.expires_at }}</span>{% endif %}{% if item.error %}<span>{{ item.error }}</span>{% endif %}</article>{% endfor %}</div>{% endif %}
+  <div class="provision-choices">{% for entry, row, expiry in shares %}<article class="provision-choice"><strong>{{ entry.label }} · {{ entry.serial }}</strong><span>分享至 {{ expiry }}；最多 {{ row.max_downloads }} 次下載</span><img class="qr img-fluid" src="/qr.png/{{ row.token }}" alt="{{ entry.label }} QR Code"><a href="{{ public_base }}/q/{{ row.token }}" target="_blank" rel="noopener noreferrer">開啟分享頁</a></article>{% endfor %}</div>
+  {% if receipt.state != 'complete' %}<form method="post" action="/provision/tak-new/retry"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="job_id" value="{{ job_id }}"><button class="btn btn-warning">接續未完成作業</button></form>{% endif %}
+  <a class="btn btn-outline-info" href="/provision?flow=tak-new">建立新批次</a></section>
+  {% endif %}
+</main><script src="{{ url_for('static', filename='group_assignment.js') }}" defer></script><script src="{{ url_for('static', filename='new_certificate.js') }}" defer></script><script src="{{ url_for('static', filename='bootstrap/bootstrap.bundle.min.js') }}" defer></script></body></html>

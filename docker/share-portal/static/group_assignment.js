@@ -2,9 +2,14 @@
   'use strict';
 
   const groupName = /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,63}$/;
-  for (const board of document.querySelectorAll('[data-group-board]')) {
+  function initializeGroupBoard(board) {
+    if (board.dataset.groupReady === 'true') return;
+    board.dataset.groupReady = 'true';
     const form = board.closest('form');
     const readOnly = board.dataset.readonly === 'true';
+    const fieldMode = board.dataset.groupFieldMode;
+    const inField = board.dataset.groupInField;
+    const outField = board.dataset.groupOutField;
     const lists = Object.fromEntries([...board.querySelectorAll('[data-group-list]')]
       .map(list => [list.dataset.groupList, list]));
     const selected = new Set();
@@ -33,12 +38,21 @@
 
     function sync() {
       fields.replaceChildren();
+      const inGroups = [];
+      const outGroups = [];
       for (const [lane, list] of Object.entries(lists)) {
         for (const entry of list.querySelectorAll('.group-entry')) {
-          if (lane === 'in' || lane === 'both') addField('in_group', entry.dataset.group);
-          if (lane === 'out' || lane === 'both') addField('out_group', entry.dataset.group);
+          if (lane === 'in' || lane === 'both') inGroups.push(entry.dataset.group);
+          if (lane === 'out' || lane === 'both') outGroups.push(entry.dataset.group);
         }
         board.querySelector(`[data-count="${lane}"]`).textContent = `（${list.children.length}）`;
+      }
+      if (fieldMode === 'csv') {
+        addField(inField, inGroups.join(','));
+        addField(outField, outGroups.join(','));
+      } else {
+        for (const group of inGroups) addField(inField, group);
+        for (const group of outGroups) addField(outField, group);
       }
       moveButton.disabled = readOnly || selected.size === 0;
     }
@@ -154,8 +168,9 @@
     });
 
     form.addEventListener('submit', event => {
+      if (!board.isConnected) return;
       sync();
-      if (!fields.querySelector('[name="in_group"], [name="out_group"]')) {
+      if (![...fields.querySelectorAll('input')].some(input => input.value)) {
         event.preventDefault();
         message.textContent = '至少要有一個 In 或 Out 群組。';
         message.scrollIntoView({block: 'nearest'});
@@ -163,4 +178,6 @@
     });
     sync();
   }
+  window.initializeGroupBoard = initializeGroupBoard;
+  document.querySelectorAll('[data-group-board]').forEach(initializeGroupBoard);
 })();

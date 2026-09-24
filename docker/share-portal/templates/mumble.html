@@ -8,15 +8,16 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap/bootstrap.min.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='console.css') }}">
 <script defer src="{{ url_for('static', filename='bootstrap/bootstrap.bundle.min.js') }}"></script>
-</head>
+<script src="{{ url_for('static', filename='console_ui.js') }}" defer></script></head>
 <body class="portal-page">
 <main class="mumble-layout">
 <header class="page-header">
-<nav class="portal-nav nav nav-pills" aria-label="控制台頁面"><a class="nav-link" href="/">檔案分享</a><a class="nav-link active" aria-current="page" href="/mumble">Mumble 管理</a><a class="nav-link" href="/certificates">用戶端憑證</a></nav>
+{{ console_nav }}
 <h1>語音伺服器控制台</h1>
 </header>
-{% if error %}<section class="card error">Mumble 控制服務無法取得資料：{{ error }}</section>{% endif %}
-{% if result %}<section class="card success">操作已送出並完成，請核對下方最新清單。</section>{% endif %}
+<div class="alert alert-warning" id="mumble-feedback" role="alert" hidden></div>
+{% if error %}<div class="alert alert-danger" role="alert">Mumble 控制服務無法取得資料：{{ error }}</div>{% endif %}
+{% if result %}<div class="alert alert-success" role="status">操作已送出並完成，請核對下方最新清單。</div>{% endif %}
 {% if snapshot %}
 <section class="card sessions">
   <h2>線上連線　{{ snapshot.sessions|length }}</h2>
@@ -101,7 +102,7 @@ for(const button of document.querySelectorAll('[data-select]')){
 }
 for(const button of document.querySelectorAll('[data-open-dialog]')){
   button.addEventListener('click',()=>{const form=button.closest('form');const name=button.dataset.requireSelection;
-    if(name&&!form.querySelector(`input[name="${name}"]:checked`)){window.alert('請先選取要操作的項目。');return;}
+    if(name&&!form.querySelector(`input[name="${name}"]:checked`)){const feedback=document.getElementById('mumble-feedback');feedback.textContent='請先選取要操作的項目。';feedback.hidden=false;feedback.scrollIntoView({block:'nearest'});return;}
     const dialog=document.getElementById(button.dataset.openDialog);const checkbox=dialog.querySelector('input[type=checkbox]');
     checkbox.checked=false;dialog.querySelector('button[type=submit]').disabled=true;bootstrap.Modal.getOrCreateInstance(dialog).show();});
 }

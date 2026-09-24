@@ -154,9 +154,9 @@ services:
 
   mediamtx:
     image: bluenviron/mediamtx:1.21.1
-    command: ["/mediamtx.yml"]
+    command: ["/config/mediamtx.yml"]
     volumes:
-      - ./runtime/mediamtx/mediamtx.yml:/mediamtx.yml:ro
+      - ./runtime/mediamtx:/config:ro
       - ./runtime/pki/mediamtx-fullchain.pem:/certs/mediamtx-fullchain.pem:ro
       - ./runtime/pki/mediamtx-server.key.pem:/certs/mediamtx-server.key.pem:ro
     ports:
@@ -177,18 +177,76 @@ services:
         max-size: 10m
         max-file: "3"
 
+  media-viewer:
+    image: bluenviron/mediamtx:1.21.1
+    command: ["/config/viewer-public.yml"]
+    volumes:
+      - ./runtime/mediamtx:/config:ro
+    ports:
+      - "192.168.137.1:8189:8189/udp"
+      - "192.168.137.1:8189:8189/tcp"
+    networks:
+      - tak-edge
+    depends_on:
+      - mediamtx
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+  media-viewer-gateway:
+    image: tak-local-share-portal:1
+    build:
+      context: .
+      dockerfile: docker/share-portal/Dockerfile
+    command: ["gunicorn", "--workers", "1", "--threads", "4", "--timeout", "30", "--bind", "0.0.0.0:8889", "viewer_gateway:app"]
+    volumes:
+      - ./runtime/mediamtx:/media-config:ro
+    ports:
+      - "192.168.137.1:8889:8889/tcp"
+    networks:
+      - tak-edge
+    depends_on:
+      - media-viewer
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    restart: unless-stopped
+
+  media-preview:
+    image: bluenviron/mediamtx:1.21.1
+    command: ["/config/viewer-preview.yml"]
+    volumes:
+      - ./runtime/mediamtx:/config:ro
+    ports:
+      - "127.0.0.1:8890:8889/tcp"
+      - "127.0.0.1:8190:8190/udp"
+      - "127.0.0.1:8190:8190/tcp"
+    networks:
+      - tak-edge
+    depends_on:
+      - mediamtx
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
   share-admin:
     image: tak-local-share-portal:1
     build:
       context: .
       dockerfile: docker/share-portal/Dockerfile
-    command: ["gunicorn", "--workers", "1", "--threads", "4", "--timeout", "300", "--bind", "0.0.0.0:8766", "share_admin_flask:app"]
+    command: ["gunicorn", "--workers", "1", "--threads", "4", "--timeout", "650", "--bind", "0.0.0.0:8766", "share_admin_flask:app"]
     environment:
       SHARE_PUBLIC_BASE: http://takbox.local:${SHARE_PUBLIC_HOST_PORT:-8765}
       SHARE_ADMIN_HOST_PORT: ${SHARE_ADMIN_HOST_PORT:-8766}
     secrets:
       - share_admin_password
       - mediamtx_publish_password
+      - mediamtx_read_password
+      - mediamtx_api_password
     volumes:
       - share-state:/state
       - share-files:/files
@@ -196,10 +254,12 @@ services:
       - ./runtime/tak-cert-control:/cert-control
       - ./runtime/packages/atak:/imports/packages:ro
       - ./runtime/packages/icu:/imports/icu:ro
+      - ./runtime/mediamtx:/media-config
     ports:
       - "127.0.0.1:${SHARE_ADMIN_HOST_PORT:-8766}:8766/tcp"
     networks:
       - share-net
+      - tak-edge
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8766/healthz', timeout=3)"]
       interval: 15s
@@ -282,3 +342,7 @@ secrets:
     file: ./runtime/secrets/share_admin_password
   mediamtx_publish_password:
     file: ./runtime/secrets/mediamtx_publish_password
+  mediamtx_read_password:
+    file: ./runtime/secrets/mediamtx_read_password
+  mediamtx_api_password:
+    file: ./runtime/secrets/mediamtx_api_password

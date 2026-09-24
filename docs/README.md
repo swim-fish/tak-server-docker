@@ -16,7 +16,9 @@
 | 啟動 Mumble、建立頻道或更換密碼 | [Mumble Server](mumble/server.md) |
 | 啟動 RTSP／RTSPS 影像服務、設定 TAK ICU | [MediaMTX](mediamtx/server.md) |
 | 用 QR Code 佈建 TAK ICU 影像發布設定 | [ICU QR Code](mediamtx/icu-qrcode.md) |
+| 查看即時影像、公開 WebRTC 開關及管理小隊／設備發布身分 | [MediaMTX 管理](mediamtx/management.md) |
 | 分享 ICU 設定或 ATAK DPK／ZIP，管理 Mumble | [分享與管理頁](sharing/portal.md) |
+| 單筆／批次簽發 TAK 憑證、替換 Vx 任務套件 | [引導式佈建計畫與現況](plans/guided-provisioning.md) |
 | 查詢或取消 Mumble 註冊身分 | [Mumble 使用者](mumble/users.md) |
 | 匯入 TAK 連線與裝置憑證 | [ATAK 連線](atak/connection.md) |
 | 設定 Vx、下載任務或使用多頻道 | [Vx 任務與頻道](atak/vx-missions.md) |
@@ -30,7 +32,7 @@
 
 ## 查證據與後續工作
 
-[驗證索引](validation/README.md)區分實機結果、程式碼分析與待驗項目。[後續計畫](plans/roadmap.md)收錄尚未實作的功能。[歷史資料](archive/README.md)保留原始設計與過時畫面，不作為現行操作指引。
+[驗證索引](validation/README.md)區分實機結果、程式碼分析與待驗項目。[後續計畫](plans/roadmap.md)收錄尚未完成的功能；[引導式佈建與分享計畫](plans/guided-provisioning.md)記錄目前控制台流程與尚待驗收的項目。[歷史資料](archive/README.md)保留原始設計與過時畫面，不作為現行操作指引。
 
 文件使用臺灣正體中文；CLI、檔名、設定鍵與 UI 名稱保留原文。部署範例使用 `takbox.local` 與 Windows 行動熱點；不同環境請依[變更網路設定](network/mdns.md#變更名稱或網段)同步調整。
 

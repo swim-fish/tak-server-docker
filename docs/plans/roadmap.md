@@ -2,6 +2,10 @@
 
 以下尚未完成，不是現行啟動指令。已實作範圍見[架構](../architecture.md)，先前設計見[歷史資料](../archive/README.md)。
 
+## 引導式佈建與分享
+
+引導頁、批次憑證簽發、Vx 伺服器端固定名稱替換、ICU 組別／人員與 Advanced 自訂路徑、小隊／設備發布身分、熱點匿名 WebRTC、控制台預覽與開關已有本機實作，見[驗證紀錄](../validation/2026-09-24-guided-provisioning.md)及[MediaMTX 管理](../mediamtx/management.md)。仍需新憑證 DPK 的 Android 匯入、替換後 Vx 的實機更新行為、外網公開 DNS／HTTPS／ICE、跨瀏覽器與多裝置驗收。操作順序、失敗恢復及完整驗收見[引導式佈建與分享計畫](guided-provisioning.md)。
+
 ## 語音與任務部署
 
 | 項目 | 完成條件 |

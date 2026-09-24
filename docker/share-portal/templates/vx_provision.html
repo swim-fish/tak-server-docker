@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="zh-Hant-TW" data-bs-theme="dark">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Vx 任務佈建｜TAK 控制台</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap/bootstrap.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='console.css') }}">
+<script src="{{ url_for('static', filename='console_ui.js') }}" defer></script></head>
+<body class="portal-page"><main class="provision-layout">
+  <header class="page-header">{{ console_nav }}{{ console_breadcrumb([('引導式佈建', '/provision'), ('Vx 任務佈建', none)]) }}<h1>Vx 任務佈建</h1></header>
+  {% if step == 'configure' %}
+  <section class="card"><h2>準備固定名稱套件</h2><p>使用已驗證的 Vx 範本與四頻道設定，產生 Vx-only DPK。TAK Server 上的顯示名稱固定為 <code>ATAK Local Voice</code>，任務名稱為 <code>vx-local</code>。</p><p>此步驟只產生本機套件並查詢伺服器，不刪除任何檔案。</p>
+  <form method="post" action="/provision/vx/prepare"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="job_id" value="{{ job_id }}"><button class="btn btn-primary">產生套件並預覽</button></form></section>
+  {% elif step == 'preview' %}
+  <section class="card"><h2>確認強制替換</h2><p>新套件 SHA-256：<code>{{ package.sha256 }}</code>；大小 {{ package.size }} bytes。</p><div class="alert alert-warning" role="note">TAK Server 同名舊套件：{{ package.old|length }} 筆。執行時會先逐筆下載並驗證備份，再按確切 hash 刪除、上傳新檔、設定 <code>tool=public</code> 與 <code>missionpackage</code>，最後讀回確認只剩一筆。</div>
+  <div class="provision-choices">{% for item in package.summary.channels %}<article class="provision-choice"><strong>{{ item.alias }}</strong><span>{{ item.mumble_channel_name }} · Mumble 頻道 ID {{ item.mumble_channel_id }}</span></article>{% endfor %}</div>
+  <p>Mumble：<code>{{ package.summary.host }}:{{ package.summary.port }}</code>。TAK Server 套件替換後，已安裝於 Android 的任務不保證自動更新。</p>
+  <form method="post" action="/provision/vx/replace" class="provision-form"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="job_id" value="{{ job_id }}"><label><input class="form-check-input" type="checkbox" name="confirmation" value="yes" required> 我確認備份後強制替換 TAK Server 的同名套件</label><button class="btn btn-danger">備份並強制替換</button></form></section>
+  {% else %}
+  <section class="card {{ 'success' if package.state == 'complete' else 'warning' }}"><h2>作業狀態：{{ package.state }}</h2><p>作業 ID：<code>{{ job_id }}</code></p><p>新套件 SHA-256：<code>{{ package.sha256 or '尚未產生' }}</code></p>{% if package.error %}<div class="alert alert-warning" role="alert">{{ package.error }}</div>{% endif %}
+  {% if package.state == 'complete' %}<p>已備份並替換 {{ package.old|length }} 筆同名舊套件；伺服器已讀回唯一的 <code>ATAK Local Voice</code>，具備 <code>tool=public</code> 與 <code>missionpackage</code>。Android 請在 ATAK → Data Packages → Download 選擇本機 TAK Server 下載。</p>
+  {% elif package.state in ['needs-recovery', 'replacing'] %}<p>替換作業未完成，舊套件備份保存在本機 runtime。先檢查錯誤，再執行下方的備份恢復。</p><form method="post" action="/provision/vx/restore" class="provision-form"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="job_id" value="{{ job_id }}"><label><input class="form-check-input" type="checkbox" name="confirmation" value="yes" required> 我確認恢復此作業備份的同名套件</label><button class="btn btn-warning">恢復舊套件</button></form>
+  {% elif package.state == 'restored' %}<p>已從本機備份恢復舊套件。</p>
+  {% elif package.state == 'failed-before-delete' %}<p>尚未刪除伺服器套件；請修正問題後建立新的作業。</p>
+  {% else %}<p>作業未完成，請先查閱 Windows 管理 worker 與本機作業紀錄。</p>{% endif %}
+  <a class="btn btn-outline-info" href="/provision?flow=vx">建立新作業</a></section>
+  {% endif %}
+</main><script src="{{ url_for('static', filename='bootstrap/bootstrap.bundle.min.js') }}" defer></script></body></html>

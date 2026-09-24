@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="zh-Hant-TW" data-bs-theme="dark">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>依群組檢視憑證｜TAK 控制台</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap/bootstrap.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='console.css') }}">
+  <script src="{{ url_for('static', filename='console_ui.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='certificate_groups.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='bootstrap/bootstrap.bundle.min.js') }}" defer></script>
+</head>
+<body class="portal-page"><main class="certificate-layout">
+  <header class="wide page-header">{{ console_nav }}{{ console_breadcrumb([('用戶端憑證', '/certificates'), ('依群組檢視', none)]) }}<h1>依群組檢視憑證</h1></header>
+  <nav class="nav nav-pills gap-2 wide" aria-label="憑證檢視方式"><a class="nav-link" href="/certificates">憑證清冊</a><a class="nav-link active" aria-current="page" href="/certificates/groups">依群組檢視</a></nav>
+  {% if error %}<div class="alert alert-danger wide" role="alert">憑證管理程式無法取得資料：{{ error }}</div>{% else %}
+  {% if batch_result %}<div class="alert {{ 'alert-success' if batch_result.state == 'complete' else 'alert-warning' }} wide" role="status"><strong>{{ '群組變更已完成' if batch_result.state == 'complete' else '部分變更失敗，請核對憑證詳情' }}</strong><ul class="mb-0">{% for item in batch_result.results %}<li>{{ item.cn }} · {{ '已更新' if item.state == 'updated' else item.error }}</li>{% endfor %}</ul></div>{% endif %}
+  <div class="inventory-stats wide" role="status"><span>群組 <strong>{{ groups|length }}</strong></span><span>憑證總計 <strong>{{ total }}</strong></span><span id="group-visible-count"></span><span id="group-pending-count"></span></div>
+  <div class="group-page-toolbar wide"><div class="btn-group status-filter" role="group" aria-label="憑證狀態篩選"><button class="btn btn-outline-info" type="button" data-group-status="all" aria-pressed="false">全選</button><button class="btn btn-outline-success active" type="button" data-group-status="active" aria-pressed="true">使用中</button><button class="btn btn-outline-warning" type="button" data-group-status="expired" aria-pressed="false">逾期</button><button class="btn btn-outline-secondary" type="button" data-group-status="revoked" aria-pressed="false">撤銷</button></div><button class="btn btn-outline-secondary" type="button" id="group-discard" disabled>取消未儲存變更</button><button class="btn btn-primary" type="button" id="group-save" disabled>儲存群組變更</button></div>
+  <p class="muted wide">可將憑證拖到其他群組的 In、Out 或 In + Out 清單；也可按「移動」選擇目的地。新增憑證時用搜尋與勾選。所有變更先暫存，確認後才寫入 TAK；已撤銷、逾期或未註冊的憑證僅供檢視。</p>
+  <div class="alert alert-warning wide" id="group-message" role="status" hidden></div>
+  {% for group in groups %}
+  <section class="card wide certificate-group" data-group-card="{{ group.name }}" aria-labelledby="group-{{ loop.index }}">
+    <div class="certificate-group-head"><h2 id="group-{{ loop.index }}">{{ group.name }} <span class="badge text-bg-secondary" data-group-total>{{ group['in']|length + group['out']|length + group.both|length }} 張</span></h2><button class="btn btn-outline-info" type="button" data-group-add>新增憑證</button></div>
+    <div class="certificate-group-lanes">
+      {% for key, label in [('in', 'In／寫入'), ('out', 'Out／讀取'), ('both', 'In + Out／讀寫')] %}
+      <section class="certificate-group-lane" data-lane="{{ key }}"><h3>{{ label }} <span class="badge text-bg-secondary" data-lane-count>{{ group[key]|length }}</span></h3><ul data-members></ul><p class="muted" data-empty>無憑證</p></section>
+      {% endfor %}
+    </div>
+  </section>
+  {% else %}<section class="card wide"><p>目前沒有可用的群組。請先在憑證詳細頁設定群組。</p></section>{% endfor %}
+  <section class="card wide certificate-group" id="group-unassigned" {% if not unassigned %}hidden{% endif %}><h2>未記錄群組</h2><ul class="certificate-group-unassigned" id="group-unassigned-list"></ul></section>
+  <script id="group-records" type="application/json">{{ records|tojson }}</script>
+  <form id="group-save-form" method="post" action="/certificates/groups/batch"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="changes" id="group-changes"><div class="modal fade" id="group-confirm-dialog" tabindex="-1" aria-labelledby="group-confirm-title" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h2 class="modal-title fs-5" id="group-confirm-title">確認群組變更</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button></div><div class="modal-body"><p id="group-confirm-summary"></p><p>送出前會核對 TAK API 的原群組；若已被其他操作更改，這批變更會被拒絕。</p><label class="d-flex align-items-start gap-2"><input class="form-check-input" type="checkbox" name="confirmation" value="yes" id="group-confirm-check">我確認更新這些憑證的群組</label></div><div class="modal-footer"><button class="btn btn-outline-info" type="button" data-bs-dismiss="modal">取消</button><button class="btn btn-primary" type="submit" id="group-confirm-submit" disabled>確認儲存</button></div></div></div></div></form>
+  <div class="modal fade" id="group-add-dialog" tabindex="-1" aria-labelledby="group-add-title" aria-hidden="true"><div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content"><div class="modal-header"><h2 class="modal-title fs-5" id="group-add-title">新增憑證到群組</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button></div><div class="modal-body"><label for="group-add-lane">加入權限</label><select class="form-select mb-3" id="group-add-lane"><option value="both">In + Out／讀寫</option><option value="in">In／寫入</option><option value="out">Out／讀取</option></select><label for="group-add-search">搜尋尚未加入的使用中憑證</label><input class="form-control" id="group-add-search" type="search" placeholder="裝置、CN 或 CRL ID"><p class="muted mt-2" id="group-add-count"></p><div class="group-add-results" id="group-add-results"></div></div><div class="modal-footer"><button class="btn btn-outline-info" type="button" data-bs-dismiss="modal">取消</button><button class="btn btn-primary" type="button" id="group-add-apply" disabled>加入選取的憑證</button></div></div></div></div>
+  <div class="modal fade" id="group-move-dialog" tabindex="-1" aria-labelledby="group-move-title" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h2 class="modal-title fs-5" id="group-move-title">移動憑證</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button></div><div class="modal-body"><p id="group-move-name"></p><label for="group-move-target">目的群組</label><select class="form-select mb-3" id="group-move-target">{% for group in groups %}<option value="{{ group.name }}">{{ group.name }}</option>{% endfor %}</select><label for="group-move-lane">目的權限</label><select class="form-select" id="group-move-lane"><option value="in">In／寫入</option><option value="out">Out／讀取</option><option value="both">In + Out／讀寫</option></select></div><div class="modal-footer"><button class="btn btn-outline-info" type="button" data-bs-dismiss="modal">取消</button><button class="btn btn-primary" type="button" id="group-move-apply">暫存移動</button></div></div></div></div>
+  {% endif %}
+</main></body></html>

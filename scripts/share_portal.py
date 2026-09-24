@@ -22,6 +22,7 @@ import qrcode
 from flask import Flask, Response, request
 
 from build_icu_qr import build_profile, build_uri
+from console_ui import navbar
 
 
 STATE_DIR = Path(os.environ.get("SHARE_STATE_DIR", "/state"))
@@ -70,6 +71,13 @@ def initialize() -> None:
             max_downloads INTEGER, accepted INTEGER NOT NULL DEFAULT 0,
             completed INTEGER NOT NULL DEFAULT 0, status TEXT NOT NULL DEFAULT 'active'
         )""")
+        existing = {column[1] for column in db.execute("PRAGMA table_info(shares)")}
+        if "media_owner" not in existing:
+            db.execute("ALTER TABLE shares ADD COLUMN media_owner TEXT")
+        if "media_path" not in existing:
+            db.execute("ALTER TABLE shares ADD COLUMN media_path TEXT")
+        if "display_name" not in existing:
+            db.execute("ALTER TABLE shares ADD COLUMN display_name TEXT")
         db.execute("""CREATE TABLE IF NOT EXISTS downloads (
             id TEXT PRIMARY KEY, share_id TEXT NOT NULL, started_at INTEGER NOT NULL,
             finished_at INTEGER, outcome TEXT NOT NULL, bytes_sent INTEGER NOT NULL DEFAULT 0
@@ -105,6 +113,30 @@ def get_share(token: str) -> sqlite3.Row | None:
 def list_shares() -> tuple[list[sqlite3.Row], bool]:
     with connection() as db:
         return list(db.execute("SELECT * FROM shares ORDER BY created_at DESC, rowid DESC")), is_paused(db)
+
+
+def share_label(row: sqlite3.Row) -> str:
+    """Return an identifiable console label without changing the download filename."""
+    if row["display_name"]:
+        return row["display_name"]
+    if row["kind"] == "icu":
+        path = row["media_path"] or ""
+        if not path:
+            return "ICU-預設"
+        owner = row["media_owner"] or ""
+        squad = owner.removeprefix("squad:") if owner.startswith("squad:") else ""
+        prefix = f"live/{squad}/" if squad else ""
+        if prefix and path.startswith(prefix):
+            person = path[len(prefix):].strip("/")
+            if not person or (person.isdigit() and 1 <= int(person) <= 10):
+                return f"ICU-{squad}-{person or '未指定'}"
+        return "ICU-ADV-" + (path.strip("/") or "live")
+    name = row["filename"]
+    if name.startswith("atak-") and name.endswith(".dpk"):
+        parts = name[5:-4].rsplit("-", 1)
+        if len(parts) == 2 and parts[1] and all(char in "0123456789abcdefABCDEF" for char in parts[1]):
+            return f"{parts[0]}-{parts[1]}"
+    return name
 
 
 def reserve_download(token: str) -> tuple[sqlite3.Row, str] | None:
@@ -186,7 +218,9 @@ def source_file(value: str, kind: str = "file") -> Path:
 
 
 def create_share(kind: str, source: str, ttl_minutes: int | None,
-                 max_downloads: int | None) -> str:
+                 max_downloads: int | None, *, profile: bytes | None = None,
+                 media_owner: str | None = None, media_path: str | None = None,
+                 display_name: str | None = None) -> str:
     if ttl_minutes is None and max_downloads is None:
         raise ValueError("截止時間與下載上限至少填一項")
     if ttl_minutes is not None and not 1 <= ttl_minutes <= 10080:
@@ -195,12 +229,21 @@ def create_share(kind: str, source: str, ttl_minutes: int | None,
         raise ValueError("下載上限須介於 1 與 10000 次")
     if kind not in {"icu", "file"}:
         raise ValueError("分享種類無效")
+    if profile is not None and (kind != "icu" or source or not 0 < len(profile) <= 1024 * 1024):
+        raise ValueError("ICU profile is invalid")
+    if (media_owner is None) != (media_path is None) or (media_owner is not None and kind != "icu"):
+        raise ValueError("Media share metadata is invalid")
+    if display_name is not None and (not display_name or len(display_name) > 200):
+        raise ValueError("Share display name is invalid")
     share_id = uuid.uuid4().hex
     stored_name = uuid.uuid4().hex
     target = FILE_DIR / stored_name
     if kind == "icu" and not source:
-        password = PUBLISH_PASSWORD_FILE.read_text(encoding="utf-8").rstrip("\r\n")
-        data = build_profile("takbox.local", 8322, "live/", "atak-publisher", password)
+        if profile is None:
+            password = PUBLISH_PASSWORD_FILE.read_text(encoding="utf-8").rstrip("\r\n")
+            data = build_profile("takbox.local", 8322, "live/", "atak-publisher", password)
+        else:
+            data = profile
         target.write_bytes(data)
         filename = "initial.prefs"
     else:
@@ -213,16 +256,23 @@ def create_share(kind: str, source: str, ttl_minutes: int | None,
         with connection() as db:
             db.execute("BEGIN IMMEDIATE")
             db.execute("""INSERT INTO shares
-                (id,token,kind,filename,stored_name,created_at,expires_at,max_downloads)
-                VALUES (?,?,?,?,?,?,?,?)""",
+                (id,token,kind,filename,stored_name,created_at,expires_at,max_downloads,media_owner,media_path,display_name)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
                 (share_id, secrets.token_urlsafe(24), kind, filename, stored_name,
                  now, now + ttl_minutes * 60 if ttl_minutes is not None else None,
-                 max_downloads))
+                 max_downloads, media_owner, media_path, display_name))
             db.commit()
     except Exception:
         target.unlink(missing_ok=True)
         raise
     return share_id
+
+
+def get_share_by_id(share_id: str) -> sqlite3.Row | None:
+    if len(share_id) != 32 or any(char not in "0123456789abcdef" for char in share_id):
+        return None
+    with connection() as db:
+        return db.execute("SELECT * FROM shares WHERE id=?", (share_id,)).fetchone()
 
 
 def update_status(share_id: str) -> None:
@@ -237,6 +287,12 @@ def stop_file_shares(filename: str) -> int:
         result = db.execute("UPDATE shares SET status='stopped' WHERE kind='file' AND filename=? "
                             "AND status='active'", (filename,))
         db.commit()
+        return result.rowcount
+
+
+def stop_media_shares(owner: str) -> int:
+    with connection() as db:
+        result = db.execute("UPDATE shares SET status='stopped' WHERE media_owner=? AND status='active'", (owner,))
         return result.rowcount
 
 
@@ -290,22 +346,17 @@ def admin_page(csrf: str) -> bytes:
     now = int(time.time())
     active_rows = [row for row in rows if share_status(row, paused) == "分享中"]
     live_links = "".join(
-        f"<li id='active-{row['id']}'><strong>{esc(row['filename'])}</strong>"
-        f"<a data-qr-open data-share-id='{row['id']}' data-qr-name='{esc(row['filename'])}' data-qr-image='/qr.png/{esc(row['token'])}' href='{esc(PUBLIC_BASE)}/q/{esc(row['token'])}'>"
+        f"<li id='active-{row['id']}'><strong>{esc(share_label(row))}</strong>"
+        f"<a data-qr-open data-share-id='{row['id']}' data-qr-name='{esc(share_label(row))}' data-qr-image='/qr.png/{esc(row['token'])}' href='{esc(PUBLIC_BASE)}/q/{esc(row['token'])}'>"
         f"{esc(PUBLIC_BASE)}/q/{esc(row['token'])}</a></li>" for row in active_rows)
-    options = "<optgroup label='即時產生'><option value='icu:new'>使用目前發布密碼建立 ICU 設定</option></optgroup>" + "".join(
-        f"<optgroup label='{esc(group)}'>" + "".join(
-            f"<option value='{esc(value)}'>{esc(label)}</option>" for value, label in choices)
-        + "</optgroup>" for group, choices in import_choices())
     table = "".join(
         f"<tr id='row-{row['id']}' class='{'inactive' if terminal else ''}'>"
-        f"<td data-label='檔案'>{esc(row['filename'])}<br><small>{esc(row['kind'])}</small></td>"
-        f"<td data-label='狀態' class='{'status-live' if status == '分享中' else 'status-muted'}' id='status-{row['id']}' data-expiry='{row['expires_at'] or ''}'><span class='share-state'>{esc(status)}</span>"
+        f"<td data-label='檔案'><strong>{esc(share_label(row))}</strong><br><span class='badge text-bg-secondary'>{'ICU 設定' if row['kind'] == 'icu' else 'TAK 套件'}</span></td>"
+        f"<td data-label='狀態' class='{'status-live' if status == '分享中' else 'status-muted'}' id='status-{row['id']}' data-expiry='{row['expires_at'] or ''}'><span class='share-state badge {'text-bg-success' if status == '分享中' else 'text-bg-secondary'}'>{esc(status)}</span>"
         f"<small class='share-countdown' {'hidden' if status != '分享中' else ''}>{remaining_text(row['expires_at'] - now) if row['expires_at'] else '無時間限制'}</small></td>"
-        f"<td data-label='已使用／上限' id='count-{row['id']}'>{row['accepted']} / {row['max_downloads'] or '∞'}"
-        f"<br><small>完成 {row['completed']}</small></td>"
+        f"<td data-label='已使用／上限' id='count-{row['id']}'>{row['accepted']} / {row['max_downloads'] or '∞'}</td>"
         f"<td data-label='建立／截止時間'>{esc(local_time(row['created_at']))}<br>截止：{esc(local_time(row['expires_at']))}</td>"
-        f"<td data-label='查看'><a class='btn btn-outline-info view' data-qr-open data-share-id='{row['id']}' data-qr-name='{esc(row['filename'])}' data-qr-image='/qr.png/{esc(row['token'])}' href='{esc(PUBLIC_BASE)}/q/{esc(row['token'])}' {'hidden' if status != '分享中' else ''}>檢視 QR</a>"
+        f"<td data-label='查看'><a class='btn btn-outline-info view' data-qr-open data-share-id='{row['id']}' data-qr-name='{esc(share_label(row))}' data-qr-image='/qr.png/{esc(row['token'])}' href='{esc(PUBLIC_BASE)}/q/{esc(row['token'])}' {'hidden' if status != '分享中' else ''}>檢視 QR</a>"
         f"<span data-ended {'hidden' if status == '分享中' else ''}>{'已暫停' if status == '全部暫停' else '已結束'}</span></td>"
         f"<td data-label='控制' class='action-danger'><form data-active method='post' action='/stop' {'hidden' if terminal else ''}><input type='hidden' name='csrf' value='{csrf}'>"
         f"<input type='hidden' name='id' value='{row['id']}'>"
@@ -322,34 +373,32 @@ def admin_page(csrf: str) -> bytes:
             f"<input type='hidden' name='csrf' value='{csrf}'>"
             f"<button id='master-button' class='btn {'btn-primary' if paused else 'btn-danger stop'}'>{'恢復所有分享下載' if paused else '暫停所有分享下載'}</button>"
             "</form></section>")
-    body = ("<header class='page-header'><nav class='portal-nav nav nav-pills' aria-label='控制台頁面'><a class='nav-link active' aria-current='page' href='/'>檔案分享</a><a class='nav-link' href='/mumble'>Mumble 管理</a><a class='nav-link' href='/certificates'>用戶端憑證</a></nav><h1>TAK 控制台</h1>"
+    body = ("<header class='page-header'>" + navbar("/") + "<h1>檔案分享</h1>"
             "<p class='muted'>公開入口 <code>" + esc(PUBLIC_BASE) + "</code>　｜　管理入口僅限本機　｜　"
-            "<span id='live-sync' role='status' aria-live='polite'>正在同步狀態…</span></p></header>"
+            "<span id='live-sync' role='status' aria-live='polite'><span class='spinner-border spinner-border-sm' aria-hidden='true'></span> 正在同步狀態…</span></p></header>"
             + master +
             "<section class='card live'><h2>目前分享中的連結　<span id='live-count'>" + str(len(active_rows)) + "</span></h2>"
             "<p id='live-empty' class='muted' " + ("hidden" if active_rows else "") + ">目前沒有可下載的連結。</p>"
             "<ul id='live-links' class='live-links'>" + live_links + "</ul></section>"
-            "<section class='card create'><h2>新增分享</h2><form class='create-form' method='post' action='/create'>"
-            f"<input type='hidden' name='csrf' value='{csrf}'>"
-            "<label class='field-source'>檔案來源 <select class='form-select' id='source-select' name='source' required>" + options + "</select></label>"
-            "<label>停止時間（分鐘） <input class='form-control' name='ttl' type='number' min='1' max='10080' value='15'></label>"
-            "<label>下載上限（次） <input class='form-control' name='limit' type='number' min='1' max='10000' value='3'></label>"
-            "<p class='muted'>可只填一項；同時填寫時先達到者停止。Vx Mission 套件須從 TAK Server Data Packages 下載，不列入此 QR 分享。</p>"
-            "<button class='btn btn-primary'>啟用這筆分享</button></form></section>"
+            "<section class='card create'><h2>新增分享</h2><p>依用途選擇 TAK Server 連線、ICU 影像發布或 Vx 任務。</p><a class='btn btn-primary' href='/provision'>開始引導式佈建</a></section>"
             "<section class='card records share-records'><h2>分享紀錄</h2>"
             "<div class='share-record-toolbar'>"
             "<label for='share-page-size'>每頁 <select class='form-select' id='share-page-size'><option value='10'>10 筆</option><option value='20'>20 筆</option><option value='30'>30 筆</option></select></label>"
-            "<label class='share-hide-inactive'><input class='form-check-input' id='share-hide-inactive' type='checkbox'> 隱藏已停用</label>"
-            "<span id='share-record-count' class='muted' role='status'>正在載入紀錄…</span></div>"
+            "<div class='btn-group share-status-filter' role='group' aria-label='分享狀態篩選'>"
+            "<button class='btn btn-outline-success' type='button' data-share-status='active' aria-pressed='false'>啟用中</button>"
+            "<button class='btn btn-outline-warning' type='button' data-share-status='expired' aria-pressed='false'>到期</button>"
+            "<button class='btn btn-outline-secondary' type='button' data-share-status='stopped' aria-pressed='false'>停用</button>"
+            "<button class='btn btn-outline-info active' type='button' data-share-status='all' aria-pressed='true'>顯示全部</button></div>"
+            "<span id='share-record-count' class='muted' role='status'><span class='spinner-border spinner-border-sm' aria-hidden='true'></span> 正在載入紀錄…</span></div>"
             "<p id='share-record-empty' class='muted' hidden>目前沒有分享紀錄。</p>"
             "<table class='table responsive-table align-middle'><thead><tr><th>檔案</th><th>狀態</th>"
             "<th>已使用／上限</th><th>建立／截止時間</th><th>查看</th><th>控制</th></tr></thead><tbody id='share-rows' data-server-now='" + str(now) + "'>"
             + table + "</tbody></table>"
-            "<nav class='share-record-pages' aria-label='分享紀錄分頁'>"
-            "<button class='btn btn-outline-info' id='share-page-prev' type='button' disabled>上一頁</button>"
-            "<span id='share-page-label'>第 1 / 1 頁</span>"
-            "<button class='btn btn-outline-info' id='share-page-next' type='button' disabled>下一頁</button>"
-            "</nav></section>"
+            "<nav class='share-record-pages' aria-label='分享紀錄分頁'><ul class='pagination mb-0'>"
+            "<li class='page-item disabled' id='share-page-prev-item'><button class='page-link' id='share-page-prev' type='button' aria-label='上一頁' disabled>上一頁</button></li>"
+            "<li class='page-item active'><span class='page-link' id='share-page-label' aria-current='page'>第 1 / 1 頁</span></li>"
+            "<li class='page-item disabled' id='share-page-next-item'><button class='page-link' id='share-page-next' type='button' aria-label='下一頁' disabled>下一頁</button></li>"
+            "</ul></nav></section>"
             "<div class='modal fade' id='share-qr-dialog' tabindex='-1' aria-labelledby='share-qr-title' aria-hidden='true'>"
             "<div class='modal-dialog modal-dialog-centered'><div class='modal-content'>"
             "<div class='modal-header'><h2 class='modal-title fs-5' id='share-qr-title'>分享 QR Code</h2>"
@@ -358,7 +407,8 @@ def admin_page(csrf: str) -> bytes:
             "<img id='share-qr-image' class='qr img-fluid rounded' alt='分享 QR Code'>"
             "<a id='share-qr-url' target='_blank' rel='noreferrer noopener'></a>"
             "<p class='muted'>掃描後請點相機顯示的完整連結。</p></div></div></div></div>")
-    script = "<script src='/static/bootstrap/bootstrap.bundle.min.js' defer></script><script src='/admin.js' defer></script>"
+    script = ("<script src='/static/bootstrap/bootstrap.bundle.min.js' defer></script>"
+              "<script src='/static/console_ui.js' defer></script><script src='/admin.js' defer></script>")
     return page("TAK 分享管理", body, script, layout="admin")
 
 

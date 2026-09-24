@@ -1,0 +1,9 @@
+<div class="device-links" data-device-key="{{ key }}" data-csrf="{{ csrf }}">
+  <p>發布網址與 QR 內含設備密碼，請先確認周圍無人拍攝螢幕。</p>
+  <button class="btn btn-outline-info" type="button" data-device-reveal>顯示連線資訊</button>
+  <button class="btn btn-outline-info" type="button" data-device-hide hidden>隱藏連線資訊</button>
+  <div class="alert alert-danger" role="alert" data-device-error hidden>無法取得連線資訊。請重新整理頁面。</div>
+  <div class="provision-choices" data-device-cards hidden>
+    {% for scheme in ['rtsp', 'rtsps'] %}<article class="provision-choice" data-protocol="{{ scheme }}"><strong>{{ scheme|upper }} 發布</strong><input class="form-control" type="text" readonly aria-label="{{ scheme|upper }} 發布網址"><button class="btn btn-outline-info" type="button" data-device-copy>複製 {{ scheme|upper }} 網址</button><img class="qr img-fluid" alt="{{ scheme|upper }} 發布 QR Code"></article>{% endfor %}
+  </div>
+</div>
