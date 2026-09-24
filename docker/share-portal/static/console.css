@@ -89,6 +89,12 @@ body.portal-detail { max-width: 1100px; }
 .share-records td.status-muted { color: #899b9f; }
 .share-records .share-countdown { display: block; margin-top: .2rem; color: var(--portal-amber); font-size: .82rem; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .share-records td.action-danger { border-left: 1px solid var(--portal-line); padding-left: 1.3rem; }
+.share-record-toolbar, .share-record-pages { display: flex; flex-wrap: wrap; align-items: center; gap: .65rem 1rem; margin: .75rem 0; }
+.share-record-toolbar label { display: inline-flex; align-items: center; gap: .5rem; margin: 0; white-space: nowrap; }
+.share-record-toolbar .form-select { width: auto; min-width: 6.5rem; }
+.share-record-toolbar #share-record-count { margin-left: auto; }
+.share-record-pages { justify-content: flex-end; font-variant-numeric: tabular-nums; }
+.share-record-pages .btn { min-width: 5.5rem; }
 .qr { width: min(100%, 360px); image-rendering: pixelated; background: white; padding: 1rem; }
 .share-qr-body { display: grid; justify-items: center; gap: .75rem; text-align: center; }
 #share-qr-dialog .modal-content { border-color: var(--portal-cyan); }
@@ -162,6 +168,9 @@ body.portal-detail { max-width: 1100px; }
 @media (max-width: 700px) { .issue-grid, .cert-facts { grid-template-columns: 1fr; } .issue-grid .full, .cert-facts .full { grid-column: auto; } .cert-card-head { display: grid; grid-template-columns: auto minmax(0, 1fr); } .cert-card-head .badge { grid-column: 2; justify-self: start; } .certificate-list[data-view="list"] .cert-card { grid-template-columns: 1fr; } .certificate-list[data-view="list"] .cert-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); } .certificate-list[data-view="list"] .cert-card-foot { grid-column: auto; } }
 @media (max-width: 640px) { .meta { grid-template-columns: 1fr; } .meta dt { margin-top: .4rem; } .portal-page section.card { padding: 1rem; } .selection-tools .btn { flex: 1 1 8rem; } .portal-page .responsive-table, .portal-page .responsive-table tbody, .portal-page .responsive-table tr, .portal-page .responsive-table td { display: block; width: 100%; } .portal-page .responsive-table thead { display: none; } .portal-page .responsive-table tbody tr { border: 1px solid var(--portal-line); margin: .75rem 0; padding: .25rem .5rem; } .portal-page .responsive-table td { padding: .5rem .25rem; } .portal-page .responsive-table td::before { content: attr(data-label); display: block; color: var(--portal-muted); font-size: .8rem; margin-bottom: .15rem; } .portal-page .responsive-table td.empty-row::before { display: none; } .share-records td.action-danger { border-left: 0; padding-left: .25rem; } .master button, .create-form button, .server-control button { width: 100%; } }
 @media (max-width: 640px) {
+  .share-record-toolbar #share-record-count { flex-basis: 100%; margin-left: 0; }
+  .share-record-pages { justify-content: space-between; gap: .35rem; }
+  .share-record-pages .btn { min-width: 0; }
   .portal-page .meta { grid-template-columns: minmax(6.5rem, 34%) minmax(0, 1fr); gap: .35rem .65rem; }
   .portal-page .meta dt { margin: 0; }
   .portal-page .selection-tools .btn { flex: 1 1 auto; min-height: 38px; padding: .35rem .5rem; font-size: .87rem; }

@@ -185,7 +185,8 @@ def stats() -> Response:
     now = int(time.time())
     return jsonify({"paused": paused, "server_now": now,
                     "sources": portal.import_choices(), "shares": [
-        {"id": row["id"], "status": portal.share_status(row, paused),
+        {"id": row["id"], "status": portal.share_status(row, paused, now),
+         "inactive": portal.share_status(row, False, now) != "分享中",
          "filename": row["filename"], "kind": row["kind"],
          "created_at": portal.local_time(row["created_at"]),
          "expires_at": portal.local_time(row["expires_at"]),

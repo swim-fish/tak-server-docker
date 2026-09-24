@@ -240,17 +240,22 @@ class SharePortalTests(unittest.TestCase):
         self.assertEqual(after["shares"][0]["expires_at_epoch"], row["expires_at"])
         self.assertIsInstance(after["server_now"], int)
         self.assertEqual(after["shares"][0]["status"], "分享中")
+        self.assertFalse(after["shares"][0]["inactive"])
         self.assertEqual(client.get(f"/qr.png/{row['token']}").status_code, 401)
         self.assertEqual(client.get(f"/qr.png/{row['token']}", headers=auth).data[:8],
                          b"\x89PNG\r\n\x1a\n")
         self.assertEqual(portal.get_share(row["token"])["accepted"], 0)
         portal.set_paused(True)
+        paused = client.get("/stats", headers=auth).json["shares"][0]
+        self.assertEqual(paused["status"], "全部暫停")
+        self.assertFalse(paused["inactive"])
         self.assertEqual(client.get(f"/qr.png/{row['token']}", headers=auth).status_code, 410)
         self.assertIn("已暫停", client.get("/", headers=auth).data.decode())
         portal.set_paused(False)
         portal.update_status(row["id"])
-        self.assertEqual(client.get("/stats", headers=auth).json["shares"][0]["status"],
-                         "已手動停止")
+        stopped = client.get("/stats", headers=auth).json["shares"][0]
+        self.assertEqual(stopped["status"], "已手動停止")
+        self.assertTrue(stopped["inactive"])
         self.assertEqual(client.get(f"/qr.png/{row['token']}", headers=auth).status_code, 410)
 
     def test_icu_profile_uses_secret_without_putting_it_in_qr(self) -> None:
