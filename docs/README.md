@@ -1,12 +1,12 @@
 # 文件首頁
 
-第一次部署請讀[從零建置](getting-started.md)。以下依工作分類，指令預設在專案根目錄執行；一般 PowerShell 即可，需管理員權限的步驟會另外標示。
+第一次部署可使用[首次建置腳本](scripts/first-time-setup.md)，需要逐步檢查時再讀[從零建置](getting-started.md)。以下依工作分類，指令預設在專案根目錄執行；一般 PowerShell 即可，需管理員權限的步驟會另外標示。
 
 ## 找到要做的工作
 
 | 工作 | 文件 |
 | --- | --- |
-| 從官方 ZIP 建立服務並連上 ATAK／Vx | [從零建置](getting-started.md) |
+| 從官方 ZIP 建立服務並連上 ATAK／Vx | [首次建置腳本](scripts/first-time-setup.md)、[逐步流程](getting-started.md) |
 | 理解目前有哪些服務、哪些項目已驗證 | [架構與驗證狀態](architecture.md) |
 | 設定、測試或移除 Windows 名稱解析 | [mDNS](network/mdns.md) |
 | 啟用熱點與防火牆、處理重新開機後的連線 | [防火牆](network/firewall.md) |

@@ -2,6 +2,8 @@
 
 本教學從官方 5.8 Hardened ZIP 開始，完成 TAK、資料庫、Mumble 與 MediaMTX 四個容器啟動、ATAK 憑證連線、Vx 語音與 ICU 影像連線。適用版本與目前驗證範圍見[版本表](reference/versions-and-ports.md)及[驗證索引](validation/README.md)。
 
+希望由一支腳本完成首次建置與 Compose 啟動，可使用[首次建置腳本](scripts/first-time-setup.md)。以下保留逐步手動流程，方便檢查每項產物。
+
 ## 開始前
 
 需要 Windows、Docker Desktop 的 Linux containers、Python 3.14、OpenSSL，以及包含 `keytool` 的 JDK 17。mDNS 安裝腳本目前固定使用 `C:/Python314/python.exe`，請先將 Python 3.14 安裝在該位置；只有 PATH 內的 Python 不足以滿足此腳本。第一次建置需下載基礎映像與套件。先在專案根目錄確認：

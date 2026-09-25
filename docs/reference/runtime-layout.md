@@ -4,7 +4,7 @@
 
 ## 官方 ZIP 與 runtime/tak
 
-請將 ZIP **完整解壓到 `vendor/`**，由 bootstrap 產生 `runtime/tak/`。
+使用[首次建置腳本](../scripts/first-time-setup.md)時，指定官方 ZIP 路徑即可；腳本會驗證後完整解壓到 `vendor/`，再由 bootstrap 產生 `runtime/tak/`。逐步手動建置時，請自行將 ZIP **完整解壓到 `vendor/`**。
 
 各目錄的責任：
 
