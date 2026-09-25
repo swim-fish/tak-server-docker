@@ -50,7 +50,7 @@ MediaMTX Advanced 入口先讓管理者選擇 **ICU QR Code** 或 **一般設備
 
 ### 小隊與 Advanced 設備的發布身分
 
-**ICU 依小隊、一般 Advanced 設備依單台設備管理 username、password 與 `publish` 路徑權限。** Alpha 至 Hotel 各有一組小隊身分；未選組別的 ICU 歸入 `Default` 小隊，仍按前表產生 `live/` 或 `live/<人員代號>/` 路徑。小隊帳號可發布該小隊已分配的路徑，不給整個 `live/` 的無限制權限。無人機及其他一般設備各有獨立帳密，只能發布指定的完整路徑。ICU 在 Advanced 分支自訂路徑時，仍使用所選小隊帳密，只把經確認的新路徑明確加入該小隊的允許清單，不擴大成所有 `live/` 路徑。匿名 WebRTC read 與管理用 read 帳號另外處理。[MediaMTX internal authentication](https://mediamtx.org/docs/features/authentication)支援按使用者設定 `publish` 與 path 權限；此版本的路徑比對及更新後工作階段行為仍須實測。
+**ICU 依小隊、一般 Advanced 設備依單台設備管理 username、password 與 `publish` 路徑權限。** Alpha 至 Hotel 各有一組小隊身分；未選組別的 ICU 歸入 `Default` 小隊，仍按前表產生 `live/` 或 `live/<人員代號>/` 路徑。具名小隊帳號只可發布自己 `live/<小隊>/` 前綴、以 `/VIDEO_1` 結尾的路徑；同隊裝置可匯入同一 QR，再各自更改後段。Default 仍逐一授權路徑。無人機及其他一般設備各有獨立帳密，只能發布指定的完整路徑，也不可占用具名小隊前綴。ICU Advanced 自訂路徑必須保留所選小隊前綴。匿名 WebRTC read 與管理用 read 帳號另外處理。[MediaMTX internal authentication](https://mediamtx.org/docs/features/authentication)支援正規表示式 path 權限；Alpha／2 實機發布與跨隊拒絕見[驗證紀錄](../validation/2026-09-25-icu-squad-path-scope.md)。
 
 控制台分列「ICU 小隊」與「Advanced 設備」，顯示名稱、權限路徑、啟用狀態、所屬人員／設備數及最後發布狀態。支援搜尋、單選／多選／全選後**批次停用**與**批次重設密碼**；確認畫面逐項列出受影響的帳號、路徑與正在發布的工作階段。小隊密碼重設會使該小隊所有 ICU 舊設定失效，不能只撤銷小隊中的單一裝置；單台設備需要獨立撤銷能力時，應改用 Advanced 設備身分。密碼不出現在清單或一般日誌。
 
@@ -86,7 +86,7 @@ MediaMTX Advanced 入口先讓管理者選擇 **ICU QR Code** 或 **一般設備
 
 ## MediaMTX Advanced → 一般設備：發布網址與 QR
 
-管理者在 Advanced 入口選「一般設備」後，為無人機、編碼器等設備產生向 MediaMTX **發布影像**的連線資訊；選「ICU QR Code」則回到前述 `.prefs` 下載流程。一般設備的 QR 編碼發布網址，不是 `icu://download`，也不是免密碼 WebRTC 觀看連結。管理者先指定設備名稱與獨立的 `live/` 路徑，例如 `live/alpha/1/drone-01`；一般設備直接使用完整路徑，不假設它會像 ICU 一樣自行附加 `VIDEO_1`。
+管理者在 Advanced 入口選「一般設備」後，為無人機、編碼器等設備產生向 MediaMTX **發布影像**的連線資訊；選「ICU QR Code」則回到前述 `.prefs` 下載流程。一般設備的 QR 編碼發布網址，不是 `icu://download`，也不是免密碼 WebRTC 觀看連結。管理者先指定設備名稱與獨立的 `live/` 路徑，例如 `live/device/drone-01`；一般設備直接使用完整路徑，不假設它會像 ICU 一樣自行附加 `VIDEO_1`。
 
 | 本機目前啟用的發布協定 | Advanced 頁面格式 | 目前可達範圍 |
 | --- | --- | --- |

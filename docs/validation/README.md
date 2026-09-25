@@ -19,10 +19,13 @@
 | 中繼 CA 輪替前置驗證 | Root DB 缺少中繼 CA 紀錄；隔離副本補登／撤銷與 OpenSSL 鏈驗證通過，本機快照完成；尚未切換服務 | [2026-09-24](2026-09-24-ca-rotation-preflight.md) |
 | CA 輪替前實機與群組基線 | 兩張短效憑證分組簽發並在兩台 Android 連線；同網段標記互見尚需排除本機傳播；群組移除與還原通過 | [2026-09-24](2026-09-24-ca-rotation-device-baseline.md) |
 | 中繼 CA 切換與 Root CRL | 新鏈的 A 裝置 ATAK、Vx、8443 套件查詢通過；發布 Root CRL 後仍須移除舊 CA 直接信任錨，8089 才拒絕舊 Alpha TLS 握手 | [2026-09-25](2026-09-25-ca-rotation-cutover.md) |
+| `.env` Wi-Fi 位址與 CA 控制台替換 | Wi-Fi 綁定、Android mDNS／TCP、控制台 CA 替換及 Root CRL 通過；批次 API 就緒逾時後人工復原，Android 新 DPK 驗收另記；防火牆 UAC 首次取消 | [2026-09-25](2026-09-25-wifi-env-ca-console.md) |
 | 憑證控制台瀏覽器 | Chrome 在桌面、平板、手機寬度的清冊、篩選、詳細頁及群組頁通過唯讀互動驗證；附去識別截圖 | [2026-09-25](2026-09-25-certificate-browser.md) |
 | 引導式批次憑證與 Vx 替換 | 兩張測試憑證合併註冊並由 API 讀回；伺服器固定名稱 Vx 套件替換及 metadata 讀回通過，Android 新套件待驗 | [2026-09-24](2026-09-24-guided-provisioning.md) |
 | Mumble 單一類型 SAN | DNS-only／IP-only 搭配相符 Vx Address，P1／A1 均成功；不包含不相符 SAN 拒絕測試 | [SAN 實測](2026-09-22-mumble-san.md) |
 | MediaMTX／TAK ICU | RTSP、RTSPS TCP 與 Compose 內 UDP 串流通過；ICU 7.5.1 經 RTSPS＋帳密實際發布，獨立讀取成功；跨 bridge UDP 與 ATAK 內建播放仍待驗 | [2026-09-23](2026-09-23-mediamtx.md) |
+| 一般設備發布網址與收流 | 控制台建立獨立身分；FFmpeg 模擬無人機經熱點入口以 RTSP／RTSPS TCP 發布，獨立讀取端各解碼 30 個影格；WebRTC 預覽顯示影像，停用後舊網址遭拒。實體無人機與外網未驗收 | [2026-09-25](2026-09-25-drone-synthetic-stream.md) |
+| ICU 同隊共用 QR 與路徑隔離 | 同一 Alpha QR 匯入後，Android 手動改為 `live/alpha/2/` 並成功發布；Alpha 帳密對 Bravo 與非 ICU 路徑遭拒 | [2026-09-25](2026-09-25-icu-squad-path-scope.md) |
 | TAK ICU QR Code | 依 ICU 7.5.1 APK 與原生 `local.prefs` 確認格式；`takbox.local` 含密碼 QR 已由第二台熱點裝置掃碼套用，ICU 無提示發布 RTSPS，獨立讀取端取得影像 | [2026-09-23](2026-09-23-icu-qrcode.md) |
 | 分享與 Mumble 管理頁 | Compose 健康、限時／限次與單次下載、Flask 管理頁與 Mumble 唯讀清單通過；真實使用者刪除與密碼輪替未執行 | [2026-09-23](2026-09-23-share-portal.md) |
 | 密碼輪替與註冊 | 已註冊 Vx 仍可登入；取消註冊後重現密碼提示 | [密碼測試](2026-09-22-tak-vx-dpk.md#更換-mumble-密碼以重現提示畫面) |

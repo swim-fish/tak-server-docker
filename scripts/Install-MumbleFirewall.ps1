@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
-    [string]$LocalAddress = '192.168.137.1',
-    [string]$RemoteAddress = '192.168.137.0/24',
+    [string]$LocalAddress,
+    [string]$RemoteAddress,
     [ValidateRange(1, 65535)]
     [int]$Port = 40000,
     [string]$ElevationRequestPath
@@ -9,11 +9,14 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+$networkConfig = & (Join-Path $PSScriptRoot 'Local-NetworkConfig.ps1')
+if (-not $LocalAddress) { $LocalAddress = $networkConfig.Address }
+if (-not $RemoteAddress) { $RemoteAddress = $networkConfig.Subnet }
 
 function Get-MumbleLocalInterface {
     param([string]$Address)
 
-    # The hotspot address is the clients' gateway, not an upstream gateway.
+    # The configured address belongs to the clients' local network.
     $addresses = @(Get-NetIPAddress -AddressFamily IPv4 -ErrorAction Stop |
         Where-Object { $_.IPAddress -eq $Address -and $_.AddressState -eq 'Preferred' })
     foreach ($item in $addresses) {
@@ -39,7 +42,7 @@ function Invoke-MumbleFirewallSession {
     try {
         $network = Get-MumbleLocalInterface -Address $Address
         if (-not $network) {
-            throw "Local address $Address is not ready. Enable Windows Mobile hotspot or connect the target interface, then run this script again."
+            throw "Local address $Address is not ready. Connect the target interface, then run this script again."
         }
         $existing = @(Get-NetFirewallRule -Name 'TAK-Local-Mumble-*' -ErrorAction SilentlyContinue)
         if ($existing.Count -gt 0) {
@@ -115,7 +118,7 @@ if (-not [Net.IPAddress]::TryParse($LocalAddress, [ref]$parsedAddress) -or
 
 # Fail before requesting UAC or changing any firewall rules.
 if (-not (Get-MumbleLocalInterface -Address $LocalAddress)) {
-    throw "Local address $LocalAddress is not ready. Enable Windows Mobile hotspot or connect the target interface, then run this script again. No firewall rules were changed."
+    throw "Local address $LocalAddress is not ready. Connect the target interface, then run this script again. No firewall rules were changed."
 }
 
 $identity = [Security.Principal.WindowsIdentity]::GetCurrent()

@@ -11,12 +11,13 @@ import subprocess
 import time
 import uuid
 from pathlib import Path
+from local_network import bind_ip
 
 
 PROJECT = Path(__file__).resolve().parents[1]
 IMAGE = "bluenviron/mediamtx:1.21.1-ffmpeg"
 NETWORK = "tak-local_tak-edge"
-HOST_IP = "192.168.137.1"
+HOST_IP = bind_ip()
 ROOT_CA = PROJECT / "runtime" / "pki" / "public" / "root-ca.crt.pem"
 PUBLISH_PASS = PROJECT / "runtime" / "secrets" / "mediamtx_publish_password"
 READ_PASS = PROJECT / "runtime" / "secrets" / "mediamtx_read_password"

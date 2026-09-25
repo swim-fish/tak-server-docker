@@ -12,6 +12,7 @@ import ssl
 import hashlib
 from pathlib import Path
 from urllib.parse import quote
+from local_network import bind_ip
 
 
 PROJECT = Path(__file__).resolve().parents[1]
@@ -21,7 +22,6 @@ KEY = RUNTIME / "pki" / "private" / "admin.key.pem"
 KEY_PASSWORD = RUNTIME / "secrets" / "leaf_key_password"
 API_ROOT = "/Marti/api/user-management/api"
 HOST = "takbox.local"
-HOTSPOT_IP = "192.168.137.1"
 
 
 def api_port() -> int:
@@ -41,7 +41,7 @@ def api_port() -> int:
 
 class TakConnection(http.client.HTTPSConnection):
     def connect(self) -> None:
-        raw = socket.create_connection((HOTSPOT_IP, self.port), timeout=self.timeout)
+        raw = socket.create_connection((bind_ip(), self.port), timeout=self.timeout)
         try:
             self.sock = self._context.wrap_socket(raw, server_hostname=self.host)
         except BaseException:

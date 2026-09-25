@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Serve one TAK ICU preference profile to devices on the local hotspot."""
+"""Serve one TAK ICU preference profile to devices on the local network."""
 
 from __future__ import annotations
 
@@ -9,12 +9,14 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
+from local_network import allowed_subnet, bind_ip
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--bind", default="192.168.137.1")
+    parser.add_argument("--bind", default=bind_ip())
     parser.add_argument("--port", type=int, default=8765)
-    parser.add_argument("--allow-subnet", default="192.168.137.0/24")
+    parser.add_argument("--allow-subnet", default=allowed_subnet())
     parser.add_argument("--profile", type=Path, default=Path("runtime/packages/icu/initial.prefs"))
     parser.add_argument("--allow-http-password", action="store_true",
                         help="Explicitly allow serving a publishing password over plain HTTP")

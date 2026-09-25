@@ -17,7 +17,7 @@ import zipfile
 from datetime import datetime, timedelta, timezone
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from threading import Event, Thread
+from threading import Event, Lock, Thread
 from xml.etree import ElementTree
 from xml.sax.saxutils import escape
 
@@ -28,6 +28,7 @@ from cryptography.x509.oid import ExtendedKeyUsageOID, ExtensionOID, NameOID
 import tak_api_client
 import tak_vx_package_host
 from certificate_validity import requested_expiry
+from local_network import bind_ip
 
 
 PROJECT = Path(__file__).resolve().parents[1]
@@ -42,6 +43,9 @@ REGISTRY = CONTROL / "registry.json"
 AUDIT = CONTROL / "audit.jsonl"
 LAST_RESULT = CONTROL / "last-result.json"
 BATCH_JOBS = CONTROL / "batch-jobs"
+ROTATION_JOB = CONTROL / "ca-rotation-job.json"
+ROTATION_LOCK = Lock()
+ROTATION_THREAD: Thread | None = None
 TAIPEI = timezone(timedelta(hours=8), "Asia/Taipei")
 GROUP = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.:-]{0,63}\Z")
 COMMON_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{1,62}\Z")
@@ -737,7 +741,7 @@ def issue_batch(job_id: str, items: object) -> dict:
                     item["fingerprint"] for item in inventory() if item["serial"] == entry["serial"]))
                 selected = entry["request"]
                 try:
-                    wait_for_groups(record, selected["in_groups"], selected["out_groups"], timeout=20)
+                    wait_for_groups(record, selected["in_groups"], selected["out_groups"], timeout=150)
                     registry = load_registry()
                     registry[entry["serial"]]["registered"] = True
                     registry[entry["serial"]]["username"] = selected["cn"]
@@ -799,7 +803,7 @@ def wait_for_cot_listener(timeout: int = 60) -> bool:
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
         try:
-            with socket.create_connection(("192.168.137.1", 8089), timeout=2):
+            with socket.create_connection((bind_ip(), 8089), timeout=2):
                 return True
         except OSError:
             time.sleep(2)
@@ -814,7 +818,7 @@ def probe_8089(record: dict, registry: dict) -> str:
     env = secret_env(TAK_PROBE_KEY_PASS=password)
     try:
         result = subprocess.run(
-            [require_tool("openssl"), "s_client", "-brief", "-connect", "192.168.137.1:8089",
+            [require_tool("openssl"), "s_client", "-brief", "-connect", f"{bind_ip()}:8089",
              "-servername", "takbox.local", "-cert", str(certificate_path(record["serial"])),
              "-key", str(key), "-pass", "env:TAK_PROBE_KEY_PASS", "-CAfile",
              str(PUBLIC / "root-ca.crt.pem"), "-verify_return_error"],
@@ -919,8 +923,72 @@ def republish() -> dict:
             "tak_restarted": True, "validation_8443": "out-of-scope"}
 
 
+def rotation_status() -> dict:
+    if not ROTATION_JOB.is_file():
+        return {"state": "idle"}
+    data = json.loads(ROTATION_JOB.read_text(encoding="utf-8"))
+    if data.get("state") not in {"staging", "cutover", "renewing", "revoking", "complete", "failed", "interrupted"}:
+        raise RuntimeError("Invalid CA replacement job state")
+    return data
+
+
+def save_rotation_status(data: dict) -> None:
+    CONTROL.mkdir(parents=True, exist_ok=True)
+    pending = ROTATION_JOB.with_suffix("." + uuid.uuid4().hex + ".pending")
+    pending.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    os.replace(pending, ROTATION_JOB)
+
+
+def start_ca_rotation(request: dict) -> dict:
+    global ROTATION_THREAD
+    with ROTATION_LOCK:
+        if ROTATION_THREAD is not None and ROTATION_THREAD.is_alive():
+            raise RuntimeError("A CA replacement is already running")
+        current = rotation_status()
+        if current["state"] not in {"idle", "complete"}:
+            raise RuntimeError("Resolve the previous CA replacement before starting another")
+        import ca_rotation_console as rotation
+        expected = request.get("expected_ca_id")
+        if not isinstance(expected, str) or expected != rotation.active_ca_summary()["id"]:
+            raise RuntimeError("The issuing CA changed; refresh the page")
+        selected = request.get("selected")
+        prepared = rotation.prepare_selection(selected)
+        check_server_running()
+        job = {"id": uuid.uuid4().hex, "state": "staging",
+               "message": "Preparing replacement CA", "started_at": datetime.now(timezone.utc).isoformat(),
+               "old_ca_id": expected, "selected_count": len(prepared)}
+        save_rotation_status(job)
+
+        def run() -> None:
+            def progress(state: str, message: str) -> None:
+                job.update(state=state, message=message,
+                           updated_at=datetime.now(timezone.utc).isoformat())
+                save_rotation_status(job)
+            try:
+                result = rotation.rotate(selected, progress)
+                job.update(state="complete", message="CA replacement completed", result=result)
+            except Exception as exc:
+                job.update(state="failed", message=str(exc)[:500])
+                print(f"CA replacement failed: {type(exc).__name__}: {exc}", flush=True)
+            job["updated_at"] = datetime.now(timezone.utc).isoformat()
+            save_rotation_status(job)
+
+        ROTATION_THREAD = Thread(target=run, name="tak-ca-replacement", daemon=False)
+        ROTATION_THREAD.start()
+        return {"job": job}
+
+
 def execute(request: dict) -> dict:
     action = request.get("action")
+    if action == "ca_rotate_status":
+        return {"job": rotation_status()}
+    if ROTATION_THREAD is not None and ROTATION_THREAD.is_alive():
+        raise RuntimeError("CA replacement is running; wait for its result")
+    if action == "ca_rotate_info":
+        import ca_rotation_console as rotation
+        return {"ca": rotation.active_ca_summary()}
+    if action == "ca_rotate_start":
+        return start_ca_rotation(request)
     if action == "snapshot":
         group_choices = {"local-test"}
         for metadata in load_registry().values():
@@ -967,6 +1035,10 @@ def main() -> None:
     inbox, outbox = CONTROL / "inbox", CONTROL / "outbox"
     inbox.mkdir(parents=True, exist_ok=True)
     outbox.mkdir(parents=True, exist_ok=True)
+    previous_rotation = rotation_status()
+    if previous_rotation["state"] in {"staging", "cutover", "renewing", "revoking"}:
+        previous_rotation.update(state="interrupted", message="Host worker restarted during CA replacement; inspect runtime and snapshots before retrying")
+        save_rotation_status(previous_rotation)
     heartbeat = CONTROL / "heartbeat"
     heartbeat_stop = Event()
 

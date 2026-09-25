@@ -40,10 +40,10 @@
     <div class="provision-limits"><label>小隊<select class="form-select" name="squad">{% for squad in squads %}<option value="{{ squad }}">{{ squad|title }}</option>{% endfor %}</select></label><label>人員代號<select class="form-select" name="person"><option value="">未指定</option>{% for number in range(1, 11) %}<option value="{{ number }}">{{ number }}</option>{% endfor %}</select></label></div>
     <div id="icu-advanced-path" class="icu-advanced-path" {% if request.args.get('mode') != 'advanced' %}hidden{% endif %}>
       <label for="icu-custom-path">PATH 預覽</label>
-      <div class="input-group icu-url-group"><span class="input-group-text" id="icu-url-base">rtsps://takbox.local:8322/</span><input class="form-control" id="icu-custom-path" name="custom" value="live/" placeholder="live/command-post/camera-2/" maxlength="160" pattern="live/([A-Za-z0-9_-]+/)*" title="以 live/ 開頭，使用英文字母、數字、底線或連字號分段，並以 / 結尾" aria-describedby="icu-url-base icu-path-help" {% if request.args.get('mode') != 'advanced' %}disabled{% else %}required{% endif %} spellcheck="false" autocapitalize="off"></div>
+      <div class="input-group icu-url-group"><span class="input-group-text" id="icu-url-base">rtsps://takbox.local:8322/</span><input class="form-control" id="icu-custom-path" name="custom" value="live/" placeholder="live/alpha/camera-2/" maxlength="160" pattern="live/([A-Za-z0-9_-]+/)*" title="以 live/ 開頭，使用英文字母、數字、底線或連字號分段，並以 / 結尾" aria-describedby="icu-url-base icu-path-help" {% if request.args.get('mode') != 'advanced' %}disabled{% else %}required{% endif %} spellcheck="false" autocapitalize="off"></div>
       <p class="muted" id="icu-path-help">預期發布 URL：<output id="icu-path-preview" for="icu-custom-path">rtsps://takbox.local:8322/live/VIDEO_1</output></p>
     </div>
-    <p class="muted">標準模式依小隊與人員代號產生路徑；Advanced 模式使用自訂路徑。ICU 會在結尾加上 VIDEO_1。</p>
+    <p class="muted">標準模式依小隊與人員代號產生路徑；Advanced 模式須保留所選小隊的 live/&lt;小隊&gt;/ 前綴。ICU 會在結尾加上 VIDEO_1。同隊可共用 QR，匯入後各自更改小隊後段。</p>
     <div class="provision-limits"><label>分享時間（分鐘）<input class="form-control" name="ttl" type="number" min="1" max="10080" value="20" required></label><label>下載上限（次）<input class="form-control" name="limit" type="number" min="1" max="10000" value="3" required></label></div>
     <button class="btn btn-primary">預覽</button>
   </form></section>
@@ -51,9 +51,9 @@
   <section class="card"><h2>Advanced · 一般設備</h2><form method="post" action="/provision/preview" class="provision-form">
     <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="kind" value="device">
     <label>設備名稱<input class="form-control" name="name" maxlength="80" required placeholder="Drone 01"></label>
-    <div class="device-path-field"><label for="device-path">發布 URL 預覽</label><div class="input-group icu-url-group"><span class="input-group-text" id="device-url-base">rtsps://takbox.local:8322/</span><input class="form-control" id="device-path" name="path" maxlength="160" required pattern="live/[A-Za-z0-9_-]+(/[A-Za-z0-9_-]+)*" value="live/" placeholder="live/alpha/1/drone-01" title="以 live/ 開頭，後接英文字母、數字、底線或連字號組成的完整路徑" aria-describedby="device-url-base device-path-help" spellcheck="false" autocapitalize="off"></div>
+    <div class="device-path-field"><label for="device-path">發布 URL 預覽</label><div class="input-group icu-url-group"><span class="input-group-text" id="device-url-base">rtsps://takbox.local:8322/</span><input class="form-control" id="device-path" name="path" maxlength="160" required pattern="live/[A-Za-z0-9_-]+(/[A-Za-z0-9_-]+)*" value="live/" placeholder="live/device/drone-01" title="以 live/ 開頭，後接英文字母、數字、底線或連字號組成的完整路徑" aria-describedby="device-url-base device-path-help" spellcheck="false" autocapitalize="off"></div>
       <p class="muted" id="device-path-help">預期發布 URL：<output id="device-path-preview" for="device-path">請輸入有效的 live/ 完整路徑</output></p></div>
-    <p class="muted">一般設備直接發布到完整路徑，不會自動附加 VIDEO_1。建立後取得獨立帳密，RTSP 與 RTSPS 各有自己的網址和 QR。</p>
+    <p class="muted">一般設備直接發布到完整路徑，不會自動附加 VIDEO_1，也不可使用 ICU 小隊前綴。建立後取得獨立帳密，RTSP 與 RTSPS 各有自己的網址和 QR。</p>
     <input type="hidden" name="ttl" value="20"><input type="hidden" name="limit" value="3"><button class="btn btn-primary">預覽</button>
   </form></section>
   {% elif step == 'configure' and flow == 'vx' %}

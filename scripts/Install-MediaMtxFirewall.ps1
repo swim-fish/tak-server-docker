@@ -1,10 +1,13 @@
 [CmdletBinding()]
 param(
-    [string]$LocalAddress = '192.168.137.1',
-    [string]$RemoteAddress = '192.168.137.0/24'
+    [string]$LocalAddress,
+    [string]$RemoteAddress
 )
 
 $ErrorActionPreference = 'Stop'
+$networkConfig = & (Join-Path $PSScriptRoot 'Local-NetworkConfig.ps1')
+if (-not $LocalAddress) { $LocalAddress = $networkConfig.Address }
+if (-not $RemoteAddress) { $RemoteAddress = $networkConfig.Subnet }
 
 $address = $null
 if (-not [Net.IPAddress]::TryParse($LocalAddress, [ref]$address) -or
@@ -35,8 +38,8 @@ if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administra
 
 $interfaceAlias = $network[0].InterfaceAlias
 $rules = @(
-    @{ Name = 'TAK-Local-MediaMTX-TCP'; Protocol = 'TCP'; Ports = @('8554', '8322') },
-    @{ Name = 'TAK-Local-MediaMTX-UDP'; Protocol = 'UDP'; Ports = @('8000', '8001', '8004', '8005') }
+    @{ Name = 'TAK-Local-MediaMTX-TCP'; Protocol = 'TCP'; Ports = @('8554', '8322', '8189', '8889') },
+    @{ Name = 'TAK-Local-MediaMTX-UDP'; Protocol = 'UDP'; Ports = @('8000', '8001', '8004', '8005', '8189') }
 )
 foreach ($rule in $rules) {
     Get-NetFirewallRule -Name $rule.Name -ErrorAction SilentlyContinue |

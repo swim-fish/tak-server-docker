@@ -35,6 +35,9 @@ document.querySelectorAll(".device-links").forEach((panel) => {
     panel.querySelectorAll("input").forEach((field) => field.value = "");
     panel.querySelectorAll("img").forEach((image) => image.removeAttribute("src"));
   });
+  panel.closest(".modal")?.addEventListener("hidden.bs.modal", () => {
+    if (!hide.hidden) hide.click();
+  });
   panel.querySelectorAll("[data-device-copy]").forEach((button) => button.addEventListener("click", async () => {
     await navigator.clipboard.writeText(button.closest("article").querySelector("input").value);
     button.textContent = "已複製";

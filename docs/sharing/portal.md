@@ -1,6 +1,6 @@
 # 檔案分享與 Mumble 管理頁
 
-公開下載使用 Docker Compose `sharing` profile；本機管理頁 `share-admin` 已列入預設服務，執行 `docker compose up -d` 時會啟動。兩者均由 Flask／Gunicorn 提供。目前本機 `.env` 將公開端映射至 Windows 熱點 `192.168.137.1:10065`，管理端映射至 `127.0.0.1:10066`；容器內仍使用 `8765`／`8766`。兩者不提供目錄瀏覽，並設為 Docker 自動重啟。
+公開下載使用 Docker Compose `sharing` profile；本機管理頁 `share-admin` 已列入預設服務，執行 `docker compose up -d` 時會啟動。兩者均由 Flask／Gunicorn 提供。公開端綁定 `.env` 的 `TAK_BIND_IP` 與 `SHARE_PUBLIC_HOST_PORT`，管理端只綁定 `127.0.0.1` 與 `SHARE_ADMIN_HOST_PORT`；容器內仍使用 `8765`／`8766`。兩者不提供目錄瀏覽，並設為 Docker 自動重啟。
 
 本機管理頁另有[用戶端憑證控制台](../tak-server/certificate-console.md)，可管理憑證、群組與專屬 DPK；其 Windows 管理程式與 Mumble 管理程式由登入後排程工作啟動。
 
@@ -68,7 +68,8 @@ ATAK QR 的下載 URL 會以原始 `.dpk`／`.zip` 檔名結尾，讓匯入器�
 ```powershell
 docker compose --profile sharing ps share-admin share-public
 Invoke-WebRequest http://127.0.0.1:10066/healthz
-Invoke-WebRequest http://192.168.137.1:10065/healthz
+$network = & .\scripts\Local-NetworkConfig.ps1
+Invoke-WebRequest "http://$($network.Address):10065/healthz"
 ```
 
 健康檢查只代表 Web 服務存活。要驗證 QR，先建立短效、單次分享，再從熱點裝置掃碼並核對實際 ICU 欄位或 ATAK 匯入結果。完成後停止測試分享與防火牆前景工作階段。若要停用兩個 Windows 管理程式，執行 `Manage-TakControlWorkers.ps1 -Action Stop`；若要關閉 Web 服務，執行 `docker compose --profile sharing stop share-admin share-public`。手動停止的容器不會被 `unless-stopped` 自動重新啟動。

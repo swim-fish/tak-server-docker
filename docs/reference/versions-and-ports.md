@@ -1,6 +1,6 @@
 # 版本、通訊埠與上游套件
 
-以下是 2026-09-24 專案設定及實測版本。表格主機端採目前本機 `.env` 的值；Compose 原始預設與主機通訊埠覆寫仍以 [compose.yaml](../../compose.yaml) 為準。
+以下是 2026-09-25 專案設定及實測版本。主機位址由 Git 忽略的 `.env` 中 `TAK_BIND_IP` 設定，允許來源網段由 `TAK_ALLOWED_SUBNET` 設定；未設定時採預設熱點值。主機通訊埠覆寫以 [compose.yaml](../../compose.yaml) 為準。
 
 ## 版本
 
@@ -19,15 +19,15 @@ Vx 標籤中的 `[5.6.0]` 是套件標示；與 ATAK 5.7 的可用性以本次�
 
 | 用途 | 主機端 | 容器端／說明 |
 | --- | --- | --- |
-| Windows 行動熱點 | `192.168.137.1`／`192.168.137.0/24` | 裝置需在允許子網路內 |
+| Wi-Fi／Windows 行動熱點 | `.env` 的 `TAK_BIND_IP`／`TAK_ALLOWED_SUBNET`；預設 `192.168.137.1`／`192.168.137.0/24` | 裝置需在允許子網路內 |
 | 名稱 | `takbox.local` | mDNS 指向主機 LAN IP |
 | TAK CoT TLS | `8089/TCP` | `8089/TCP` |
 | TAK 管理 API | `8443/TCP` | `8443/TCP`，使用管理用戶端憑證；ATAK Data Packages 會連向主機 `8443` |
 | Mumble | `40000/TCP`、`40000/UDP` | `64738/TCP`、`64738/UDP` |
 | MediaMTX RTSP | `8554/TCP`、`8000-8001/UDP` | TCP 控制／媒體、UDP RTP／RTCP |
 | MediaMTX RTSPS | `8322/TCP`、`8004-8005/UDP` | TLS 控制／TCP 媒體、UDP SRTP／SRTCP |
-| 公開 WebRTC 觀看 | `8889/TCP`，綁定熱點 IP | 匿名 viewer gateway；控制台預覽只在 Compose 網路內 |
-| 分享下載與 QR | `10065/TCP`，綁定熱點 IP | 容器端 `8765/TCP`；僅在 `sharing` profile 啟動 |
+| 公開 WebRTC 觀看 | `8889/TCP`，綁定 `TAK_BIND_IP` | 匿名 viewer gateway；控制台預覽只在 Compose 網路內 |
+| 分享下載與 QR | `10065/TCP`，綁定 `TAK_BIND_IP` | 容器端 `8765/TCP`；僅在 `sharing` profile 啟動 |
 | 控制台管理 | `127.0.0.1:10066/TCP` | 容器端 `8766/TCP`；Windows 管理 worker 由登入後排程啟動 |
 | PostgreSQL | 不發布 | `5432/TCP`，限 `tak-backend` |
 | mDNS | `5353/UDP` | Windows multicast，非 Compose port mapping |

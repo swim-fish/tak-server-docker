@@ -99,7 +99,8 @@ class SharePortalTests(unittest.TestCase):
             self.assertIn("到期日（台灣時間）", response.data.decode())
             self.assertIn("Field tablet", response.data.decode())
             self.assertIn("style-src 'self' 'unsafe-inline'", response.headers["Content-Security-Policy"])
-            self.assertIn("data-group-board", response.data.decode())
+            self.assertNotIn("data-group-board", response.data.decode())
+            self.assertIn('href="/certificates/new"', response.data.decode())
             self.assertIn('id="view-list" aria-pressed="false"', response.data.decode())
             self.assertIn('class="certificate-list" role="list" data-view="cards"', response.data.decode())
             self.assertIn('data-cert-status="revoked"', response.data.decode())
@@ -109,6 +110,12 @@ class SharePortalTests(unittest.TestCase):
             self.assertIn('/static/bootstrap/bootstrap.min.css', response.data.decode())
             self.assertIn('class="modal fade" id="revoke-dialog"', response.data.decode())
             self.assertNotIn("撤銷範圍：", response.data.decode())
+        with patch.object(admin, "cert_control", return_value={"group_choices": ["local-test", "team-alpha"]}):
+            new_page = client.get("/certificates/new", headers=headers)
+            self.assertEqual(new_page.status_code, 200)
+            self.assertIn("data-group-board", new_page.data.decode())
+            self.assertIn("簽發並註冊裝置憑證", new_page.data.decode())
+            self.assertIn('aria-current="page" href="/certificates/new"', new_page.data.decode())
         recent = {"action": "revoke", "result": {"results": [
             {"serial": "1002", "ca_revoked": True, "validation_8089": "rejected-revoked"},
             {"serial": "1003", "ca_revoked": False, "error": "test failure"}]}}
@@ -181,6 +188,48 @@ class SharePortalTests(unittest.TestCase):
                                          "certificate": "1002:" + "a" * 64})
             self.assertEqual(response.status_code, 303)
         self.assertEqual(portal.share_status(portal.get_share(row["token"]), False), "已手動停止")
+
+    def test_ca_replacement_page_keeps_individual_expiry_and_requires_two_confirmations(self) -> None:
+        import share_admin_flask as admin
+
+        auth = "Basic " + base64.b64encode(b"admin:test-admin-password-that-is-long-enough").decode()
+        headers = {"Authorization": auth, "Host": "127.0.0.1:8766"}
+        client = admin.app.test_client()
+        expiry = (datetime.now(timezone.utc) + timedelta(days=60)).replace(second=0, microsecond=0)
+        taipei_expiry = expiry.astimezone(TAIPEI).strftime("%Y-%m-%dT%H:%M")
+        record = {"serial": "1002", "fingerprint": "a" * 64, "name": "Tablet A", "cn": "tablet-a",
+                  "expires_iso": expiry.isoformat(), "revoked": False, "expired": False,
+                  "registered": True, "in_groups": ["team-alpha"], "out_groups": ["team-alpha"],
+                  "package": None}
+
+        def worker(action, **parameters):
+            if action == "ca_rotate_status":
+                return {"job": {"state": "idle"}}
+            if action == "snapshot":
+                return {"certificates": [record]}
+            if action == "ca_rotate_info":
+                return {"ca": {"id": "B" * 64, "serial": "1001", "expires_at": expiry.isoformat()}}
+            if action == "ca_rotate_start":
+                self.assertEqual(parameters["selected"], [{"serial": "1002", "fingerprint": "a" * 64,
+                                                              "expires_at": taipei_expiry}])
+                return {"job": {"state": "staging"}}
+            raise AssertionError(action)
+
+        with patch.object(admin, "cert_control", side_effect=worker):
+            page = client.get("/certificates/ca", headers=headers)
+            self.assertEqual(page.status_code, 200)
+            self.assertIn('name="expiry_1002"', page.data.decode())
+            self.assertIn('value="' + taipei_expiry + '"', page.data.decode())
+            self.assertIn("從現在起 90 天", page.data.decode())
+            self.assertIn('class="modal fade" id="ca-confirm-dialog"', page.data.decode())
+            self.assertIn('id="confirm-ca-replacement" type="submit" disabled', page.data.decode())
+            self.assertEqual(client.post("/certificates/ca", headers=headers,
+                                         data={"csrf": admin.CSRF, "confirm_credentials": "yes"}).status_code, 400)
+            result = client.post("/certificates/ca", headers=headers,
+                                 data={"csrf": admin.CSRF, "confirm_credentials": "yes",
+                                       "confirm_interruption": "yes", "expected_ca_id": "B" * 64,
+                                       "certificate": "1002:" + "a" * 64, "expiry_1002": taipei_expiry})
+            self.assertEqual(result.status_code, 303)
 
     def test_alternate_admin_port_and_crl_republish_confirmation(self) -> None:
         import share_admin_flask as admin

@@ -1,0 +1,6 @@
+<nav class="nav nav-pills gap-2 wide" aria-label="用戶端憑證子頁">
+  <a class="nav-link {{ 'active' if cert_tab == 'inventory' else '' }}" {% if cert_tab == 'inventory' %}aria-current="page"{% endif %} href="/certificates">憑證清冊</a>
+  <a class="nav-link {{ 'active' if cert_tab == 'groups' else '' }}" {% if cert_tab == 'groups' %}aria-current="page"{% endif %} href="/certificates/groups">依群組檢視</a>
+  <a class="nav-link {{ 'active' if cert_tab == 'new' else '' }}" {% if cert_tab == 'new' %}aria-current="page"{% endif %} href="/certificates/new">建立裝置憑證</a>
+  <a class="nav-link {{ 'active' if cert_tab == 'ca' else '' }}" {% if cert_tab == 'ca' %}aria-current="page"{% endif %} href="/certificates/ca">CA 替換</a>
+</nav>

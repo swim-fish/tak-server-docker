@@ -1,28 +1,47 @@
 "use strict";
 const form = document.getElementById("publisher-form");
-const cards = [...document.querySelectorAll("#publisher-cards > article")];
+const entries = [...document.querySelectorAll("[data-media-entry]")];
 const search = document.getElementById("media-search");
-let statusFilter = "all";
+const pageSizeInput = document.getElementById("media-page-size");
+const previousPage = document.getElementById("media-page-prev");
+const nextPage = document.getElementById("media-page-next");
+const pageIndicator = document.getElementById("media-page-indicator");
+let statusFilter = form.dataset.defaultStatus;
+let currentPage = 1;
 function refresh() {
   const term = search.value.trim().toLocaleLowerCase();
-  let visible = 0;
-  for (const card of cards) {
-    const statusMatches = statusFilter === "all" || card.dataset.enabled === (statusFilter === "enabled" ? "yes" : "no");
-    card.hidden = !statusMatches || !card.dataset.search.toLocaleLowerCase().includes(term);
-    if (card.hidden) card.querySelector('input[name="publisher"]').checked = false;
-    if (!card.hidden) visible++;
+  const matches = entries.filter((entry) => {
+    const statusMatches = statusFilter === "all" || entry.dataset.enabled === (statusFilter === "enabled" ? "yes" : "no");
+    return statusMatches && entry.dataset.search.toLocaleLowerCase().includes(term);
+  });
+  const pageSize = pageSizeInput ? Number(pageSizeInput.value) : Math.max(1, matches.length);
+  const pageCount = Math.max(1, Math.ceil(matches.length / pageSize));
+  currentPage = Math.min(currentPage, pageCount);
+  const visible = matches.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  for (const entry of entries) {
+    entry.hidden = !visible.includes(entry);
+    if (entry.hidden) entry.querySelector('input[name="publisher"]').checked = false;
   }
   const selected = form.querySelectorAll('input[name="publisher"]:checked').length;
-  const selectedCards = cards.filter((card) => card.querySelector('input[name="publisher"]').checked);
-  document.getElementById("media-count").textContent = `顯示 ${visible}／總計 ${cards.length}；隱藏 ${cards.length - visible}；已選 ${selected}`;
+  const selectedEntries = visible.filter((entry) => entry.querySelector('input[name="publisher"]').checked);
+  document.getElementById("media-count").textContent = pageSizeInput
+    ? `顯示 ${visible.length}／符合搜尋 ${matches.length}／總計 ${entries.length}；已選 ${selected}`
+    : `顯示 ${visible.length}／總計 ${entries.length}；隱藏 ${entries.length - visible.length}；已選 ${selected}`;
+  const empty = document.getElementById("media-empty");
+  if (empty) empty.hidden = matches.length !== 0;
+  if (pageIndicator) pageIndicator.textContent = `${currentPage}／${pageCount} 頁`;
+  if (previousPage) previousPage.disabled = currentPage === 1;
+  if (nextPage) nextPage.disabled = currentPage === pageCount;
   form.querySelectorAll('button[type="submit"]').forEach((button) => {
-    button.disabled = selected === 0 || (button.value === "reshare" &&
-      !selectedCards.every((card) => card.dataset.kind === "squad" && card.dataset.enabled === "yes"));
+    button.disabled = selected === 0 ||
+      (button.value === "reshare" && !selectedEntries.every((entry) => entry.dataset.enabled === "yes")) ||
+      (button.value === "reset" && !selectedEntries.every((entry) => entry.dataset.enabled === "yes"));
   });
 }
-search.addEventListener("input", refresh);
+search.addEventListener("input", () => { currentPage = 1; refresh(); });
 document.querySelectorAll("[data-media-status]").forEach((button) => button.addEventListener("click", () => {
   statusFilter = button.dataset.mediaStatus;
+  currentPage = 1;
   document.querySelectorAll("[data-media-status]").forEach((option) => {
     const selected = option === button;
     option.classList.toggle("active", selected);
@@ -31,9 +50,20 @@ document.querySelectorAll("[data-media-status]").forEach((button) => button.addE
   refresh();
 }));
 form.addEventListener("change", refresh);
-document.getElementById("media-select-visible").addEventListener("click", () => { cards.forEach((card) => { if (!card.hidden) card.querySelector('input[name="publisher"]').checked = true; }); refresh(); });
-document.getElementById("media-select-none").addEventListener("click", () => { cards.forEach((card) => card.querySelector('input[name="publisher"]').checked = false); refresh(); });
+if (pageSizeInput) pageSizeInput.addEventListener("change", () => { currentPage = 1; refresh(); });
+if (previousPage) previousPage.addEventListener("click", () => { currentPage--; refresh(); });
+if (nextPage) nextPage.addEventListener("click", () => { currentPage++; refresh(); });
+document.getElementById("media-select-visible").addEventListener("click", () => { entries.forEach((entry) => { if (!entry.hidden) entry.querySelector('input[name="publisher"]').checked = true; }); refresh(); });
+document.getElementById("media-select-none").addEventListener("click", () => { entries.forEach((entry) => entry.querySelector('input[name="publisher"]').checked = false); refresh(); });
 refresh();
+const reactivateModal = document.getElementById("device-reactivate");
+if (reactivateModal) reactivateModal.addEventListener("show.bs.modal", (event) => {
+  const button = event.relatedTarget;
+  reactivateModal.querySelector("#device-reactivate-key").value = button.dataset.reactivateKey;
+  reactivateModal.querySelector("#device-reactivate-name").textContent = button.dataset.reactivateName;
+  reactivateModal.querySelector('input[value="rotate"]').checked = true;
+  reactivateModal.querySelector('input[name="confirmation"]').checked = false;
+});
 document.querySelectorAll("[data-preview-url]").forEach((button) => button.addEventListener("click", () => {
   const panel = document.getElementById("media-preview");
   const frame = document.getElementById("media-preview-frame");
