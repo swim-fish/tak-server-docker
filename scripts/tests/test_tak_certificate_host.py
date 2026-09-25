@@ -34,6 +34,27 @@ def certificate(serial: int, cn: str, expires: datetime) -> bytes:
 
 
 class CertificateHostTests(unittest.TestCase):
+    def test_client_key_reads_rotated_alpha_and_rejects_unrelated_directories(self):
+        with tempfile.TemporaryDirectory() as temp:
+            private = Path(temp)
+            directory = private / "clients/ca-rotation-alpha-c5008117"
+            directory.mkdir(parents=True)
+            (directory / "key.pem").write_text("private key")
+            (directory / "key.password").write_text("test password\n")
+            with patch.object(host, "PRIVATE", private):
+                self.assertEqual(host.client_key("C5008117", {
+                    "C5008117": {"key_dir": directory.name}}),
+                    (directory / "key.pem", "test password"))
+                self.assertIsNone(host.client_key("C5008118", {
+                    "C5008118": {"key_dir": directory.name}}))
+                current_dir = private / "clients/0123456789abcdef"
+                current_dir.mkdir()
+                (current_dir / "key.pem").write_text("private key")
+                (current_dir / "key.password").write_text("new password\n")
+                self.assertEqual(host.client_key("C5008118", {
+                    "C5008118": {"key_dir": current_dir.name}}),
+                    (current_dir / "key.pem", "new password"))
+
     def test_certificate_validity_accepts_short_expiry_and_rejects_invalid_ranges(self):
         now = datetime(2026, 9, 24, 12, 0, tzinfo=timezone.utc)
         self.assertEqual(requested_expiry("2026-09-24T21:00", now=now),

@@ -9,6 +9,7 @@ import os
 import re
 import shutil
 import subprocess
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from xml.etree import ElementTree
@@ -190,7 +191,7 @@ def cutover(path: Path) -> None:
             "-out", str(PRIVATE / "intermediate-signing.p12"), "-passout", "env:TAK_STORE_PASS", env=env)
         package_name = f"atak-alpha-ca-{new_ca_id[:12]}.dpk"
         put(artifacts / "packages" / alpha["package"], PACKAGES / package_name)
-        client_dir = PRIVATE / "clients" / f"ca-rotation-alpha-{alpha['serial'].lower()}"
+        client_dir = PRIVATE / "clients" / uuid.uuid4().hex[:16]
         client_dir.mkdir(parents=True, exist_ok=False)
         put(artifacts / "private" / "alpha.key.pem", client_dir / "key.pem")
         put(artifacts / "public" / "alpha.crt.pem", client_dir / "client.pem")
