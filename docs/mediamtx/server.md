@@ -52,7 +52,7 @@ Get-Content ./runtime/secrets/mediamtx_publish_password
 
 目前這台 ICU 的純 RTSP（`8554`、不勾選 SSL）雖能建立 `live/VIDEO_1` session，卻在約 10 秒後因媒體逾時失敗。故上表右欄是診斷用設定，**不是已驗證可用的 ICU 回退路徑**。本機使用 RTSPS over TCP；若未來透過 VPN 使用 RTSP，須重新確認 ICU 的媒體傳輸及 Docker／Linux 網路路徑，不能只改連線位址。
 
-啟動後看 `docker compose logs -f mediamtx`：`is publishing to path 'live/...'` 才表示已送達伺服器。要在 ATAK 或其他播放器觀看，另使用 `atak-viewer` 帳號與**實際發布路徑**；ATAK 內建播放器的 RTSPS 相容性仍須另測。第三方 [OpenTAK ICU 的說明](https://docs.opentakserver.io/opentak_icu/index.html)曾指出原廠 TAK ICU 對「RTSPS＋帳密」有相容性疑慮，但本次安裝的 7.5.1 已完成這項組合的發布與讀取驗證。
+啟動後看 `docker compose logs -f mediamtx`：`is publishing to path 'live/...'` 才表示已送達伺服器。其他播放器使用 `atak-viewer` 讀取帳號與**實際發布路徑**。2026-09-25 實測發現，ATAK CIV 5.7.0.15 無法直接播放 ICU 自動通告的 RTSPS 來源；手動建立 `rtsp://takbox.local:8554/live/alpha/1/VIDEO_1` 影像來源，填入 `atak-viewer` 的獨立讀取密碼並勾選 **Reliable P2P Connection (consumes more resources)** 後，實機成功顯示 1280×720 影像。未勾選時，H.264 與 KLV 的 RTSP SETUP 傳輸方式不一致，MediaMTX 會關閉連線。純 RTSP 觀看沒有 TLS，只在受控區域網路或 VPN 使用；步驟與 log 見[ATAK 觀看實測](../validation/2026-09-25-atak-icu-viewer.md)。
 
 ## 伺服器端驗證
 

@@ -49,7 +49,7 @@ TAK 用戶端群組的日常讀寫使用 5.8 管理 API；新憑證的指紋綁�
 - 已驗證：分享頁的時間／次數先到停止、QR 與檔案下載；引導頁的批次憑證、Vx 伺服器端替換、ICU QR 及 MediaMTX 小隊發布身分。Flask 管理頁能列出 Mumble session 與註冊身分；管理頁異動操作尚未對真實 Vx 身分執行。
 - 已驗證：Android ICU 經 RTSPS 發布 `live/alpha/1/VIDEO_1`，Chrome 由控制台預覽與熱點 WebRTC 入口觀看；公開觀看開關及工作階段數量會更新。網際網路入口尚未建置。
 - 待驗：雙向 PTT、UDP 音訊品質、同 UUID 任務重複下載的覆寫／去重行為。
-- 待驗：MediaMTX 跨網路 UDP、ATAK 內建播放與 ICU 憑證拒絕行為。
+- 已驗：ATAK 5.7.0.15 手動 RTSP 來源使用讀取帳密與 Reliable／TCP，可觀看 ICU 發布的影像；自動 RTSPS 通告無法直接播放。待驗 MediaMTX 跨網路 UDP、其他 ATAK 版本與 ICU 憑證拒絕行為。
 - 尚未實作：公開 8446／ACME、Linux 遷移與 Federation Hub，見[後續計畫](plans/roadmap.md)。
 
 TAK hardened 套件的範圍是 TAK 與資料庫，不能據此宣稱 Mumble 或整個 Windows 主機也符合相同強化基準。

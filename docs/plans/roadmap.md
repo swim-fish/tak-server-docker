@@ -19,7 +19,7 @@
 
 MediaMTX RTSP／RTSPS、publish／read 權限、獨立中繼 CA 簽發憑證及 Compose TCP／UDP 對應已實作，見[MediaMTX 操作](../mediamtx/server.md)及[實測紀錄](../validation/2026-09-23-mediamtx.md)。TAK ICU 7.5.1 已經由 RTSPS＋帳密發布實機影像，FFmpeg 獨立讀取成功。
 
-仍須由實際 LAN 裝置測 UDP RTP／RTCP 與 SRTP／SRTCP 的發布及讀取。獨立 Docker bridge 經 Windows 發布通訊埠的 UDP 讀取未成功；需分辨 Docker Desktop NAT 與用戶端回程路徑，不把 Compose 內 UDP 成功當成外部 UDP 通過。ATAK 內建播放器的 RTSPS 讀取與 ICU 對不受信任憑證的拒絕行為也未驗收。
+仍須由實際 LAN 裝置測 UDP RTP／RTCP 與 SRTP／SRTCP 的發布及讀取。獨立 Docker bridge 經 Windows 發布通訊埠的 UDP 讀取未成功；需分辨 Docker Desktop NAT 與用戶端回程路徑，不把 Compose 內 UDP 成功當成外部 UDP 通過。ATAK 5.7.0.15 已用手動 RTSP 來源、讀取帳密及 Reliable／TCP 成功觀看 ICU 影像；ICU 自動通告的 RTSPS 來源被辨識為 RAW，後續須規劃相容的影像通告方式。ICU 對不受信任憑證的拒絕行為仍未驗收。
 
 ## 公開 8446 與 Let's Encrypt
 
