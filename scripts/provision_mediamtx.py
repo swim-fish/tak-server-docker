@@ -14,6 +14,7 @@ from pathlib import Path
 
 from bootstrap_local import dns_name, ip_literal
 from media_registry import load as load_media_registry, render_config
+from local_network import bind_ip
 
 
 PROJECT = Path(__file__).resolve().parents[1]
@@ -150,7 +151,7 @@ def viewer_configs(read_password: str, api_password: str, admin_password: str,
               "webrtc: true\n"
               "webrtcAddress: :8889\nwebrtcLocalUDPAddress: :8189\n"
               "webrtcLocalTCPAddress: :8189\n"
-              "webrtcAdditionalHosts: [takbox.local, 192.168.137.1]\n" + paths)
+              f"webrtcAdditionalHosts: [takbox.local, {bind_ip()}]\n" + paths)
     preview = (base + "authInternalUsers:\n"
                "  - user: admin\n    pass: " + json.dumps(admin_password) +
                "\n    ips: []\n    permissions:\n"

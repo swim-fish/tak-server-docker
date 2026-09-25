@@ -4,7 +4,7 @@ Mumble 使用獨立伺服器憑證，由 TAK 中繼 CA 簽發。本專案教學�
 
 ## 啟動與檢查
 
-需要已產生的 Mumble 憑證、三個相關 secret、Windows 熱點及[前景防火牆工作階段](../network/firewall.md#mumble-前景工作階段)。在另一個終端機執行：
+需要已產生的 Mumble 憑證、三個相關 secret、`.env` 指定的 Windows 網路介面及[前景防火牆工作階段](../network/firewall.md#mumble-前景工作階段)。在另一個終端機執行：
 
 ```powershell
 docker compose up -d mumble
@@ -51,7 +51,7 @@ python ./scripts/provision_mumble_channel.py
 腳本使用 SuperUser，驗證 CA 與 `takbox.local` 後，初次建立持久化的 `Primary`（主要）、`Alternate`（次要）。目前四頻道 Vx DPK 另使用 `Medical`、`Emergency`；建立或核對全部頻道：
 
 ```powershell
-python ./scripts/provision_mumble_channel.py Primary Alternate Medical Emergency --connect-host 192.168.137.1 --server-name takbox.local --port 40000
+python ./scripts/provision_mumble_channel.py Primary Alternate Medical Emergency --server-name takbox.local --port 40000
 ```
 
 成功時應列出每個頻道的 ID。頻道已存在時回報既有 ID，不重複建立。DPK 必須使用本台伺服器的實際 ID，不能把本次的 `2`–`5` 當成所有部署的固定值。建立失敗時先檢查 TLS、SuperUser secret 與伺服器紀錄，再重跑；不要清空 volume。

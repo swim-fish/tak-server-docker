@@ -1,13 +1,16 @@
 [CmdletBinding()]
 param(
-    [string]$LocalAddress = '192.168.137.1',
-    [string]$RemoteAddress = '192.168.137.0/24',
+    [string]$LocalAddress,
+    [string]$RemoteAddress,
     [ValidateRange(1, 65535)]
     [int]$Port = 8765
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+$networkConfig = & (Join-Path $PSScriptRoot 'Local-NetworkConfig.ps1')
+if (-not $LocalAddress) { $LocalAddress = $networkConfig.Address }
+if (-not $RemoteAddress) { $RemoteAddress = $networkConfig.Subnet }
 
 $parsedAddress = $null
 if (-not [Net.IPAddress]::TryParse($LocalAddress, [ref]$parsedAddress) -or

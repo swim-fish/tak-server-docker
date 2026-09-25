@@ -12,7 +12,7 @@
 python -m pip install -r .\scripts\requirements-tak-certificate-host.txt
 ```
 
-先開啟 Windows 行動熱點，確認主機具有 `192.168.137.1`。本版腳本依目前 Compose 與健康檢查設定，固定使用 `takbox.local`、熱點位址 `192.168.137.1`、TAK 8089／8443、Mumble 40000 與 MediaMTX 8322 等通訊埠。若需要其他 DNS、IP 或通訊埠，須先同步調整 Compose、健康檢查、mDNS 與防火牆設定；不要只改憑證 SAN。
+先開啟 Wi-Fi 或 Windows 行動熱點，確認主機和裝置位於相同網段。將 `.env.example` 複製為 `.env`，設定 `TAK_BIND_IP` 為主機 IPv4 位址、`TAK_ALLOWED_SUBNET` 為允許裝置連線的 CIDR；首次建置腳本、Compose、mDNS 和防火牆共用這些設定。預設範例為 `192.168.137.1`／`192.168.137.0/24`。DNS 目前固定為 `takbox.local`；若更改 DNS 或通訊埠，仍須同步檢查憑證 SAN、DPK、mDNS 與服務設定。
 
 ## 執行
 
@@ -31,7 +31,7 @@ python -m pip install -r .\scripts\requirements-tak-certificate-host.txt
 
 腳本依序：
 
-1. 檢查工具、熱點 IP、既有 `runtime/`、Compose 容器與 volume；檢查 ZIP 內容與必要檔案。
+1. 檢查工具、`.env` 指定的主機 IP、既有 `runtime/`、Compose 容器與 volume；檢查 ZIP 內容與必要檔案。
 2. 將 ZIP 解壓至暫存目錄，確認內容後移入 `vendor/`。不覆寫既有官方套件。
 3. 執行 `bootstrap_local.py`，建立 Root／中繼 CA、CRL、TAK／ATAK／Mumble 憑證、密碼、`runtime/tak/` 與初始 DPK。
 4. 執行 `provision_mediamtx.py`，建立 MediaMTX 憑證、帳密、觀看與管理設定，再用 `docker compose config --quiet` 檢查 Compose 輸入。

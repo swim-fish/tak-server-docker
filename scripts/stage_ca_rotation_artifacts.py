@@ -17,6 +17,7 @@ from xml.sax.saxutils import escape
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
+from local_network import bind_ip
 
 
 PROJECT = Path(__file__).resolve().parents[1]
@@ -140,7 +141,7 @@ def device_package(output: Path, cn: str, cert: Path, key: Path, ca_store: Path,
             "package": output.name}
 
 
-def prepare(stage: Path) -> None:
+def prepare(stage: Path, *, include_test_devices: bool = True) -> None:
     stage = stage.resolve(strict=True)
     if stage.parent != STAGES.resolve(strict=True) or not stage.name.startswith("issuing-"):
         raise ValueError("Stage must be a direct child of runtime/ca-rotation-stage")
@@ -158,12 +159,13 @@ def prepare(stage: Path) -> None:
     env["TAK_NEW_LEAF_PASS"] = leaf_password
     env["TAK_STORE_PASS"] = (SECRETS / "tak_store_password").read_text(encoding="ascii").strip()
     concat(artifacts / "ca-chain.pem", stage / "intermediate.crt.pem", PUBLIC / "root-ca.crt.pem")
-    names = (("takserver", "takbox.local", "serverAuth,clientAuth", "DNS:takbox.local,IP:192.168.137.1", True),
+    names = [("takserver", "takbox.local", "serverAuth,clientAuth", f"DNS:takbox.local,IP:{bind_ip()}", True),
              ("admin", "admin", "clientAuth", None, True),
              ("mumble", "takbox.local", "serverAuth", "DNS:takbox.local", True),
-             ("mediamtx", "takbox.local", "serverAuth", "DNS:takbox.local", False),
-             ("alpha", "ca-test-alpha-rotated-20260924", "clientAuth", None, True),
-             ("bravo", "ca-test-bravo-rotated-20260924", "clientAuth", None, True))
+             ("mediamtx", "takbox.local", "serverAuth", "DNS:takbox.local", False)]
+    if include_test_devices:
+        names.extend((("alpha", "ca-test-alpha-rotated-20260924", "clientAuth", None, True),
+                      ("bravo", "ca-test-bravo-rotated-20260924", "clientAuth", None, True)))
     issued = {}
     for name, cn, eku, san, encrypted in names:
         issued[name] = issue_leaf(stage, name, cn, eku, san, encrypted=encrypted, env=env)
@@ -184,13 +186,14 @@ def prepare(stage: Path) -> None:
     concat(artifacts / "mumble-fullchain.pem", issued["mumble"][1], stage / "intermediate.crt.pem")
     concat(artifacts / "mediamtx-fullchain.pem", issued["mediamtx"][1], stage / "intermediate.crt.pem")
     metadata = {"new_ca_id": (stage / "ca-id.txt").read_text(encoding="ascii").strip(), "devices": {}}
-    for name in ("alpha", "bravo"):
-        cn = next(item[1] for item in names if item[0] == name)
-        package = artifacts / "packages" / f"atak-{name}-rotated.dpk"
-        metadata["devices"][name] = device_package(package, cn, issued[name][1], issued[name][0],
-                                                    artifacts / "packages" / "caCert.p12", env=env)
+    if include_test_devices:
+        for name in ("alpha", "bravo"):
+            cn = next(item[1] for item in names if item[0] == name)
+            package = artifacts / "packages" / f"atak-{name}-rotated.dpk"
+            metadata["devices"][name] = device_package(package, cn, issued[name][1], issued[name][0],
+                                                        artifacts / "packages" / "caCert.p12", env=env)
     (artifacts / "manifest.json").write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
-    print(f"Replacement service certificates and two DPKs staged in {artifacts.relative_to(PROJECT)}")
+    print(f"Replacement service certificates and {len(metadata['devices'])} DPKs staged in {artifacts.relative_to(PROJECT)}")
     print("Active services, certificates, CA database and deployed CRLs are unchanged.")
 
 

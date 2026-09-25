@@ -139,6 +139,18 @@ body.portal-detail { max-width: 1100px; }
 #icu-path-preview, #device-path-preview { overflow-wrap: anywhere; color: var(--portal-text); }
 @media (max-width: 640px) { .icu-url-group { flex-wrap: wrap; } .icu-url-group .input-group-text { width: 100%; border-radius: .375rem .375rem 0 0; } .icu-url-group .form-control { flex-basis: 100%; border-radius: 0 0 .375rem .375rem; } }
 .media-disabled { opacity: .55; filter: grayscale(.8); }
+.media-subpages { margin-top: 1rem; border-color: var(--portal-line); }
+.media-subpages .nav-link { color: var(--portal-cyan); min-width: 7rem; text-align: center; }
+.media-subpages .nav-link.active { color: var(--portal-text); background: #20313a; border-color: var(--portal-line) var(--portal-line) #20313a; }
+.media-device-table { min-width: 800px; }
+.media-device-table tr.media-disabled { opacity: 1; filter: none; }
+.media-device-table tr.media-disabled td:not(:last-child) { opacity: .55; filter: grayscale(.8); }
+.media-device-table th, .media-device-table td { vertical-align: middle; }
+.media-device-table td code { white-space: normal; overflow-wrap: anywhere; }
+.media-device-table tr[hidden] { display: none; }
+.media-device-table .btn { white-space: nowrap; }
+#media-page-size { width: 5rem; }
+.media-layout .modal-content { border-color: var(--portal-line); }
 .device-links { display: grid; gap: .75rem; }
 .device-links input { font-size: .82rem; }
 #media-preview-frame { display: block; width: 100%; aspect-ratio: 16 / 9; min-height: 240px; border: 1px solid var(--portal-line); background: #000; }

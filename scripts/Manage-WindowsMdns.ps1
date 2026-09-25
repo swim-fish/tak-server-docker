@@ -2,11 +2,11 @@
 param(
     [ValidateSet('Menu', 'Install', 'Start', 'Stop', 'Test', 'Uninstall')]
     [string]$Action = 'Menu',
-    [string]$Address = '192.168.137.1',
+    [string]$Address,
     [string]$Hostname = 'takbox.local',
     [int]$MumblePort = 40000,
     [int]$TakPort = 8089,
-    [string]$RemoteSubnet = '192.168.137.0/24',
+    [string]$RemoteSubnet,
     [string]$TaskName = 'TAK-mDNS-Responder',
     [switch]$RemoveRuntime,
     [string]$ElevationRequestPath
@@ -14,6 +14,9 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+$networkConfig = & (Join-Path $PSScriptRoot 'Local-NetworkConfig.ps1')
+if (-not $Address) { $Address = $networkConfig.Address }
+if (-not $RemoteSubnet) { $RemoteSubnet = $networkConfig.Subnet }
 
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $requirements = Join-Path $projectRoot 'mdns\requirements.txt'
@@ -329,7 +332,7 @@ Register-ScheduledTask `
     -Action $taskAction `
     -Principal $taskPrincipal `
     -Settings $settings `
-    -Description 'Publishes takbox.local and TAK service records on the Windows hotspot interface.' `
+    -Description 'Publishes takbox.local and TAK service records on the configured Windows network interface.' `
     -Force | Out-Null
 
 $registeredTask = Get-ScheduledTask -TaskName $TaskName

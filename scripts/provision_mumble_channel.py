@@ -9,6 +9,7 @@ import ssl
 import struct
 import time
 from pathlib import Path
+from local_network import bind_ip
 
 
 PROJECT = Path(__file__).resolve().parents[1]
@@ -134,7 +135,7 @@ def main() -> int:
         nargs="*",
         help="Channels to create; defaults to Primary and Alternate",
     )
-    parser.add_argument("--connect-host", default="192.168.137.1")
+    parser.add_argument("--connect-host", default=bind_ip())
     parser.add_argument("--server-name", default="takbox.local")
     parser.add_argument("--port", type=int, default=40000)
     args = parser.parse_args()

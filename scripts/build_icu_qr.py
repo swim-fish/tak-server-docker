@@ -10,10 +10,15 @@ from xml.etree import ElementTree as ET
 
 
 DESTINATION = "RTSP-Push (Video Management System)"
+STREAM_RESOLUTIONS = {"0": "Lowest", "1": "240p", "2": "480p", "3": "720p", "4": "Maximum"}
+STREAM_BIT_RATES = {"400", "700", "900", "2000", "3000"}
+ALTITUDE_DISPLAYS = {"0": "m MSL", "1": "m HAE", "2": "ft MSL", "3": "ft HAE"}
 
 
 def build_profile(host: str, port: int, stream_path: str, username: str,
-                  password: str | None = None) -> bytes:
+                  password: str | None = None, *, stream_resolution: str = "3",
+                  stream_frame_rate: str = "15", stream_bit_rate: str = "900",
+                  altitude_display: str = "0", disable_local_broadcast: bool = True) -> bytes:
     if not host or "://" in host or "/" in host:
         raise ValueError("--host must be a DNS name or IP address without a scheme or path")
     if not 1 <= port <= 65535:
@@ -22,6 +27,14 @@ def build_profile(host: str, port: int, stream_path: str, username: str,
         raise ValueError("--stream-path must start with live/")
     if not username:
         raise ValueError("--username is required")
+    if stream_resolution not in STREAM_RESOLUTIONS:
+        raise ValueError("--stream-resolution must be one of 0, 1, 2, 3, 4")
+    if stream_bit_rate not in STREAM_BIT_RATES:
+        raise ValueError("--stream-bit-rate must be one of 400, 700, 900, 2000, 3000")
+    if not stream_frame_rate.isdigit() or not 1 <= int(stream_frame_rate) <= 60:
+        raise ValueError("--stream-frame-rate must be between 1 and 60")
+    if altitude_display not in ALTITUDE_DISPLAYS:
+        raise ValueError("--altitude-display must be one of 0, 1, 2, 3")
 
     root = ET.Element("preferences")
     group = ET.SubElement(root, "preference", {"version": "1", "name": "ICU"})
@@ -32,6 +45,11 @@ def build_profile(host: str, port: int, stream_path: str, username: str,
         "videoServerPath": ("class java.lang.String", stream_path),
         "videoServerSSL": ("class java.lang.Boolean", "true"),
         "videoServerUsername": ("class java.lang.String", username),
+        "disableLocalBroadcast": ("class java.lang.Boolean", str(disable_local_broadcast).lower()),
+        "stream_resolution": ("class java.lang.String", stream_resolution),
+        "stream_frame_rate": ("class java.lang.String", stream_frame_rate),
+        "stream_bit_rate": ("class java.lang.String", stream_bit_rate),
+        "display_coord_alt": ("class java.lang.String", altitude_display),
     }
     if password is not None:
         if not password or "\n" in password or "\r" in password:
@@ -58,6 +76,15 @@ def main() -> None:
     parser.add_argument("--port", type=int, default=8322)
     parser.add_argument("--stream-path", default="live/")
     parser.add_argument("--username", default="atak-publisher")
+    parser.add_argument("--stream-resolution", choices=STREAM_RESOLUTIONS, default="3",
+                        help="0=Lowest, 1=240p, 2=480p, 3=720p, 4=Maximum")
+    parser.add_argument("--stream-frame-rate", default="15", help="Frame rate supported by the device")
+    parser.add_argument("--stream-bit-rate", choices=sorted(STREAM_BIT_RATES, key=int), default="900",
+                        help="Streaming bit rate in kbps")
+    parser.add_argument("--altitude-display", choices=ALTITUDE_DISPLAYS, default="0",
+                        help="0=m MSL, 1=m HAE, 2=ft MSL, 3=ft HAE")
+    parser.add_argument("--allow-local-broadcast", action="store_true",
+                        help="Leave ICU local CoT broadcasting enabled")
     parser.add_argument("--profile-url", required=True)
     parser.add_argument("--password-file", type=Path,
                         help="Read the MediaMTX publishing password from a local file")
@@ -72,7 +99,12 @@ def main() -> None:
         if urlsplit(args.profile_url).scheme == "http" and not args.allow_http_password:
             parser.error("HTTP delivery of a password requires --allow-http-password")
         password = args.password_file.read_text(encoding="utf-8").rstrip("\r\n")
-    profile = build_profile(args.host, args.port, args.stream_path, args.username, password)
+    profile = build_profile(args.host, args.port, args.stream_path, args.username, password,
+                            stream_resolution=args.stream_resolution,
+                            stream_frame_rate=args.stream_frame_rate,
+                            stream_bit_rate=args.stream_bit_rate,
+                            altitude_display=args.altitude_display,
+                            disable_local_broadcast=not args.allow_local_broadcast)
     try:
         import qrcode
     except ImportError as exc:

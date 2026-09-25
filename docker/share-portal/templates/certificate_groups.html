@@ -11,7 +11,7 @@
 </head>
 <body class="portal-page"><main class="certificate-layout">
   <header class="wide page-header">{{ console_nav }}{{ console_breadcrumb([('用戶端憑證', '/certificates'), ('依群組檢視', none)]) }}<h1>依群組檢視憑證</h1></header>
-  <nav class="nav nav-pills gap-2 wide" aria-label="憑證檢視方式"><a class="nav-link" href="/certificates">憑證清冊</a><a class="nav-link active" aria-current="page" href="/certificates/groups">依群組檢視</a></nav>
+  {% with cert_tab='groups' %}{% include 'certificate_nav.html' %}{% endwith %}
   {% if error %}<div class="alert alert-danger wide" role="alert">憑證管理程式無法取得資料：{{ error }}</div>{% else %}
   {% if batch_result %}<div class="alert {{ 'alert-success' if batch_result.state == 'complete' else 'alert-warning' }} wide" role="status"><strong>{{ '群組變更已完成' if batch_result.state == 'complete' else '部分變更失敗，請核對憑證詳情' }}</strong><ul class="mb-0">{% for item in batch_result.results %}<li>{{ item.cn }} · {{ '已更新' if item.state == 'updated' else item.error }}</li>{% endfor %}</ul></div>{% endif %}
   <div class="inventory-stats wide" role="status"><span>群組 <strong>{{ groups|length }}</strong></span><span>憑證總計 <strong>{{ total }}</strong></span><span id="group-visible-count"></span><span id="group-pending-count"></span></div>

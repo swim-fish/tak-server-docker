@@ -1,27 +1,28 @@
-# Windows 防火牆與熱點
+# Windows 防火牆與本機網路
 
-預設只允許熱點網段 `192.168.137.0/24` 存取主機 `192.168.137.1`。通訊埠清單以[版本與通訊埠](../reference/versions-and-ports.md)為準。
+防火牆腳本預設讀取 `.env` 的 `TAK_BIND_IP` 與 `TAK_ALLOWED_SUBNET`，只允許指定網段連到指定的 Windows 位址。未設定時使用熱點範例 `192.168.137.1`／`192.168.137.0/24`。通訊埠清單以[版本與通訊埠](../reference/versions-and-ports.md)為準。
 
 ## 先確認介面
 
-先啟用 Windows 行動熱點，再執行：
+先啟用 Wi-Fi 或 Windows 行動熱點，核對 `.env` 的位址與網段，再執行：
 
 ```powershell
-Get-NetIPAddress -AddressFamily IPv4 | Where-Object IPAddress -eq '192.168.137.1'
+$network = & .\scripts\Local-NetworkConfig.ps1
+Get-NetIPAddress -AddressFamily IPv4 | Where-Object IPAddress -eq $network.Address
 Get-NetIPInterface -AddressFamily IPv4 | Where-Object ConnectionState -eq 'Connected'
 ```
 
-目標 IP 應為 `Preferred`，對應介面應為 `Connected`。此 IP 是 Android 使用的熱點 gateway，檢查重點是主機介面已啟用，不是上游網際網路 gateway 能否 ping。
+目標 IP 應為 `Preferred`，對應介面應為 `Connected`。若使用行動熱點，此 IP 也是 Android 的 gateway；若使用 Wi-Fi，通常不是 Router gateway。
 
 ## TAK 規則
 
-`Install-TakFirewall.ps1` 目前不會自行請求 UAC，請在**管理員 PowerShell** 執行：
+`Install-TakFirewall.ps1` 會確認主機位址並視需要請求 UAC，可在一般 PowerShell 執行：
 
 ```powershell
 ./scripts/Install-TakFirewall.ps1
 ```
 
-腳本建立持久的 `TAK-Local-CoT-8089` 與 `TAK-Local-Admin-8443` TCP 規則。重新執行會替換同名規則；變更網段時傳入 `-LocalAddress <HOST_IP> -RemoteAddress <CIDR>`。這些規則重開機後仍在，不需要每次重建。
+腳本建立持久的 `TAK-Local-CoT-8089` 與 `TAK-Local-Admin-8443` TCP 規則。重新執行會替換同名規則；修改 `.env` 後應重新執行，也可用 `-LocalAddress <HOST_IP> -RemoteAddress <CIDR>` 覆寫。這些規則重開機後仍在。
 
 需要取消時，在管理員 PowerShell 精確移除這兩個 DisplayName：
 
@@ -59,20 +60,20 @@ Get-NetFirewallRule -Name 'TAK-Local-Mumble-*' | Select-Object Name,DisplayName,
 
 ## MediaMTX 規則
 
-在一般 PowerShell 啟動，腳本先檢查目標 IP，再請求 UAC。它建立持久的 `TAK-Local-MediaMTX-TCP`（8554、8322）與 `TAK-Local-MediaMTX-UDP`（8000、8001、8004、8005）規則，限制主機位址、熱點介面及來源網段：
+在一般 PowerShell 啟動，腳本先檢查目標 IP，再請求 UAC。它建立持久的 `TAK-Local-MediaMTX-TCP`（8554、8322、8189、8889）與 `TAK-Local-MediaMTX-UDP`（8000、8001、8004、8005、8189）規則，限制主機位址、網路介面及來源網段：
 
 ```powershell
 ./scripts/Install-MediaMtxFirewall.ps1
 ```
 
-自訂主機與來源網段時傳 `-LocalAddress <HOST_IP> -RemoteAddress <CIDR>`，並同步調整 Compose port bind、名稱解析及憑證 SAN。重新執行會替換同名規則；移除時須在管理員 PowerShell 核對並精確移除這兩個 Name。規則允許封包進入，不保證 Docker Desktop UDP NAT 或用戶端回程可用；以實際串流驗證。
+修改 `.env` 後重新執行，或以 `-LocalAddress <HOST_IP> -RemoteAddress <CIDR>` 覆寫，並確認 Compose port bind 與名稱解析同步。若用戶端直接以 IP 連線，憑證 SAN 也要包含新 IP。重新執行會替換同名規則；移除時須在管理員 PowerShell 核對並精確移除這兩個 Name。規則允許封包進入，不保證 Docker Desktop UDP NAT 或用戶端回程可用；以實際串流驗證。
 
 ## 重新開機後
 
 分享入口需要時使用 `./scripts/Install-SharePortalFirewall.ps1 -Port 10065`，只開放目前熱點下載通訊埠；管理頁 `127.0.0.1:10066` 不對裝置開放。若 `.env` 改變映射，防火牆 `-Port` 也須同步調整。詳見[分享與管理頁](../sharing/portal.md)。
 
 1. 啟動 Docker Desktop，等待 Linux engine 可用。
-2. 啟用熱點並確認主機 IP／網段。
+2. 啟用 `.env` 所設定的網路介面並確認主機 IP／網段。
 3. 執行 `./scripts/Manage-WindowsMdns.ps1 -Action Start` 手動啟動 mDNS，再執行 `Test-WindowsMdns.ps1`；缺少排程或相依套件時依 [mDNS 頁](mdns.md)選「安裝／修復並啟動」。mDNS 不會隨重新開機自動啟動。
 4. TAK／MediaMTX 持久規則若仍在且參數相同，可繼續沿用；Mumble 前景規則需要重新啟動工作階段。
 5. 執行 `docker compose up -d`，確認服務 healthy，再由 Android 測試連線。

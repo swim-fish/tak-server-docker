@@ -62,7 +62,7 @@ def security_headers(response: Response) -> Response:
     response.headers["X-Frame-Options"] = "SAMEORIGIN" if request.path.startswith("/media/preview/") else "DENY"
     response.headers["Referrer-Policy"] = "no-referrer"
     response.headers["Content-Security-Policy"] = (
-        "default-src 'none'; img-src 'self'; style-src 'self' 'unsafe-inline'; "
+        "default-src 'none'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; "
         "script-src 'self' 'unsafe-inline'; connect-src 'self'; frame-src 'self'; "
         "frame-ancestors 'self'; form-action 'self'; base-uri 'none'")
     return response
@@ -246,6 +246,8 @@ def provision_values() -> dict:
         path = request.form.get("path", "").strip()
         if not 1 <= len(name) <= 80 or not path:
             raise ValueError("Device name and Stream Path are required")
+        if media.reserved_squad(path):
+            raise ValueError("This Stream Path is reserved for an ICU squad")
         values.update(name=name, path=path)
     elif kind == "icu":
         squad = request.form.get("squad", "default")
@@ -257,6 +259,8 @@ def provision_values() -> dict:
         if mode == "advanced" and not custom:
             raise ValueError("Advanced ICU Stream Path is required")
         path = stream_path(squad, person, custom)
+        if squad != "default" and not path.startswith(f"live/{squad}/"):
+            raise ValueError("ICU Stream Path must stay within the selected squad")
         values.update(squad=squad, person=person, custom=custom, icu_mode=mode,
                       stream_path=path, expected_path=path + "VIDEO_1")
     else:
@@ -543,7 +547,9 @@ def read_operation_kind(operation_id: str) -> str:
 
 
 @app.get("/media")
+@app.get("/media/other")
 def media_management() -> str:
+    view = "other" if request.path == "/media/other" else "icu"
     registry, paths, viewer, error = {"publishers": {}}, [], None, None
     try:
         registry = media.load()
@@ -553,8 +559,10 @@ def media_management() -> str:
         viewer = media.viewer_status()
     except (RuntimeError, OSError, ValueError) as exc:
         error = str(exc)
-    rows = [(key, item) for key, item in registry["publishers"].items()]
-    return render_template("media.html", rows=rows, paths=paths, viewer=viewer, error=error, csrf=CSRF,
+    kind = "device" if view == "other" else "squad"
+    rows = sorted(((key, item) for key, item in registry["publishers"].items()
+                   if item["kind"] == kind), key=lambda row: row[1]["name"].casefold())
+    return render_template("media.html", view=view, rows=rows, paths=paths, viewer=viewer, error=error, csrf=CSRF,
                            result=request.args.get("result", ""), operation_id=uuid.uuid4().hex)
 
 
@@ -623,7 +631,8 @@ def media_viewer_switch() -> Response:
         media.set_viewer_enabled(request.form.get("enabled") == "yes")
     except (RuntimeError, OSError, ValueError) as exc:
         return Response(str(exc), 409)
-    return redirect(url_for("media_management", result="viewer"), code=303)
+    destination = "/media/other" if request.form.get("view") == "other" else "/media"
+    return redirect(destination + "?result=viewer", code=303)
 
 
 @app.post("/media/device/reveal")
@@ -665,8 +674,19 @@ def media_update() -> str | Response:
             return redirect(url_for("media_result", operation_id=operation_id), code=303)
         receipt = read_operation(operation_id, "media:update")
         receipt["action"] = action
+        receipt["view"] = "other" if request.form.get("view") == "other" else "icu"
         save_operation(operation_id, receipt)
-        if action == "reshare":
+        if action == "reactivate":
+            if receipt["view"] != "other" or len(keys) != 1:
+                raise ValueError("Select one disabled device")
+            password_choice = request.form.get("password_choice")
+            if password_choice not in {"reuse", "rotate"}:
+                raise ValueError("Choose how to handle the device password")
+            item = media.reactivate_device(keys[0], password_choice == "rotate")
+            changed = [(keys[0], item)]
+            receipt["password_choice"] = password_choice
+            save_operation(operation_id, receipt)
+        elif action == "reshare":
             if not 1 <= len(keys) <= 100 or len(keys) != len(set(keys)):
                 raise ValueError("Select between 1 and 100 ICU squads")
             registry = media.load()["publishers"]
@@ -679,8 +699,8 @@ def media_update() -> str | Response:
         previous_labels = {(row["media_owner"], row["media_path"]): portal.share_label(row)
                            for row in reversed(portal.list_shares()[0]) if row["media_owner"] and row["media_path"]}
         for key, item in changed:
-            stopped = portal.stop_media_shares(key) if action != "reshare" else 0
-            kicked = media.kick_publishers({item["user"]}) if action != "reshare" else []
+            stopped = portal.stop_media_shares(key) if action in {"disable", "reset"} else 0
+            kicked = media.kick_publishers({item["user"]}) if action in {"disable", "reset"} else []
             shares = []
             if action in {"reset", "reshare"} and item["kind"] == "squad":
                 for actual in item["paths"]:
@@ -716,6 +736,8 @@ def media_result(operation_id: str) -> str | Response:
         shares = [portal.get_share_by_id(share_id) for share_id in item["share_ids"]]
         results.append({**item, "shares": [row for row in shares if row is not None]})
     return render_template("media_result.html", action=receipt.get("action"), results=results,
+                           password_choice=receipt.get("password_choice"),
+                           return_url="/media/other" if receipt.get("view") == "other" else "/media",
                            error=receipt.get("error"), public_base=portal.PUBLIC_BASE, csrf=CSRF)
 
 
@@ -859,6 +881,73 @@ def certificates() -> str:
     return render_template("certificates.html", snapshot=snapshot, inventory_rows=inventory_rows,
                            shares=shares,
                            csrf=CSRF, error=error, result=request.args.get("result", ""))
+
+
+@app.get("/certificates/new")
+def certificate_new() -> str:
+    snapshot, error = None, None
+    try:
+        snapshot = cert_control("snapshot")
+    except (RuntimeError, OSError, ValueError) as exc:
+        error = str(exc)
+    return render_template("certificate_new.html", snapshot=snapshot, error=error, csrf=CSRF)
+
+
+@app.get("/certificates/ca")
+def certificate_ca() -> str:
+    job, snapshot, ca, error = {"state": "idle"}, None, None, None
+    try:
+        job = cert_control("ca_rotate_status")["job"]
+        if job["state"] not in {"staging", "cutover", "renewing", "revoking"}:
+            snapshot = cert_control("snapshot")
+            ca = cert_control("ca_rotate_info")["ca"]
+    except (RuntimeError, OSError, ValueError, KeyError) as exc:
+        error = str(exc)
+    records = [item for item in snapshot.get("certificates", [])
+               if not item["revoked"] and not item["expired"] and item.get("registered") is True] if snapshot else []
+    from datetime import datetime, timezone, timedelta
+    taipei = timezone(timedelta(hours=8))
+    for item in records:
+        item["renewal_expiry"] = datetime.fromisoformat(item["expires_iso"]).astimezone(
+            taipei).strftime("%Y-%m-%dT%H:%M")
+    return render_template("certificate_ca_rotation.html", job=job, records=records,
+                           ca=ca, error=error, csrf=CSRF)
+
+
+@app.get("/certificates/ca/status")
+def certificate_ca_status() -> Response:
+    try:
+        return jsonify(cert_control("ca_rotate_status")["job"])
+    except (RuntimeError, OSError, ValueError, KeyError) as exc:
+        return jsonify({"state": "unavailable", "message": str(exc)}), 503
+
+
+@app.post("/certificates/ca")
+def certificate_ca_start() -> Response:
+    if request.form.get("confirm_credentials") != "yes" or request.form.get("confirm_interruption") != "yes":
+        return Response("Confirm both CA replacement effects", 400)
+    try:
+        snapshot = cert_control("snapshot")
+        available = {item["serial"]: item for item in snapshot["certificates"]
+                     if not item["revoked"] and not item["expired"] and item.get("registered") is True}
+        selected = []
+        for value in request.form.getlist("certificate"):
+            serial, separator, fingerprint = value.partition(":")
+            record = available.get(serial)
+            if not separator or not record or fingerprint != record["fingerprint"]:
+                raise ValueError("A renewal selection changed; refresh the page")
+            selected.append({"serial": serial, "fingerprint": fingerprint,
+                             "expires_at": local_expiry(request.form.get("expiry_" + serial, ""))})
+        if len(selected) > 100 or len({item["serial"] for item in selected}) != len(selected):
+            raise ValueError("Select up to 100 distinct certificates")
+        expected = request.form.get("expected_ca_id", "")
+        cert_control("ca_rotate_start", expected_ca_id=expected, selected=selected)
+        for record in snapshot["certificates"]:
+            if record.get("package"):
+                portal.stop_file_shares(record["package"])
+    except (RuntimeError, OSError, ValueError, KeyError) as exc:
+        return Response(str(exc), 409)
+    return redirect(url_for("certificate_ca"), code=303)
 
 
 def certificate_group_index(records: list[dict], choices: list[str] | None = None) -> tuple[list[dict], list[dict]]:

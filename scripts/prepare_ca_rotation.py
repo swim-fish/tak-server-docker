@@ -7,6 +7,7 @@ import argparse
 import hashlib
 import json
 import shutil
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -48,7 +49,7 @@ def create_snapshot() -> Path:
         raise RuntimeError("No files to snapshot")
     BACKUPS.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    destination = BACKUPS / f"ca-rotation-{stamp}"
+    destination = BACKUPS / f"ca-rotation-{stamp}-{uuid.uuid4().hex[:8]}"
     destination.mkdir(exist_ok=False)
     manifest = {"created_at_utc": datetime.now(timezone.utc).isoformat(), "files": {}}
     for source, relative in files:

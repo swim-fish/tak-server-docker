@@ -14,6 +14,8 @@ from urllib.parse import quote
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
+from icu_profiles import SEGMENT, SQUADS
+
 
 REGISTRY = Path(os.environ.get("MEDIA_REGISTRY_FILE", "/media-config/publishers.json"))
 CONFIG = Path(os.environ.get("MEDIA_CONFIG_FILE", "/media-config/mediamtx.yml"))
@@ -25,6 +27,21 @@ API_URL = os.environ.get("MEDIA_API_URL", "http://mediamtx:9997")
 VIEWER_API_URL = os.environ.get("MEDIA_VIEWER_API_URL", "http://media-viewer:9997")
 VIEWER_STATE = Path(os.environ.get("MEDIA_VIEWER_STATE_FILE", "/media-config/viewer_state.json"))
 LOCK = threading.RLock()
+NAMED_SQUADS = set(SQUADS) - {"default"}
+
+
+def reserved_squad(path: str) -> str | None:
+    parts = path.split("/")
+    return parts[1] if len(parts) >= 2 and parts[0] == "live" and parts[1] in NAMED_SQUADS else None
+
+
+def permission_paths(key: str, item: dict) -> list[str]:
+    paths = set(item["paths"])
+    if item["kind"] == "squad":
+        squad = key.removeprefix("squad:")
+        if squad in NAMED_SQUADS:
+            paths.add(f"~^live/{squad}/(?:[A-Za-z0-9_-]+/)*VIDEO_1$")
+    return sorted(paths)
 
 
 def load() -> dict:
@@ -41,7 +58,7 @@ def render_users(registry: dict) -> str:
     for key, item in sorted(registry["publishers"].items()):
         if not item["enabled"]:
             continue
-        paths = sorted(set(item["paths"]))
+        paths = permission_paths(key, item)
         if not paths:
             continue
         lines.extend([f"  - user: {json.dumps(item['user'])}",
@@ -88,8 +105,8 @@ def apply(registry: dict) -> None:
     temporary.write_text(rendered, encoding="utf-8", newline="\n")
     os.replace(temporary, CONFIG)
     try:
-        expected = {item["user"]: set(item["paths"]) for item in registry["publishers"].values()
-                    if item["enabled"] and item["paths"]}
+        expected = {item["user"]: set(permission_paths(key, item))
+                    for key, item in registry["publishers"].items() if item["enabled"] and item["paths"]}
         for _ in range(30):
             try:
                 current = api_request("/v3/config/global/get")
@@ -116,12 +133,21 @@ def apply(registry: dict) -> None:
 
 
 def ensure_squad(squad: str, path: str) -> dict:
-    from icu_profiles import SQUADS
     if squad not in SQUADS or not path.startswith("live/") or not path.endswith("/VIDEO_1"):
         raise ValueError("Invalid squad or ICU path")
+    if squad != "default" and not path.startswith(f"live/{squad}/"):
+        raise ValueError("ICU Stream Path must stay within the selected squad")
+    if any(not SEGMENT.fullmatch(part) for part in path.split("/")[1:]):
+        raise ValueError("Invalid ICU Stream Path segment")
+    owner = reserved_squad(path)
+    if owner and owner != squad:
+        raise ValueError("This member path belongs to another ICU squad")
     with LOCK:
         registry = load()
         key = "squad:" + squad
+        if any(reserved_squad(other_path) == squad for other_key, existing in registry["publishers"].items()
+               if other_key != key for other_path in existing["paths"]):
+            raise ValueError("An ICU member path is assigned to another publisher")
         item = registry["publishers"].get(key)
         if item is None:
             item = {"kind": "squad", "name": squad.title(), "user": "icu-" + squad,
@@ -143,6 +169,8 @@ def create_device(name: str, path: str) -> tuple[str, dict]:
         raise ValueError("Invalid device name or Stream Path")
     if any(not SEGMENT.fullmatch(part) for part in path.split("/")[1:]):
         raise ValueError("Invalid device Stream Path")
+    if reserved_squad(path):
+        raise ValueError("This Stream Path is reserved for an ICU squad member")
     with LOCK:
         registry = load()
         if any(path in item["paths"] for item in registry["publishers"].values()):
@@ -174,6 +202,28 @@ def update_many(keys: list[str], action: str) -> list[tuple[str, dict]]:
                 item["password"] = secrets.token_urlsafe(30)
         apply(registry)
         return [(key, copy.deepcopy(registry["publishers"][key])) for key in keys]
+
+
+def reactivate_device(key: str, rotate_password: bool) -> dict:
+    if type(rotate_password) is not bool:
+        raise ValueError("Invalid password choice")
+    with LOCK:
+        registry = load()
+        item = registry["publishers"].get(key)
+        if not item or item["kind"] != "device":
+            raise ValueError("Select an existing device")
+        if item["enabled"]:
+            raise ValueError("Device is already enabled")
+        if any(reserved_squad(path) for path in item["paths"]):
+            raise ValueError("Device Stream Path is reserved for an ICU squad member")
+        if any(path in other["paths"] for owner, other in registry["publishers"].items()
+               if owner != key for path in item["paths"]):
+            raise ValueError("Device Stream Path is assigned to another publisher")
+        item["enabled"] = True
+        if rotate_password:
+            item["password"] = secrets.token_urlsafe(30)
+        apply(registry)
+        return copy.deepcopy(item)
 
 
 def active_paths() -> list[dict]:

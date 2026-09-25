@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-Hant-TW" data-bs-theme="dark">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CA 替換｜TAK 控制台</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='bootstrap/bootstrap.min.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='console.css') }}">
+<script src="{{ url_for('static', filename='bootstrap/bootstrap.bundle.min.js') }}" defer></script>
+<script src="{{ url_for('static', filename='console_ui.js') }}" defer></script></head>
+<body class="portal-page"><main class="certificate-layout">
+<header class="wide page-header">{{ console_nav }}{{ console_breadcrumb([('用戶端憑證', '/certificates'), ('CA 替換', none)]) }}<h1>TAK 用戶端憑證</h1></header>
+{% with cert_tab='ca' %}{% include 'certificate_nav.html' %}{% endwith %}
+{% if error %}<div class="alert alert-danger wide" role="alert">CA 管理程式無法取得資料：{{ error }}</div>{% endif %}
+{% if job.state in ('staging', 'cutover', 'renewing', 'revoking') %}
+<section class="card wide" id="rotation-progress"><h2>CA 替換進行中</h2><div class="d-flex align-items-center gap-2"><div class="spinner-border spinner-border-sm" role="status"><span class="visually-hidden">處理中</span></div><span id="rotation-message">{{ job.message }}</span></div><p class="muted">TAK、Mumble 與 MediaMTX 會在切換時短暫中斷；此頁持續顯示背景工作進度。</p></section>
+{% elif job.state in ('failed', 'interrupted') %}
+<div class="alert alert-danger wide" role="alert"><strong>CA 替換未完成：</strong>{{ job.message }}。請先檢查 Windows 管理程式、服務狀態及本機快照，確認舊 CA 是否已撤銷，再決定後續動作。</div>
+{% elif job.state == 'complete' %}
+<div class="alert alert-success wide" role="status">CA 替換已完成。舊 CA ID：<code>{{ job.result.old_ca_id }}</code>；新 CA ID：<code>{{ job.result.new_ca_id }}</code>。已重簽 {{ job.result.renewed|length }} 張憑證；請逐一交付新 DPK 並驗證 ATAK 與 Vx。</div>
+{% endif %}
+{% if ca %}
+<section class="card wide"><h2>目前簽發中繼 CA</h2><dl class="cert-facts"><div><dt>SHA-256 CA ID</dt><dd><code class="text-break">{{ ca.id }}</code></dd></div><div><dt>序號</dt><dd><code>{{ ca.serial }}</code></dd></div><div><dt>到期時間</dt><dd>{{ ca.expires_at }}</dd></div></dl></section>
+{% endif %}
+{% if ca and job.state not in ('staging', 'cutover', 'renewing', 'revoking', 'failed', 'interrupted') %}
+<section class="card wide">
+<h2>撤銷目前中繼 CA 並重新簽署</h2>
+<div class="alert alert-warning" role="note">替換會更新 TAK Server、Mumble 與 MediaMTX 的服務憑證，發布 Root CRL，移除舊中繼 CA 的直接信任，並中斷既有連線。所有由舊 CA 簽發的用戶端憑證都會標示「簽發 CA 已撤銷」；只有勾選的裝置會取得新憑證與 DPK。舊 Vx 的 Mumble 身分須另行管理。</div>
+<form method="post" action="/certificates/ca" id="ca-rotation-form">
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="expected_ca_id" value="{{ ca.id }}">
+<h3 class="h5">選擇要重簽的裝置</h3><p class="muted">可不勾選任何裝置。勾選時預設保留 CN、顯示名稱、In／Out 群組及原到期日；可逐張調整到期時間或展延，範圍為送出後 5 分鐘至 730 天。到期時間採台灣時間。</p>
+<div class="row row-cols-1 row-cols-xl-3 g-3 mb-3">
+{% for item in records %}<div class="col"><article class="card h-100 p-3">
+<label class="form-check"><input class="form-check-input" type="checkbox" name="certificate" value="{{ item.serial }}:{{ item.fingerprint }}" aria-label="重簽 {{ item.name }}"><span class="form-check-label fw-semibold">{{ item.name }}</span></label>
+<div class="small text-secondary text-break">CN：{{ item.cn }}<br>CRL ID：<code>{{ item.serial }}</code></div>
+<div class="small mt-2">In：{{ item.in_groups|join(', ') or '無' }}<br>Out：{{ item.out_groups|join(', ') or '無' }}</div>
+<label class="mt-2">新憑證到期（台灣時間）<input class="form-control" type="datetime-local" name="expiry_{{ item.serial }}" value="{{ item.renewal_expiry }}" disabled></label>
+<select class="form-select form-select-sm mt-2" data-renewal-preset aria-label="{{ item.name }} 快速設定效期" disabled><option value="" selected>保留原到期日</option><option value="7">從現在起 7 天</option><option value="14">從現在起 14 天</option><option value="28">從現在起 28 天</option><option value="90">從現在起 90 天</option><option value="730">從現在起 730 天</option></select>
+</article></div>{% else %}<div class="col"><p>目前沒有可重簽的使用中憑證。</p></div>{% endfor %}
+</div>
+<button class="btn btn-danger" type="button" data-bs-toggle="modal" data-bs-target="#ca-confirm-dialog">檢查並替換 CA</button>
+<div class="modal fade" id="ca-confirm-dialog" tabindex="-1" aria-labelledby="ca-confirm-title" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+<div class="modal-header"><h3 class="modal-title fs-5" id="ca-confirm-title">確認替換簽發中繼 CA</h3><button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="關閉"></button></div>
+<div class="modal-body"><p>選取 <strong id="renewal-count">0</strong> 張裝置憑證重簽。舊 CA 撤銷後，所有舊 DPK 都必須更換。</p><div class="d-grid gap-3"><label class="form-check"><input class="form-check-input" type="checkbox" name="confirm_credentials" value="yes" required>我了解目前由舊 CA 簽發的用戶端憑證與 DPK 必須更換；未勾選的裝置不會取得新憑證。</label><label class="form-check"><input class="form-check-input" type="checkbox" name="confirm_interruption" value="yes" required>我了解服務與 ATAK／Vx 連線可能中斷，且舊 CA 一旦撤銷無法恢復。</label></div></div>
+<div class="modal-footer"><button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">取消</button><button class="btn btn-danger" id="confirm-ca-replacement" type="submit" disabled>確認撤銷舊 CA 並簽發新 CA</button></div>
+</div></div></div>
+</form></section>
+{% endif %}
+</main><script>
+const rotationForm=document.getElementById('ca-rotation-form');
+if(rotationForm){const certs=[...rotationForm.querySelectorAll('input[name="certificate"]')],confirms=[...rotationForm.querySelectorAll('input[name^="confirm_"]')],submit=document.getElementById('confirm-ca-replacement');function updateConfirm(){submit.disabled=!confirms.every(box=>box.checked);document.getElementById('renewal-count').textContent=certs.filter(box=>box.checked).length}for(const box of certs){const card=box.closest('.card'),expiry=card.querySelector('input[type="datetime-local"]'),preset=card.querySelector('[data-renewal-preset]');const update=()=>{expiry.disabled=!box.checked;expiry.required=box.checked;preset.disabled=!box.checked;updateConfirm()};box.addEventListener('change',update);preset.addEventListener('change',()=>{if(preset.value)expiry.value=new Date(Date.now()+(Number(preset.value)*24+8)*3600000).toISOString().slice(0,16)});expiry.addEventListener('change',()=>{preset.value='' });update()}for(const box of confirms)box.addEventListener('change',updateConfirm)}
+{% if job.state in ('staging', 'cutover', 'renewing', 'revoking') %}
+async function refreshRotation(){try{const response=await fetch('/certificates/ca/status',{cache:'no-store'});if(!response.ok)return;const job=await response.json();if(['complete','failed','interrupted'].includes(job.state)){location.reload();return}document.getElementById('rotation-message').textContent=job.message||job.state}catch{}}
+setInterval(refreshRotation,5000);
+{% endif %}
+</script></body></html>

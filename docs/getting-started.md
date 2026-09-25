@@ -17,7 +17,7 @@ openssl version
 keytool -help
 ```
 
-準備官方 `takserver-docker-hardened-5.8-RELEASE-84.zip`。啟用 Windows 行動熱點，讓主機持有 `192.168.137.1`，Android 連到此熱點。其他網段先依[網路調整說明](network/mdns.md#變更名稱或網段)修改設定，再簽發憑證。
+準備官方 `takserver-docker-hardened-5.8-RELEASE-84.zip`。讓 Windows 主機與 Android 連到相同的 Wi-Fi 或行動熱點。在專案根目錄將 `.env.example` 複製為 `.env`，設定 `TAK_BIND_IP` 為主機目前的 IPv4 位址、`TAK_ALLOWED_SUBNET` 為裝置所在網段；Compose、mDNS 與防火牆腳本會讀取這兩個值。預設範例為 Windows 熱點 `192.168.137.1/24`。詳細步驟見[網路調整說明](network/mdns.md#變更名稱或網段)。
 
 以下為全新部署。已有 `runtime/` 或資料庫時，請改讀[維運](tak-server/operations.md)，不要用 `bootstrap_local.py --force` 解決一般連線問題。
 
@@ -72,7 +72,7 @@ python ./scripts/provision_mediamtx.py --dns takbox.local
 ./scripts/Test-WindowsMdns.ps1
 ```
 
-名稱應解析到主機熱點 IP。TAK 防火牆腳本目前需要在**管理員 PowerShell** 執行：
+名稱應解析到 `.env` 的主機 IP。TAK 防火牆腳本會在一般 PowerShell 視需要請求 UAC：
 
 ```powershell
 ./scripts/Install-TakFirewall.ps1

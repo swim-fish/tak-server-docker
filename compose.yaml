@@ -48,8 +48,8 @@ services:
       - ./runtime/tak/certs:/opt/tak/certs/files:ro
       - tak-logs:/opt/tak/logs
     ports:
-      - "192.168.137.1:8089:8089/tcp"
-      - "192.168.137.1:${TAK_HTTPS_HOST_PORT:-8443}:8443/tcp"
+      - "${TAK_BIND_IP:-192.168.137.1}:8089:8089/tcp"
+      - "${TAK_BIND_IP:-192.168.137.1}:${TAK_HTTPS_HOST_PORT:-8443}:8443/tcp"
     networks:
       tak-backend:
         ipv4_address: 172.28.0.3
@@ -109,8 +109,8 @@ services:
       - ./runtime/pki/mumble-server.key.pem:/certs/mumble-server.key.pem:ro
       - ./runtime/pki/public/root-ca.crt.pem:/certs/root-ca.pem:ro
     ports:
-      - "192.168.137.1:40000:64738/tcp"
-      - "192.168.137.1:40000:64738/udp"
+      - "${TAK_BIND_IP:-192.168.137.1}:40000:64738/tcp"
+      - "${TAK_BIND_IP:-192.168.137.1}:40000:64738/udp"
     networks:
       - tak-edge
     healthcheck:
@@ -160,12 +160,12 @@ services:
       - ./runtime/pki/mediamtx-fullchain.pem:/certs/mediamtx-fullchain.pem:ro
       - ./runtime/pki/mediamtx-server.key.pem:/certs/mediamtx-server.key.pem:ro
     ports:
-      - "192.168.137.1:8554:8554/tcp"
-      - "192.168.137.1:8322:8322/tcp"
-      - "192.168.137.1:8000:8000/udp"
-      - "192.168.137.1:8001:8001/udp"
-      - "192.168.137.1:8004:8004/udp"
-      - "192.168.137.1:8005:8005/udp"
+      - "${TAK_BIND_IP:-192.168.137.1}:8554:8554/tcp"
+      - "${TAK_BIND_IP:-192.168.137.1}:8322:8322/tcp"
+      - "${TAK_BIND_IP:-192.168.137.1}:8000:8000/udp"
+      - "${TAK_BIND_IP:-192.168.137.1}:8001:8001/udp"
+      - "${TAK_BIND_IP:-192.168.137.1}:8004:8004/udp"
+      - "${TAK_BIND_IP:-192.168.137.1}:8005:8005/udp"
     networks:
       - tak-edge
     security_opt:
@@ -183,8 +183,8 @@ services:
     volumes:
       - ./runtime/mediamtx:/config:ro
     ports:
-      - "192.168.137.1:8189:8189/udp"
-      - "192.168.137.1:8189:8189/tcp"
+      - "${TAK_BIND_IP:-192.168.137.1}:8189:8189/udp"
+      - "${TAK_BIND_IP:-192.168.137.1}:8189:8189/tcp"
     networks:
       - tak-edge
     depends_on:
@@ -202,7 +202,7 @@ services:
     volumes:
       - ./runtime/mediamtx:/media-config:ro
     ports:
-      - "192.168.137.1:8889:8889/tcp"
+      - "${TAK_BIND_IP:-192.168.137.1}:8889:8889/tcp"
     networks:
       - tak-edge
     depends_on:
@@ -291,7 +291,7 @@ services:
       - share-state:/state
       - share-files:/files:ro
     ports:
-      - "192.168.137.1:${SHARE_PUBLIC_HOST_PORT:-8765}:8765/tcp"
+      - "${TAK_BIND_IP:-192.168.137.1}:${SHARE_PUBLIC_HOST_PORT:-8765}:8765/tcp"
     networks:
       - share-net
     healthcheck:

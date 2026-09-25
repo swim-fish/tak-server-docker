@@ -15,8 +15,9 @@ $vendorRoot = Join-Path $projectRoot 'vendor'
 $upstreamName = 'takserver-docker-hardened-5.8-RELEASE-84'
 $upstreamRoot = Join-Path $vendorRoot $upstreamName
 $runtimeRoot = Join-Path $projectRoot 'runtime'
-$hotspotAddress = '192.168.137.1'
-$hotspotSubnet = '192.168.137.0/24'
+$networkConfig = & (Join-Path $PSScriptRoot 'Local-NetworkConfig.ps1')
+$hotspotAddress = $networkConfig.Address
+$hotspotSubnet = $networkConfig.Subnet
 $dnsName = 'takbox.local'
 
 function Invoke-Checked {
@@ -147,7 +148,7 @@ try {
     $address = @(Get-NetIPAddress -AddressFamily IPv4 -IPAddress $hotspotAddress -ErrorAction SilentlyContinue |
         Where-Object { $_.AddressState -eq 'Preferred' })
     if ($address.Count -ne 1) {
-        throw "Enable the Windows Mobile hotspot first; $hotspotAddress must be assigned to this host."
+        throw "Connect the configured Windows network interface first; $hotspotAddress must be assigned to this host."
     }
     $envFile = Join-Path $projectRoot '.env'
     if (Test-Path -LiteralPath $envFile -PathType Leaf) {

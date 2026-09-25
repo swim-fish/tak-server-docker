@@ -11,7 +11,7 @@
 
 ### Bravo 重匯入紀錄
 
-Bravo 裝置 `R5CX12QZWLR` 於 23:14 掃描同名 DPK 的 QR：下載成功，裝置端檔案 SHA-256 與主機一致，ATAK 判定 Manifest 有效；但紀錄接著顯示 `Overwriting existing file without prompting user`、`already in FileInfo db`，沒有新的套件解壓縮或 `takbox.local` 連線設定。通用 `ImportReceiver` 的 `no Importer found` 訊息本身不足以判定 DPK 損壞。使用者確認畫面只有開始下載，伺服器清單沒有新連線。
+Bravo 裝置 於 23:14 掃描同名 DPK 的 QR：下載成功，裝置端檔案 SHA-256 與主機一致，ATAK 判定 Manifest 有效；但紀錄接著顯示 `Overwriting existing file without prompting user`、`already in FileInfo db`，沒有新的套件解壓縮或 `takbox.local` 連線設定。通用 `ImportReceiver` 的 `no Importer found` 訊息本身不足以判定 DPK 損壞。使用者確認畫面只有開始下載，伺服器清單沒有新連線。
 
 將同一份憑證與偏好設定封裝成新檔名並換新的 Manifest UID 後，23:24:18 出現 `ExtractMissionPackageTask`，23:24:19 `takbox.local:8089:ssl` 連線成功，8443 的版本與用戶端端點 API 均回應 200。重試包只用於本機短效分享；未重新簽發憑證。使用者另表示曾移除 `atak/tools/datapackage/` 中的舊 DPK；這與檔名、Manifest UID 同時變動，因此不能單獨證明 ATAK 是依哪一項判斷重複，也不能排除刪檔促成重新匯入。原始紀錄只足以證明同名下載曾停留在檔案覆寫階段，重試則確實完成套件安裝。
 
