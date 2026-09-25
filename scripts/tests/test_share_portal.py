@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import hashlib
 import json
 from html.parser import HTMLParser
 import os
@@ -11,12 +12,14 @@ import tempfile
 import unittest
 import zipfile
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import share_portal as portal
+from certificate_validity import TAIPEI
 
 
 class SharePortalTests(unittest.TestCase):
@@ -139,12 +142,21 @@ class SharePortalTests(unittest.TestCase):
             self.assertEqual(client.post("/certificates/issue", headers=headers,
                                          data={"csrf": "wrong"}).status_code, 403)
             control.assert_not_called()
+            selected_expiry = (datetime.now(timezone.utc) + timedelta(hours=1)).astimezone(
+                TAIPEI).strftime("%Y-%m-%dT%H:%M")
             response = client.post("/certificates/issue", headers=headers,
                                    data={"csrf": admin.CSRF, "name": "Tablet 02", "cn": "tablet-02",
+                                         "expires_at": selected_expiry,
                                          "in_group": "local-test", "out_group": "local-test"})
             self.assertEqual(response.status_code, 303)
             control.assert_called_once_with("issue", name="Tablet 02", cn="tablet-02",
+                                            expires_at=selected_expiry,
                                             in_groups=["local-test"], out_groups=["local-test"])
+            control.reset_mock()
+            invalid = client.post("/certificates/issue", headers=headers,
+                                  data={"csrf": admin.CSRF, "expires_at": "2020-01-01T00:00"})
+            self.assertEqual(invalid.status_code, 409)
+            control.assert_not_called()
 
     def test_revoke_route_stops_package_shares_before_host_operation(self) -> None:
         import share_admin_flask as admin
@@ -324,6 +336,28 @@ class SharePortalTests(unittest.TestCase):
         labels = {portal.share_label(row) for row in portal.list_shares()[0]}
         self.assertEqual(labels, {"ICU-bravo-2", "ICU-預設", "field-tablet-100A"})
 
+    def test_bootstrap_package_label_uses_matching_identity_metadata(self) -> None:
+        package = portal.PACKAGE_DIR / "atak-local-test.dpk"
+        with zipfile.ZipFile(package, "w") as archive:
+            archive.writestr("example.txt", "bootstrap-package")
+        identity = {
+            "filename": package.name,
+            "sha256": hashlib.sha256(package.read_bytes()).hexdigest(),
+            "cn": "test-tablet", "serial": "1002",
+        }
+        package.with_suffix(".identity.json").write_text(json.dumps(identity), encoding="utf-8")
+        portal.create_share("file", "atak:atak-local-test.dpk", 10, 1)
+        row = portal.list_shares()[0][0]
+        self.assertEqual(portal.share_label(row), "test-tablet-1002")
+        self.assertEqual(row["display_name"], "test-tablet-1002")
+        identity["sha256"] = "0" * 64
+        package.with_suffix(".identity.json").write_text(json.dumps(identity), encoding="utf-8")
+        self.assertEqual(portal.share_label(row), "test-tablet-1002")
+        with portal.connection() as db:
+            db.execute("UPDATE shares SET display_name=NULL WHERE id=?", (row["id"],))
+        row = portal.list_shares()[0][0]
+        self.assertEqual(portal.share_label(row), "atak-local-test.dpk")
+
     def test_icu_advanced_path_only_enabled_in_advanced_mode(self) -> None:
         import share_admin_flask as admin
 
@@ -410,9 +444,12 @@ class SharePortalTests(unittest.TestCase):
         auth = "Basic " + base64.b64encode(b"admin:test-admin-password-that-is-long-enough").decode()
         headers = {"Authorization": auth, "Host": "127.0.0.1:8766"}
         client = admin.app.test_client()
+        selected_expiry = (datetime.now(timezone.utc) + timedelta(hours=1)).astimezone(
+            TAIPEI).strftime("%Y-%m-%dT%H:%M")
         form = {"csrf": admin.CSRF, "name": ["Test One", "Test Two"],
                 "cn": ["test-one", "test-two"], "in_groups": ["local-test", "team-a"],
-                "out_groups": ["local-test", "team-b"], "ttl": "20", "limit": "3"}
+                "out_groups": ["local-test", "team-b"], "expires_at": [selected_expiry, ""],
+                "ttl": "20", "limit": "3"}
         preview = client.post("/provision/tak-new/preview", data=form, headers=headers)
         self.assertEqual(preview.status_code, 200)
         self.assertIn(b"test-one", preview.data)
@@ -428,6 +465,11 @@ class SharePortalTests(unittest.TestCase):
         hidden = HiddenValues()
         hidden.feed(preview.data.decode("utf-8"))
         self.assertEqual(json.loads(hidden.value)["items"][1]["cn"], "test-two")
+        self.assertEqual(json.loads(hidden.value)["items"][0]["expires_at"], selected_expiry)
+        self.assertNotEqual(json.loads(hidden.value)["items"][1]["expires_at"], selected_expiry)
+        invalid = {**form, "expires_at": ["2020-01-01T00:00", ""]}
+        self.assertEqual(client.post("/provision/tak-new/preview", data=invalid,
+                                     headers=headers).status_code, 400)
         values = {
             "items": [{"name": "Test One", "cn": "test-one", "in_groups": ["local-test"],
                        "out_groups": ["local-test"]},
@@ -463,6 +505,12 @@ class SharePortalTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         markup = response.data.decode("utf-8")
         self.assertIn('data-group-field-mode="csv"', markup)
+        self.assertIn('name="expires_at" type="datetime-local"', markup)
+        self.assertIn('data-expiry-preset', markup)
+        self.assertIn('<option value="168">7 天</option>', markup)
+        self.assertIn('<option value="336">14 天</option>', markup)
+        self.assertIn('<option value="672">28 天</option>', markup)
+        self.assertIn('<option value="2160">90 天</option>', markup)
         self.assertIn('name="in_groups" value="local-test"', markup)
         self.assertIn('name="out_groups" value="local-test"', markup)
         self.assertIn('data-group="team-a"', markup)

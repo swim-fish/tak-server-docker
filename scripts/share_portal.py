@@ -4,8 +4,11 @@
 from __future__ import annotations
 
 import html
+import hashlib
 import io
+import json
 import os
+import re
 import secrets
 import shutil
 import sqlite3
@@ -115,6 +118,27 @@ def list_shares() -> tuple[list[sqlite3.Row], bool]:
         return list(db.execute("SELECT * FROM shares ORDER BY created_at DESC, rowid DESC")), is_paused(db)
 
 
+def bootstrap_package_label(filename: str, snapshot: Path) -> str | None:
+    """Read identity metadata only when it describes these exact package bytes."""
+    if filename != "atak-local-test.dpk":
+        return None
+    identity_file = PACKAGE_DIR / "atak-local-test.identity.json"
+    if not identity_file.is_file() or identity_file.is_symlink() or not snapshot.is_file():
+        return None
+    try:
+        identity = json.loads(identity_file.read_text(encoding="utf-8"))
+        cn, serial = identity["cn"], identity["serial"]
+        if (identity["filename"] == filename
+                and re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,62}", cn)
+                and re.fullmatch(r"[0-9A-F]{1,40}", serial)
+                and snapshot.stat().st_size <= 1024 * 1024
+                and hashlib.sha256(snapshot.read_bytes()).hexdigest() == identity["sha256"]):
+            return f"{cn}-{serial}"
+    except (KeyError, OSError, ValueError, TypeError):
+        pass
+    return None
+
+
 def share_label(row: sqlite3.Row) -> str:
     """Return an identifiable console label without changing the download filename."""
     if row["display_name"]:
@@ -132,6 +156,9 @@ def share_label(row: sqlite3.Row) -> str:
                 return f"ICU-{squad}-{person or '未指定'}"
         return "ICU-ADV-" + (path.strip("/") or "live")
     name = row["filename"]
+    bootstrap_label = bootstrap_package_label(name, FILE_DIR / row["stored_name"])
+    if bootstrap_label:
+        return bootstrap_label
     if name.startswith("atak-") and name.endswith(".dpk"):
         parts = name[5:-4].rsplit("-", 1)
         if len(parts) == 2 and parts[1] and all(char in "0123456789abcdefABCDEF" for char in parts[1]):
@@ -251,6 +278,8 @@ def create_share(kind: str, source: str, ttl_minutes: int | None,
         filename = original.name
         with original.open("rb") as src, target.open("xb") as dst:
             shutil.copyfileobj(src, dst, length=1024 * 1024)
+        if display_name is None:
+            display_name = bootstrap_package_label(filename, target)
     try:
         now = int(time.time())
         with connection() as db:

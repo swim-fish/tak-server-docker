@@ -17,6 +17,7 @@ import zipfile
 from datetime import datetime, timedelta, timezone
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from threading import Event, Thread
 from xml.etree import ElementTree
 from xml.sax.saxutils import escape
 
@@ -26,6 +27,7 @@ from cryptography.x509.oid import ExtendedKeyUsageOID, ExtensionOID, NameOID
 
 import tak_api_client
 import tak_vx_package_host
+from certificate_validity import requested_expiry
 
 
 PROJECT = Path(__file__).resolve().parents[1]
@@ -112,6 +114,8 @@ def excluded_fingerprints() -> set[str]:
 
 def inventory(now: datetime | None = None) -> list[dict]:
     now = now or datetime.now(timezone.utc)
+    active_ca = x509.load_pem_x509_certificate((PUBLIC / "intermediate.crt.pem").read_bytes())
+    active_ca_id = active_ca.fingerprint(hashes.SHA256()).hex().upper()
     index = CA_DB / "index.txt"
     if not index.is_file():
         raise RuntimeError("Issuing CA database is missing")
@@ -152,6 +156,7 @@ def inventory(now: datetime | None = None) -> list[dict]:
             package = None
         records.append({
             "serial": serial, "fingerprint": fingerprint,
+            "issuer_ca_id": active_ca_id, "archived": False, "ca_revoked": False,
             "issuer": cert.issuer.rfc4514_string(), "cn": cn_value,
             "name": metadata.get("name", cn_value),
             "expires_at": expiry.astimezone(TAIPEI).strftime("%Y-%m-%d %H:%M:%S"),
@@ -168,6 +173,43 @@ def inventory(now: datetime | None = None) -> list[dict]:
                            if isinstance(group, str) and GROUP.fullmatch(group)]
             if isinstance(metadata.get("out_groups", []), list) else [],
         })
+    return sorted(records, key=lambda item: (item["expires_iso"], item["serial"]))
+
+
+def archived_inventory(now: datetime | None = None) -> list[dict]:
+    archive_dir = CONTROL / "archive"
+    if not archive_dir.is_dir():
+        return []
+    now = now or datetime.now(timezone.utc)
+    root = x509.load_pem_x509_certificate((PUBLIC / "root-ca.crt.pem").read_bytes())
+    root_crl = x509.load_pem_x509_crl((PUBLIC / "root-ca.crl.pem").read_bytes())
+    if (root_crl.issuer != root.subject or not root_crl.is_signature_valid(root.public_key())
+            or root_crl.next_update_utc <= now):
+        raise RuntimeError("Published Root CRL cannot be verified")
+    records = []
+    for path in sorted(archive_dir.glob("*.json")):
+        ca_id = path.stem.upper()
+        if not re.fullmatch(r"[0-9A-F]{64}", ca_id):
+            raise RuntimeError("Invalid archived CA ID")
+        issuer_path = RUNTIME / "pki" / "archive" / ca_id / "intermediate.crt.pem"
+        issuer = x509.load_pem_x509_certificate(issuer_path.read_bytes())
+        if issuer.fingerprint(hashes.SHA256()).hex().upper() != ca_id:
+            raise RuntimeError("Archived CA certificate does not match its ID")
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        if payload.get("ca_id") != ca_id or not isinstance(payload.get("certificates"), list):
+            raise RuntimeError("Archived certificate inventory is invalid")
+        ca_revoked = root_crl.get_revoked_certificate_by_serial_number(issuer.serial_number) is not None
+        for original in payload["certificates"]:
+            record = dict(original)
+            expiry = datetime.fromisoformat(record["expires_iso"])
+            remaining = expiry - now
+            record["expired"] = remaining.total_seconds() <= 0
+            record["expiring_soon"] = timedelta(0) < remaining <= timedelta(days=30)
+            record["days_left"] = ("已過期" if record["expired"] else "少於 1 天"
+                                   if remaining < timedelta(days=1) else f"{remaining.days} 天")
+            record.update({"issuer_ca_id": ca_id, "archived": True,
+                           "ca_revoked": ca_revoked, "package": None})
+            records.append(record)
     return sorted(records, key=lambda item: (item["expires_iso"], item["serial"]))
 
 
@@ -287,7 +329,7 @@ def restart_for_authentication() -> None:
 
 
 def wait_for_groups(record: dict, in_groups: list[str], out_groups: list[str],
-                    timeout: int = 90) -> None:
+                    timeout: int = 150) -> None:
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
         try:
@@ -318,8 +360,9 @@ def set_groups(serial: str, fingerprint: str, in_values: object, out_values: obj
     record = checked_record(serial, fingerprint, active=True)
     in_groups = checked_group_list(in_values)
     out_groups = checked_group_list(out_values)
-    group_flags(in_groups, out_groups)
     previous_metadata = load_registry().get(serial, {})
+    if previous_metadata.get("registered") is False and not in_groups and not out_groups:
+        raise ValueError("Register the certificate with at least one In or Out group")
     if previous_metadata.get("registered") is not False:
         previous = status(record)
         if previous["role"] == "ROLE_ADMIN":
@@ -360,7 +403,6 @@ def set_group_batch(changes: object) -> dict:
         expected_out = checked_group_list(change.get("expected_out"))
         in_groups = checked_group_list(change.get("in_groups"))
         out_groups = checked_group_list(change.get("out_groups"))
-        group_flags(in_groups, out_groups)
         current = status(record)
         if current["role"] == "ROLE_ADMIN":
             raise ValueError("Administrator certificates cannot be changed in this console")
@@ -430,8 +472,8 @@ def issue(request: dict, *, defer_registration: bool = False) -> dict:
     openssl = require_tool("openssl")
     keytool = require_tool("keytool")
     issuing_ca = x509.load_pem_x509_certificate((PUBLIC / "intermediate.crt.pem").read_bytes())
-    if issuing_ca.not_valid_after_utc - datetime.now(timezone.utc) < timedelta(days=731):
-        raise RuntimeError("Issuing CA expires too soon for a two-year client certificate")
+    expires_at = requested_expiry(request.get("expires_at"),
+                                  issuer_not_after=issuing_ca.not_valid_after_utc)
     identity = uuid.uuid4().hex[:16]
     directory = PRIVATE / "clients" / identity
     directory.mkdir(parents=True, exist_ok=False)
@@ -458,10 +500,13 @@ def issue(request: dict, *, defer_registration: bool = False) -> dict:
              "env:TAK_CLIENT_KEY_PASS", "-subj", f"/C=TW/O=TAK Local/OU=Client/CN={cn}",
              "-out", str(csr)], env=env)
     command([openssl, "ca", "-batch", "-config", str(PRIVATE / "issuing-ca.cnf"),
-             "-extensions", "client_ext", "-extfile", str(ext), "-days", "730", "-notext",
+             "-extensions", "client_ext", "-extfile", str(ext), "-enddate",
+             expires_at.strftime("%Y%m%d%H%M%SZ"), "-notext",
              "-in", str(csr), "-out", str(cert_file), "-passin", "env:TAK_INTERMEDIATE_PASS"],
             env=env)
     cert = x509.load_pem_x509_certificate(cert_file.read_bytes())
+    if cert.not_valid_after_utc != expires_at:
+        raise RuntimeError("Signed certificate expiry differs from the requested time")
     serial = format(cert.serial_number, "X")
     certificate_path(serial)
     if serial in load_registry():
@@ -472,6 +517,7 @@ def issue(request: dict, *, defer_registration: bool = False) -> dict:
     registry = load_registry()
     registry[serial] = {"name": name.strip(), "cn": cn,
                         "created_at": datetime.now(timezone.utc).isoformat(),
+                        "requested_expires_at": request.get("expires_at"),
                         "package": None, "key_dir": identity, "registered": False,
                         "in_groups": in_groups, "out_groups": out_groups, "backup": backup,
                         "batch_job": request.get("_batch_job_id") if defer_registration else None}
@@ -592,9 +638,14 @@ def validate_batch_items(items: object) -> list[dict]:
         in_groups = checked_group_list(item.get("in_groups"))
         out_groups = checked_group_list(item.get("out_groups"))
         group_flags(in_groups, out_groups)
+        expires_at = item.get("expires_at")
+        if expires_at is not None and (not isinstance(expires_at, str) or
+                                       not re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}", expires_at)):
+            raise ValueError("Invalid certificate expiry date or time")
         seen.add(cn)
         checked.append({"name": name.strip(), "cn": cn,
-                        "in_groups": in_groups, "out_groups": out_groups})
+                        "in_groups": in_groups, "out_groups": out_groups,
+                        "expires_at": expires_at})
     return checked
 
 
@@ -609,6 +660,7 @@ def signed_batch_record(job_id: str, item: dict) -> dict | None:
     if (metadata.get("batch_job") != job_id or metadata.get("name") != item["name"] or
             metadata.get("in_groups") != item["in_groups"] or
             metadata.get("out_groups") != item["out_groups"] or
+            metadata.get("requested_expires_at") != item["expires_at"] or
             not record.get("package")):
         raise RuntimeError(f"Certificate CN {item['cn']} already exists outside this batch or is incomplete")
     return record
@@ -629,8 +681,8 @@ def issue_batch(job_id: str, items: object) -> dict:
         if any(item["cn"] in registered or item["cn"] in active for item in checked):
             raise ValueError("A batch CN is already registered or has an active certificate")
         issuing_ca = x509.load_pem_x509_certificate((PUBLIC / "intermediate.crt.pem").read_bytes())
-        if issuing_ca.not_valid_after_utc - datetime.now(timezone.utc) < timedelta(days=731):
-            raise RuntimeError("Issuing CA expires too soon for a two-year client certificate")
+        for item in checked:
+            requested_expiry(item["expires_at"], issuer_not_after=issuing_ca.not_valid_after_utc)
         job = {"job_id": job_id, "state": "signing", "created_at": datetime.now(timezone.utc).isoformat(),
                "items": [{"request": item, "state": "pending"} for item in checked]}
         save_batch_job(job_id, job)
@@ -870,7 +922,8 @@ def execute(request: dict) -> dict:
                 group_choices.update(group for direction in ("in_groups", "out_groups")
                                      for group in metadata.get(direction, [])
                                      if isinstance(group, str) and GROUP.fullmatch(group))
-        return {"certificates": inventory(), "group_choices": sorted(group_choices),
+        return {"certificates": inventory(), "archived_certificates": archived_inventory(),
+                "group_choices": sorted(group_choices),
                 "last_result": json.loads(LAST_RESULT.read_text(encoding="utf-8"))
                 if LAST_RESULT.is_file() else None}
     if action == "status":
@@ -909,10 +962,18 @@ def main() -> None:
     inbox.mkdir(parents=True, exist_ok=True)
     outbox.mkdir(parents=True, exist_ok=True)
     heartbeat = CONTROL / "heartbeat"
+    heartbeat_stop = Event()
+
+    def keep_heartbeat() -> None:
+        while not heartbeat_stop.wait(1):
+            heartbeat.touch()
+
+    heartbeat.touch()
+    heartbeat_thread = Thread(target=keep_heartbeat, name="tak-certificate-heartbeat", daemon=True)
+    heartbeat_thread.start()
     print("TAK certificate worker ready. Press Ctrl+C to stop.", flush=True)
     try:
         while True:
-            heartbeat.write_text(str(time.time()), encoding="ascii")
             for path in sorted(inbox.glob("*.json")):
                 operation_id = path.stem
                 if len(operation_id) != 32 or any(c not in "0123456789abcdef" for c in operation_id):
@@ -949,6 +1010,8 @@ def main() -> None:
                 path.unlink(missing_ok=True)
             time.sleep(0.2)
     finally:
+        heartbeat_stop.set()
+        heartbeat_thread.join(timeout=2)
         heartbeat.unlink(missing_ok=True)
 
 

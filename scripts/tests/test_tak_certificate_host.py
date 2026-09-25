@@ -19,6 +19,7 @@ from xml.etree import ElementTree
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import tak_certificate_host as host
+from certificate_validity import local_expiry, requested_expiry
 
 
 def certificate(serial: int, cn: str, expires: datetime) -> bytes:
@@ -33,6 +34,18 @@ def certificate(serial: int, cn: str, expires: datetime) -> bytes:
 
 
 class CertificateHostTests(unittest.TestCase):
+    def test_certificate_validity_accepts_short_expiry_and_rejects_invalid_ranges(self):
+        now = datetime(2026, 9, 24, 12, 0, tzinfo=timezone.utc)
+        self.assertEqual(requested_expiry("2026-09-24T21:00", now=now),
+                         datetime(2026, 9, 24, 13, 0, tzinfo=timezone.utc))
+        self.assertEqual(local_expiry("", now=now), "2028-09-23T20:00")
+        for value in ("2026-09-24T20:04", "2026-09-24T19:00", "invalid", "2030-01-01T00:00"):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                requested_expiry(value, now=now)
+        with self.assertRaisesRegex(ValueError, "Issuing CA"):
+            requested_expiry("2026-09-24T21:00", now=now,
+                             issuer_not_after=now + timedelta(hours=2))
+
     def test_commands_do_not_open_a_console_window(self):
         completed = subprocess.CompletedProcess(["docker"], 0, b"ok", b"")
         with patch.object(host.subprocess, "run", return_value=completed) as launch:
@@ -71,6 +84,8 @@ class CertificateHostTests(unittest.TestCase):
             control.mkdir()
             packages.mkdir()
             now = datetime(2026, 9, 23, 0, 0, tzinfo=timezone.utc)
+            (public / "intermediate.crt.pem").write_bytes(
+                certificate(0x1000, "issuing-ca", now + timedelta(days=365)))
             (ca_db / "newcerts/1001.pem").write_bytes(certificate(0x1001, "admin", now + timedelta(days=20)))
             (public / "admin.crt.pem").write_bytes((ca_db / "newcerts/1001.pem").read_bytes())
             (ca_db / "newcerts/1002.pem").write_bytes(certificate(0x1002, "tablet", now + timedelta(hours=12)))
@@ -93,6 +108,7 @@ class CertificateHostTests(unittest.TestCase):
                 self.assertTrue(rows[0]["expired"])
                 self.assertTrue(rows[0]["revoked"])
                 self.assertFalse(rows[1]["revoked"])
+                self.assertEqual(len(rows[1]["issuer_ca_id"]), 64)
                 with self.assertRaises(RuntimeError):
                     host.checked_record("1002", "0" * 64)
 
@@ -125,6 +141,19 @@ class CertificateHostTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "Revoked"):
                 host.set_group_batch([change])
             status.assert_not_called()
+
+    def test_group_batch_can_remove_last_membership(self):
+        record = {"serial": "1002", "fingerprint": "f" * 64, "cn": "tablet",
+                  "registered": True, "revoked": False, "expired": False}
+        change = {"serial": "1002", "fingerprint": "f" * 64,
+                  "expected_in": ["old"], "expected_out": ["old"],
+                  "in_groups": [], "out_groups": []}
+        with patch.object(host, "checked_record", return_value=record), \
+             patch.object(host, "status", return_value={"role": "ROLE_ANONYMOUS",
+                                                         "in_groups": ["old"], "out_groups": ["old"]}), \
+             patch.object(host, "set_groups", return_value={}) as update:
+            self.assertEqual(host.set_group_batch([change])["state"], "complete")
+            update.assert_called_once_with("1002", "f" * 64, [], [])
 
     def test_volume_registration_preserves_bind_mounted_file(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -270,7 +299,10 @@ emailAddress = optional
             with patch.multiple(host, **paths), patch.object(host, "check_server_running"), \
                  patch.object(host, "register_authentication"), \
                  patch.object(host, "status", side_effect=status):
+                selected_expiry = local_expiry((datetime.now(timezone.utc) + timedelta(hours=1))
+                                               .astimezone(host.TAIPEI).strftime("%Y-%m-%dT%H:%M"))
                 result = host.issue({"name": "Field Tablet 01", "cn": "tablet-01",
+                                     "expires_at": selected_expiry,
                                      "in_groups": ["local-test"], "out_groups": ["local-test"]})
                 rows = host.inventory()
             self.assertEqual(len(rows), 1)
@@ -290,6 +322,8 @@ emailAddress = optional
                     archive.read("cert/clientCert.p12"), password.encode())
                 self.assertIsNotNone(key)
                 self.assertEqual(format(issued.serial_number, "X"), result["serial"])
+                self.assertEqual(issued.not_valid_after_utc,
+                                 requested_expiry(selected_expiry))
                 self.assertGreaterEqual(len(chain), 1)
 
             real_command = host.command

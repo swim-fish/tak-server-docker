@@ -19,7 +19,7 @@
     <p class="muted">最多 10 台。每台有獨立私鑰與 DPK；同一批憑證合併註冊，TAK Server 會重新啟動一次。</p><button class="btn btn-primary">預覽批次</button>
   </form></section>
   {% elif step == 'preview' %}
-  <section class="card"><h2>確認簽發與分享</h2><div class="provision-choices">{% for item in values['items'] %}<article class="provision-choice"><strong>{{ item.name }} · {{ item.cn }}</strong><span>In／寫入：{{ item.in_groups|join(', ') or '無' }}</span><span>Out／讀取：{{ item.out_groups|join(', ') or '無' }}</span></article>{% endfor %}</div>
+  <section class="card"><h2>確認簽發與分享</h2><div class="provision-choices">{% for item in values['items'] %}<article class="provision-choice"><strong>{{ item.name }} · {{ item.cn }}</strong><span>憑證到期：{{ item.expires_at|replace('T', ' ') }}（台灣時間）</span><span>In／寫入：{{ item.in_groups|join(', ') or '無' }}</span><span>Out／讀取：{{ item.out_groups|join(', ') or '無' }}</span></article>{% endfor %}</div>
     <p>每台裝置簽發獨立憑證與 DPK；QR 分享 {{ values.ttl }} 分鐘、最多 {{ values.limit }} 次下載。</p><div class="alert alert-warning" role="note">註冊會重新啟動 TAK Server，短暫中斷既有連線。</div>
     <form method="post" action="/provision/tak-new/execute" class="provision-form"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="job_id" value="{{ job_id }}"><input type="hidden" name="values" value='{{ values|tojson|forceescape }}'><label><input class="form-check-input" type="checkbox" name="confirmation" value="yes" required> 我確認簽發上述憑證並建立限時 QR 分享</label><button class="btn btn-danger">簽發並建立分享</button></form>
   </section>

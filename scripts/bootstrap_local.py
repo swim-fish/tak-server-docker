@@ -17,6 +17,8 @@ import zipfile
 from pathlib import Path
 from xml.sax.saxutils import escape
 
+from atak_package_identity import write_identity
+
 
 PROJECT = Path(__file__).resolve().parents[1]
 UPSTREAM = PROJECT / "vendor" / "takserver-docker-hardened-5.8-RELEASE-84"
@@ -358,6 +360,7 @@ emailAddress = optional
     run(openssl, "pkcs12", "-in", str(PACKAGES / "clientCert.p12"), "-passin", "env:TAK_STORE_PASS", "-noout", "-info", env=env)
 
     digest = hashlib.sha256(package.read_bytes()).hexdigest()
+    write_identity(package, client_cert)
     (PACKAGES / "atak-local-test.sha256").write_text(f"{digest}  {package.name}\n", encoding="ascii", newline="\n")
     print(f"Created {package}")
     print(f"SHA-256 {digest}")

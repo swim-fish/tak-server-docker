@@ -1,4 +1,5 @@
 runtime/
+.playwright-cli/
 vendor/
 secrets/
 __pycache__/
