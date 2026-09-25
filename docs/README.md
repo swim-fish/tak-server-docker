@@ -10,9 +10,12 @@
 | 理解目前有哪些服務、哪些項目已驗證 | [架構與驗證狀態](architecture.md) |
 | 設定、測試或移除 Windows 名稱解析 | [mDNS](network/mdns.md) |
 | 啟用熱點與防火牆、處理重新開機後的連線 | [防火牆](network/firewall.md) |
-| 理解憑證鏈、SAN、TAK 信任庫與更新 CRL | [憑證與撤銷](security/certificates.md) |
+| 理解憑證鏈、SAN、TAK 信任憑證鏈資料庫與更新 CRL | [憑證與撤銷](security/certificates.md) |
+| 準備與驗證中繼 CA 輪替 | [CA 輪替測試計畫](plans/ca-rotation.md) |
 | 管理 TAK 服務、管理員與裝置使用者 | [TAK Server 維運](tak-server/operations.md) |
 | 用控制台管理用戶端憑證、群組、DPK 與撤銷 | [用戶端憑證控制台](tak-server/certificate-console.md) |
+| 依畫面操作簽發、交付、群組與撤銷 | [憑證控制台使用手冊](tak-server/certificate-operator-guide.md) |
+| 依任務操作整套 TAK 控制台 | [任務操作手冊](tak-server/console-task-manual.md) |
 | 啟動 Mumble、建立頻道或更換密碼 | [Mumble Server](mumble/server.md) |
 | 啟動 RTSP／RTSPS 影像服務、設定 TAK ICU | [MediaMTX](mediamtx/server.md) |
 | 用 QR Code 佈建 TAK ICU 影像發布設定 | [ICU QR Code](mediamtx/icu-qrcode.md) |
@@ -43,7 +46,7 @@
 | 用戶端／伺服器 | 說明 client／server；產品及 UI 名稱保留原文。 |
 | 通訊埠 | port；數值集中於版本與通訊埠頁，任務頁只保留必要範例。 |
 | 檔案／資料夾 | file／directory；runtime 與 secrets 用途集中於目錄參考。 |
-| 信任庫 | truststore；CA、SAN 與 CRL 規則集中於憑證頁。 |
+| 信任憑證鏈資料庫 | truststore；CA、SAN 與 CRL 規則集中於憑證頁。 |
 | Mission／Channel／Alias | 保留 Vx UI 字樣，中文分別說明為任務／頻道／顯示別名。 |
 | 註冊身分 | Mumble registered user；與 TAK 裝置憑證及一般共用密碼分開。 |
 | 驗證通過 | 表示測試成功，不改成表示方法或途徑的「透過」。 |

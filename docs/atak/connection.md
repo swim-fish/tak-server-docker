@@ -48,6 +48,6 @@ bootstrap 產物為 `runtime/packages/atak/atak-local-test.dpk`，內容：
 python ./scripts/rebuild_atak_data_package.py --host takbox.local --client-name atak-client
 ```
 
-此工具重建信任庫與 DPK，沿用既有用戶端憑證；`--client-name` 不會簽發新身分。重新交付並匯入後再確認 TAK 連線。若是憑證到期、撤銷、私鑰遺失或 SAN 不符，重打包不能修復，應先處理 PKI。
+此工具重建信任憑證鏈資料庫與 DPK，沿用既有用戶端憑證；`--client-name` 不會簽發新身分。重新交付並匯入後再確認 TAK 連線。若是憑證到期、撤銷、私鑰遺失或 SAN 不符，重打包不能修復，應先處理 PKI。
 
 Manifest 的實際 `contentType` 使用 `ATAK Preferences` 及 `P12 Certificate`；不要把說明文字或無空白別名當作格式值。來源：[bootstrap](../../scripts/bootstrap_local.py)、[重打包工具](../../scripts/rebuild_atak_data_package.py)、[實測紀錄](../validation/2026-09-21-tak-server-dpk.md)。

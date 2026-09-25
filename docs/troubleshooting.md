@@ -10,7 +10,7 @@
 | mDNS 缺 `ifaddr` 或找不到排程 | 安裝是否成功、專用 venv 是否完整 | [安裝／修復與測試](network/mdns.md#安裝與修復) |
 | `unknown host` | Android 是否解析到主機 IP、是否跨 VLAN／VPN | [mDNS 範圍](network/mdns.md) |
 | IP 可連，名稱不可連 | A record 與名稱拼字、VPN／resolver | 先修解析，再核對 DNS SAN |
-| `unknown issuer`／`import certificate` | CA 信任庫是否含 Root 及中繼 CA、裝置時間 | [信任鏈](security/certificates.md)、[重打包](atak/connection.md#修正信任包而不重建-pki) |
+| `unknown issuer`／`import certificate` | CA 信任憑證鏈資料庫是否含 Root 及中繼 CA、裝置時間 | [信任鏈](security/certificates.md)、[重打包](atak/connection.md#修正信任包而不重建-pki) |
 | `hostname mismatch`／IP mismatch | Vx Address 是否與葉憑證 SAN 相同 | 修正 Address 或重簽正確 SAN，不關閉 TLS 驗證 |
 | TAK 健康檢查失敗 | 資料庫、管理憑證權限、CRL 有效期、紀錄 | [TAK 維運](tak-server/operations.md) |
 | Mumble 每 30 秒本機 TLS 連上又關閉 | 來源是否 `127.0.0.1`、是否吻合 healthcheck | [健康檢查說明](mumble/server.md#啟動與檢查) |

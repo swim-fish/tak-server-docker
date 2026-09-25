@@ -16,6 +16,10 @@
 | Vx 雙頻道 | 同一伺服器的兩個 session 同時位於 Primary／Alternate；不包含音訊驗收 | [雙頻道結果](2026-09-22-tak-vx-dpk.md#雙頻道實測結果) |
 | TAK／Vx／ICU 分離佈建 | TAK 憑證 QR 成功；Vx QR 一般匯入不建立 Mission，改由 TAK Server Download 建立四頻道並逐一加入；ICU QR 發布 RTSPS 成功 | [2026-09-23](2026-09-23-qr-tak-vx-icu.md) |
 | 全新憑證 QR 與撤銷 | 清除 ATAK 資料後重新匯入、Vx 四頻道、ICU RTSPS、CRL 撤銷及實機重連；發現 ATAK Data Packages 需要 8443 可達 | [2026-09-24](2026-09-24-qr-e2e-revocation.md) |
+| 中繼 CA 輪替前置驗證 | Root DB 缺少中繼 CA 紀錄；隔離副本補登／撤銷與 OpenSSL 鏈驗證通過，本機快照完成；尚未切換服務 | [2026-09-24](2026-09-24-ca-rotation-preflight.md) |
+| CA 輪替前實機與群組基線 | 兩張短效憑證分組簽發並在兩台 Android 連線；同網段標記互見尚需排除本機傳播；群組移除與還原通過 | [2026-09-24](2026-09-24-ca-rotation-device-baseline.md) |
+| 中繼 CA 切換與 Root CRL | 新鏈的 A 裝置 ATAK、Vx、8443 套件查詢通過；發布 Root CRL 後仍須移除舊 CA 直接信任錨，8089 才拒絕舊 Alpha TLS 握手 | [2026-09-25](2026-09-25-ca-rotation-cutover.md) |
+| 憑證控制台瀏覽器 | Chrome 在桌面、平板、手機寬度的清冊、篩選、詳細頁及群組頁通過唯讀互動驗證；附去識別截圖 | [2026-09-25](2026-09-25-certificate-browser.md) |
 | 引導式批次憑證與 Vx 替換 | 兩張測試憑證合併註冊並由 API 讀回；伺服器固定名稱 Vx 套件替換及 metadata 讀回通過，Android 新套件待驗 | [2026-09-24](2026-09-24-guided-provisioning.md) |
 | Mumble 單一類型 SAN | DNS-only／IP-only 搭配相符 Vx Address，P1／A1 均成功；不包含不相符 SAN 拒絕測試 | [SAN 實測](2026-09-22-mumble-san.md) |
 | MediaMTX／TAK ICU | RTSP、RTSPS TCP 與 Compose 內 UDP 串流通過；ICU 7.5.1 經 RTSPS＋帳密實際發布，獨立讀取成功；跨 bridge UDP 與 ATAK 內建播放仍待驗 | [2026-09-23](2026-09-23-mediamtx.md) |

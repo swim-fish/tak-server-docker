@@ -37,8 +37,8 @@ runtime/tak/
 | `CoreConfig.xml` | TAK Server 主設定。包含資料庫連線、TLS keystore/truststore、`x509checkRevocation="true"`，以及 8089 使用的中繼 CA CRL 路徑；8443 connector 目前未設定 `crlFile`。 |
 | `UserAuthenticationFile.xml` | TAK Server 使用者驗證資料檔。初始內容為空的 `UserAuthenticationFile`。 |
 | `takserver.jks` | TAK Server 的 server certificate 與私鑰。 |
-| `truststore-root.jks` | TAK TLS 信任庫，包含 Root CA 與中繼 CA。 |
-| `fed-truststore.jks` | Federation 信任庫；即使目前未開啟 Federation，仍先產生一致的信任鏈。 |
+| `truststore-root.jks` | TAK TLS 信任憑證鏈資料庫，包含 Root CA 與中繼 CA。 |
+| `fed-truststore.jks` | Federation 信任憑證鏈資料庫；即使目前未開啟 Federation，仍先產生一致的信任鏈。 |
 | `admin.p12` | 管理 API health check 與管理端使用的 client certificate。 |
 | `admin.pem` | 管理憑證鏈，供 `UserManager.jar certmod -A` 授予管理權限。 |
 | `root-ca.pem`、`intermediate-ca.pem` | TAK Server 信任鏈的公開 CA 憑證。 |

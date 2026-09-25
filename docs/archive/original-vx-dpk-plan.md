@@ -127,7 +127,7 @@ com.atakmap.android.gbr.vx.channels.mumble.security.serverPasswords
 
 ## 3. 原始整合包設計（保留研究歷程）
 
-原始目標為一份 DPK 設定 TAK 連線、信任庫及 Vx 任務；本機匯入實測未達成。2026-09-22 已驗證的可用方案為：TAK 設定／憑證本機匯入，Vx-only 任務包從 TAK Server 下載，首次登入 Mumble 手動輸入密碼。下列整合包格式保留供研究，不當作已通過的部署方式。
+原始目標為一份 DPK 設定 TAK 連線、信任憑證鏈資料庫及 Vx 任務；本機匯入實測未達成。2026-09-22 已驗證的可用方案為：TAK 設定／憑證本機匯入，Vx-only 任務包從 TAK Server 下載，首次登入 Mumble 手動輸入密碼。下列整合包格式保留供研究，不當作已通過的部署方式。
 
 ```text
 atak-local-tak-vx.dpk
