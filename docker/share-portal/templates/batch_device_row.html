@@ -3,7 +3,9 @@
   <div class="batch-device-identity">
     <label>裝置顯示名稱<input class="form-control" name="name" maxlength="80" required placeholder="Field Tablet 01"></label>
     <label>憑證 CN<input class="form-control" name="cn" pattern="[A-Za-z0-9][A-Za-z0-9._-]{1,62}" required placeholder="field-tablet-01"></label>
+    <label>憑證到期（台灣時間）<input class="form-control" name="expires_at" type="datetime-local" step="60"></label>
   </div>
+  <div class="d-flex flex-wrap align-items-center gap-2 mb-3"><select class="form-select form-select-sm w-auto" data-expiry-preset aria-label="快速設定憑證效期"><option value="" selected>快速設定效期</option><option value="1">一小時</option><option value="24">一天</option><option value="168">7 天</option><option value="336">14 天</option><option value="672">28 天</option><option value="2160">90 天</option><option value="default">預設兩年</option></select><small class="text-secondary">可用日曆自訂到期時間；最短 5 分鐘、最長 730 天。</small></div>
   {% with group_catalog=group_choices, assigned_in=['local-test'], assigned_out=['local-test'], group_disabled=false, group_field_mode='csv', group_in_field='in_groups', group_out_field='out_groups' %}
     {% include 'group_assignment.html' %}
   {% endwith %}

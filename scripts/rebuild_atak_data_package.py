@@ -13,6 +13,8 @@ import zipfile
 from pathlib import Path
 from xml.sax.saxutils import escape
 
+from atak_package_identity import write_identity
+
 
 PROJECT = Path(__file__).resolve().parents[1]
 RUNTIME = PROJECT / "runtime"
@@ -116,6 +118,7 @@ def main() -> int:
     os.replace(temporary_package, package)
 
     digest = hashlib.sha256(package.read_bytes()).hexdigest()
+    write_identity(package, PUBLIC / "atak-client.crt.pem")
     (PACKAGES / "atak-local-test.sha256").write_text(
         f"{digest}  {package.name}\n", encoding="ascii", newline="\n"
     )

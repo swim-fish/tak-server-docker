@@ -81,6 +81,12 @@
       move.dataset.memberMove = "";
       move.textContent = "移動";
       node.append(move);
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "btn btn-sm btn-outline-danger";
+      remove.dataset.memberRemove = "";
+      remove.textContent = "從此群組移除";
+      node.append(remove);
     }
     return node;
   }
@@ -134,7 +140,7 @@
         unassigned.append(entry(record, "", "none"));
       }
     }
-    document.getElementById("group-unassigned").hidden = unassigned.children.length === 0;
+    document.getElementById("group-unassigned-empty").hidden = unassigned.children.length > 0;
     const visible = records.filter(matchesFilter).length;
     document.getElementById("group-visible-count").textContent = `顯示 ${visible} / ${records.length}`;
     const pending = changes().length;
@@ -159,6 +165,17 @@
     groups.out.delete(targetGroup);
     if (targetLane === "in" || targetLane === "both") groups.in.add(targetGroup);
     if (targetLane === "out" || targetLane === "both") groups.out.add(targetGroup);
+    message.hidden = true;
+    render();
+    return true;
+  }
+
+  function removeMembership(serial, sourceGroup) {
+    const record = bySerial.get(serial);
+    if (!record || !editable(record) || !laneFor(serial, sourceGroup)) return false;
+    const groups = working.get(serial);
+    groups.in.delete(sourceGroup);
+    groups.out.delete(sourceGroup);
     message.hidden = true;
     render();
     return true;
@@ -211,6 +228,25 @@
       }
     });
   }
+  const unassignedCard = document.getElementById("group-unassigned");
+  unassignedCard.addEventListener("dragover", (event) => {
+    if (!event.dataTransfer.types.includes("text/plain")) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+    unassignedCard.classList.add("drag-over");
+  });
+  unassignedCard.addEventListener("dragleave", () => unassignedCard.classList.remove("drag-over"));
+  unassignedCard.addEventListener("drop", (event) => {
+    event.preventDefault();
+    unassignedCard.classList.remove("drag-over");
+    try {
+      const item = JSON.parse(event.dataTransfer.getData("text/plain"));
+      if (!removeMembership(item.serial, item.group)) warn("無法移除這張憑證的群組。 ");
+    } catch (error) {
+      console.error("Group removal drag failed", error);
+      warn("無法讀取拖曳的憑證。");
+    }
+  });
 
   document.addEventListener("click", (event) => {
     const add = event.target.closest("[data-group-add]");
@@ -232,6 +268,14 @@
       document.getElementById("group-move-target").value = moveSelection.group;
       document.getElementById("group-move-lane").value = member.dataset.lane;
       bootstrap.Modal.getOrCreateInstance(moveDialog).show();
+      return;
+    }
+    const remove = event.target.closest("[data-member-remove]");
+    if (remove) {
+      const member = remove.closest("[data-serial]");
+      if (!removeMembership(member.dataset.serial, member.dataset.group)) {
+        warn("無法移除這張憑證的群組。");
+      }
     }
   });
 

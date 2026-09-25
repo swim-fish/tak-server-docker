@@ -8,7 +8,7 @@ RUN pip install --no-cache-dir "qrcode[pil]==8.2" "Flask==3.1.2" "gunicorn==23.0
     && mkdir -p /app /state /files \
     && chown -R share:share /state /files
 
-COPY scripts/share_portal.py scripts/share_admin_flask.py scripts/share_admin.js scripts/build_icu_qr.py scripts/icu_profiles.py scripts/media_registry.py scripts/viewer_gateway.py scripts/console_ui.py /app/
+COPY scripts/share_portal.py scripts/share_admin_flask.py scripts/share_admin.js scripts/build_icu_qr.py scripts/icu_profiles.py scripts/media_registry.py scripts/viewer_gateway.py scripts/console_ui.py scripts/certificate_validity.py /app/
 COPY config/mediamtx/mediamtx.yml.template /app/mediamtx-template.yml
 COPY docker/share-portal/templates/ /app/templates/
 COPY docker/share-portal/static/ /app/static/

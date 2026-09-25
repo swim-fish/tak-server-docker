@@ -26,6 +26,8 @@ docker compose up -d --build share-admin
 
 背景排程執行 Docker 或 OpenSSL 指令時使用 Windows 無主控台模式，開啟憑證清冊或詳細頁不會另外跳出命令視窗。
 
+簽發、群組首次註冊及撤銷會重啟 TAK Server，瀏覽器可能等待數分鐘。憑證管理程式在作業期間持續更新心跳；若畫面因連線中斷未顯示結果，先回到清冊核對憑證與「最近一次撤銷」，再查 `runtime/tak-cert-control/worker.log`、`last-result.json` 及 TAK 健康狀態。撤銷後的 8089 驗證須待 TAK Server 恢復健康再做新連線測試。
+
 使用原有管理帳號 `admin` 與 `runtime/secrets/share_admin_password` 登入。只看清冊時可不啟動 TAK Server；群組讀回、簽發與撤銷需要 `tak-server` Compose 服務執行。若 Windows 熱點的 `192.168.137.1` 未啟用，TAK 與分享容器的對外通訊埠可能無法綁定。若 Windows 保留了 8443、8765 或 8766，可在 Git 忽略的本機 `.env` 設定 `TAK_HTTPS_HOST_PORT`、`SHARE_PUBLIC_HOST_PORT` 與 `SHARE_ADMIN_HOST_PORT`；這只改主機對外通訊埠，容器內的服務仍使用原通訊埠。管理頁網址與 QR 連結會使用設定的新通訊埠，既有裝置或防火牆規則也需配合更新。**ATAK Data Packages 下載器實測固定連 `takbox.local:8443`**；若只把 TAK HTTPS 映射改到替代主機通訊埠，8089 雖可登入，套件查詢仍會逾時。
 
 需要熱點裝置存取替代通訊埠時，以 `Install-TakFirewall.ps1 -AdminPort <TAK_HTTPS_HOST_PORT>` 與 `Install-SharePortalFirewall.ps1 -Port <SHARE_PUBLIC_HOST_PORT>` 配合設定。`share-admin` 已設為 Docker 自動重啟；公開分享容器第一次仍需使用 `docker compose --profile sharing up -d share-public` 啟動，之後會自動重啟。Windows 登入後會自動啟動兩個管理程式；Docker Desktop 仍須啟動。

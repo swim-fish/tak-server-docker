@@ -168,6 +168,7 @@ body.portal-detail { max-width: 1100px; }
 .certificate-group-lanes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; }
 .certificate-group-lane { min-width: 0; padding: .8rem; border: 1px solid var(--portal-line); border-top: 4px solid var(--portal-line); background: #13212a; }
 .certificate-group-lane.drag-over { border-color: var(--portal-cyan); background: #20404a; }
+#group-unassigned.drag-over { border-color: var(--portal-cyan); background: #20404a; }
 .certificate-group-lane[data-lane="in"] { border-top-color: var(--portal-cyan); }
 .certificate-group-lane[data-lane="out"] { border-top-color: var(--portal-green); }
 .certificate-group-lane[data-lane="both"] { border-top-color: var(--portal-amber); }

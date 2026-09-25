@@ -24,6 +24,7 @@ import share_portal as portal
 import media_registry as media
 from console_ui import breadcrumb, navbar
 from build_icu_qr import build_profile
+from certificate_validity import local_expiry
 from icu_profiles import SQUADS, stream_path
 
 
@@ -293,11 +294,12 @@ def new_certificate_values() -> dict:
     cns = request.form.getlist("cn")
     ins = request.form.getlist("in_groups")
     outs = request.form.getlist("out_groups")
-    if not 1 <= len(names) <= 10 or any(len(values) != len(names) for values in (cns, ins, outs)):
+    expiries = request.form.getlist("expires_at")
+    if not 1 <= len(names) <= 10 or any(len(values) != len(names) for values in (cns, ins, outs, expiries)):
         raise ValueError("Enter between 1 and 10 complete device rows")
     items = []
     seen = set()
-    for name, cn, in_text, out_text in zip(names, cns, ins, outs):
+    for name, cn, in_text, out_text, expiry in zip(names, cns, ins, outs, expiries):
         name, cn = name.strip(), cn.strip()
         if (not 1 <= len(name) <= 80 or any(ord(char) < 32 for char in name) or
                 not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{1,62}", cn) or cn in seen):
@@ -312,7 +314,8 @@ def new_certificate_values() -> dict:
         if not any(groups):
             raise ValueError("Each device needs at least one In or Out group")
         seen.add(cn)
-        items.append({"name": name, "cn": cn, "in_groups": groups[0], "out_groups": groups[1]})
+        items.append({"name": name, "cn": cn, "in_groups": groups[0], "out_groups": groups[1],
+                      "expires_at": local_expiry(expiry)})
     ttl = int(request.form.get("ttl", "20"))
     limit = int(request.form.get("limit", "3"))
     if not 1 <= ttl <= 10080 or not 1 <= limit <= 10000:
@@ -842,14 +845,19 @@ def certificates() -> str:
         error = str(exc)
     rows, paused = portal.list_shares()
     shares = {}
+    inventory_rows = []
     if snapshot:
-        for record in snapshot["certificates"]:
+        inventory_rows = snapshot["certificates"] + snapshot.get("archived_certificates", [])
+        for record in inventory_rows:
+            if record.get("archived"):
+                continue
             shares[record["serial"]] = [
                 {"url": f"{portal.PUBLIC_BASE}/q/{row['token']}",
                  "status": portal.share_status(row, paused), "accepted": row["accepted"]}
                 for row in rows if row["filename"] == record["package"]
                 and portal.share_status(row, paused) == "分享中"]
-    return render_template("certificates.html", snapshot=snapshot, shares=shares,
+    return render_template("certificates.html", snapshot=snapshot, inventory_rows=inventory_rows,
+                           shares=shares,
                            csrf=CSRF, error=error, result=request.args.get("result", ""))
 
 
@@ -937,8 +945,10 @@ def certificate_groups() -> Response:
 @app.post("/certificates/issue")
 def certificate_issue() -> Response:
     try:
+        expiry = local_expiry(request.form.get("expires_at", ""))
         result = cert_control("issue", name=request.form.get("name", ""),
                               cn=request.form.get("cn", ""),
+                              expires_at=expiry,
                               in_groups=group_values("in"), out_groups=group_values("out"))
     except (RuntimeError, OSError, ValueError) as exc:
         return Response(str(exc), 409)

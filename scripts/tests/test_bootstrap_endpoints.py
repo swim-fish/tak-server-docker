@@ -60,6 +60,7 @@ class BootstrapEndpointTests(unittest.TestCase):
 
                 with patch.multiple(bootstrap, **paths), \
                      patch.object(bootstrap, 'run', side_effect=fake_run), \
+                     patch.object(bootstrap, 'write_identity'), \
                      patch.object(bootstrap.shutil, 'which', side_effect=lambda name: name), \
                      patch.object(sys, 'argv', ['bootstrap', *args]), \
                      contextlib.redirect_stdout(io.StringIO()):
