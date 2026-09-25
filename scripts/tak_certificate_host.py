@@ -774,8 +774,14 @@ def selected_records(items: object) -> list[dict]:
 def client_key(serial: str, registry: dict) -> tuple[Path, str] | None:
     metadata = registry.get(serial, {})
     identity = metadata.get("key_dir", "")
-    if isinstance(identity, str) and re.fullmatch(r"[0-9a-f]{16}", identity):
+    legacy_rotation_dir = f"ca-rotation-alpha-{serial.lower()}"
+    if identity and (not isinstance(identity, str) or not (
+            re.fullmatch(r"[0-9a-f]{16}", identity) or identity == legacy_rotation_dir)):
+        return None
+    if identity:
         directory = PRIVATE / "clients" / identity
+        if directory.is_symlink():
+            return None
         key, password = directory / "key.pem", directory / "key.password"
     else:
         cert = x509.load_pem_x509_certificate(certificate_path(serial).read_bytes())
