@@ -86,6 +86,7 @@
 1. 在「MediaMTX 管理」選線上串流，按「即時預覽」；看完按「關閉預覽」。
 2. 熱點裝置使用 `http://takbox.local:8889/live/<path>/` 觀看，末尾斜線需保留。
 3. 以「公開 WebRTC 觀看」開關控制新觀看與現有公開工作階段；此開關不停止 ICU 推流。
+4. 若在 ATAK CIV 5.7.0.15 觀看 ICU 影像，先確認發布端仍在線；在 ATAK 手動建立 RTSP 來源，使用 `takbox.local:8554`、實際 `live/.../VIDEO_1` 路徑及 `atak-viewer` 讀取帳密，並勾選 **Reliable P2P Connection (consumes more resources)**，讓 RTSP 走 TCP。ICU 自動分享的 RTSPS 來源不能直接用這版 ATAK 內建播放器開啟。RTSP 只限受控區域網路或 VPN；見[實機紀錄](../../validation/2026-09-25-atak-icu-viewer.md)。
 
 目前只驗證熱點觀看；網際網路仍需 FQDN、HTTPS、NAT 與 ICE 驗收。下方圖 13 截圖時沒有線上串流。
 

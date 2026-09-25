@@ -23,7 +23,8 @@
 | 憑證控制台瀏覽器 | Chrome 在桌面、平板、手機寬度的清冊、篩選、詳細頁及群組頁通過唯讀互動驗證；附去識別截圖 | [2026-09-25](2026-09-25-certificate-browser.md) |
 | 引導式批次憑證與 Vx 替換 | 兩張測試憑證合併註冊並由 API 讀回；伺服器固定名稱 Vx 套件替換及 metadata 讀回通過，Android 新套件待驗 | [2026-09-24](2026-09-24-guided-provisioning.md) |
 | Mumble 單一類型 SAN | DNS-only／IP-only 搭配相符 Vx Address，P1／A1 均成功；不包含不相符 SAN 拒絕測試 | [SAN 實測](2026-09-22-mumble-san.md) |
-| MediaMTX／TAK ICU | RTSP、RTSPS TCP 與 Compose 內 UDP 串流通過；ICU 7.5.1 經 RTSPS＋帳密實際發布，獨立讀取成功；跨 bridge UDP 與 ATAK 內建播放仍待驗 | [2026-09-23](2026-09-23-mediamtx.md) |
+| MediaMTX／TAK ICU | RTSP、RTSPS TCP 與 Compose 內 UDP 串流通過；ICU 7.5.1 經 RTSPS＋帳密實際發布，獨立讀取成功；跨 bridge UDP 待驗 | [2026-09-23](2026-09-23-mediamtx.md) |
+| ATAK 觀看 ICU 影像 | ATAK 5.7.0.15 的自動 RTSPS 通告無法直接播放；手動 RTSP 加讀取帳密及 Reliable／TCP 後，實機顯示 1280×720 影像 | [2026-09-25](2026-09-25-atak-icu-viewer.md) |
 | 一般設備發布網址與收流 | 控制台建立獨立身分；FFmpeg 模擬無人機經熱點入口以 RTSP／RTSPS TCP 發布，獨立讀取端各解碼 30 個影格；WebRTC 預覽顯示影像，停用後舊網址遭拒。實體無人機與外網未驗收 | [2026-09-25](2026-09-25-drone-synthetic-stream.md) |
 | ICU 同隊共用 QR 與路徑隔離 | 同一 Alpha QR 匯入後，Android 手動改為 `live/alpha/2/` 並成功發布；Alpha 帳密對 Bravo 與非 ICU 路徑遭拒 | [2026-09-25](2026-09-25-icu-squad-path-scope.md) |
 | TAK ICU QR Code | 依 ICU 7.5.1 APK 與原生 `local.prefs` 確認格式；`takbox.local` 含密碼 QR 已由第二台熱點裝置掃碼套用，ICU 無提示發布 RTSPS，獨立讀取端取得影像 | [2026-09-23](2026-09-23-icu-qrcode.md) |
@@ -51,4 +52,4 @@ Mumble 前景防火牆既有測試涵蓋介面未啟用、建立失敗清理、C
 5. 測斷線重連、短暫切換網路與延遲／丟包；保留去識別的結果。
 6. 完成同 UUID 任務重複下載、新 UUID 同名任務與既有密碼快取的測試。
 
-整合 TAK＋Vx 包的 Server Download、Linux、MediaMTX 的跨網路 UDP／ATAK 內建播放、公開 8446／ACME 及資料庫升級尚未驗收，見[後續計畫](../plans/roadmap.md)。
+整合 TAK＋Vx 包的 Server Download、Linux、MediaMTX 跨網路 UDP、ATAK 自動 RTSPS 通告替代方式、公開 8446／ACME 及資料庫升級尚未驗收，見[後續計畫](../plans/roadmap.md)。

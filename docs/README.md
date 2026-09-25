@@ -6,6 +6,7 @@
 
 | 工作 | 文件 |
 | --- | --- |
+| 現場快速交付 TAK、Vx、ICU 與無人機設定，或停用身分 | [現場人員 Quick Start](tak-server/frontline-quick-start.md) |
 | 從官方 ZIP 建立服務並連上 ATAK／Vx | [首次建置腳本](scripts/first-time-setup.md)、[逐步流程](getting-started.md) |
 | 理解目前有哪些服務、哪些項目已驗證 | [架構與驗證狀態](architecture.md) |
 | 設定、測試或移除 Windows 名稱解析 | [mDNS](network/mdns.md) |
