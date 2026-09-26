@@ -61,6 +61,6 @@ Vx 的加密密碼快取以主機字串索引，不含通訊埠。刪除 Mission
 - 多個 Channel Pool 項目不等於增加同時使用的語音位置。
 - Channel Linking 涉及音訊轉送，本部署未自動啟用。
 
-下載現行四頻道包後，先在 VS1 分別選取 `Primary`、`Alternate`、`Medical`、`Emergency`，再測 VS1=`Primary`、VS2=`Alternate` 同時連線。PTT 按鍵與雙向 UDP 語音需要第二個用戶端另行驗收；現有登入證據不能代替音訊測試。
+下載現行四頻道包後，先在 VS1 分別選取 `Primary`、`Alternate`、`Medical`、`Emergency`，再測 VS1=`Primary`、VS2=`Alternate` 同時連線。使用者後續確認手機的雙頻道語音測試成功；尚未記錄兩端雙向 PTT 按鍵對應、UDP 封包路徑及音訊品質，不能從登入或音訊可用推定使用了 UDP。
 
 依據：[Vx 下載與雙連線實測](../validation/2026-09-22-tak-vx-dpk.md)、[DPK 格式](../reference/vx-package-format.md)。

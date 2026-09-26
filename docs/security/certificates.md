@@ -80,7 +80,7 @@ flowchart TB
 
 ## 啟用撤銷檢查
 
-目前 `CoreConfig.xml` 的 `auth` 設定 `x509checkRevocation="true"`；`security/tls/crl` 分別列出作用中中繼 CA、舊中繼 CA 與 Root CA 的 CRL，供 CoT/TLS 8089 使用。**Root CRL 記錄中繼 CA 的撤銷；簽發中繼 CA 的 CRL 記錄它簽發的葉憑證撤銷。**兩層各有用途，不能只以其中一份代表整條鏈已完成停權驗證。目前 8443 的 `network/connector` 未設定 `crlFile`；先前啟用此屬性的測試保留於[驗證紀錄](../validation/2026-09-23-tak-crl-8443.md)，不代表現在的 8443 已啟用 TLS 層 CRL 檢查。`x509checkRevocation` 是 TAK Client Certificates 的應用層檢查，不能代替 8443 connector 的 CRL 設定。
+目前 `CoreConfig.xml` 的 `auth` 設定 `x509checkRevocation="true"`；`security/tls/crl` 分別列出作用中中繼 CA、舊中繼 CA 與 Root CA 的 CRL。**Root CRL 記錄中繼 CA 的撤銷；簽發中繼 CA 的 CRL 記錄它簽發的葉憑證撤銷。**兩層各有用途，不能只以其中一份代表整條鏈已完成停權驗證。TAK 5.8 發行版的[程式路徑核對](../validation/2026-09-26-tak-crlfile-source-analysis.md)顯示，8089 的共用 TLS trust manager 遍歷全域 CRL；唯一的 8443 預設 HTTP connector 則從 `security/tls/crl` 取得**第一筆** CRL 檔。雖然目前 `network/connector` 沒有 `crlFile`，同一張用戶端憑證在撤銷前可取得 8443 HTTP 200、撤銷後的新 TLS 請求遭拒，見[實機流程紀錄](../validation/2026-09-24-qr-e2e-revocation.md)。這不能證明 8443 已載入全域清單的其他 CRL，或舊中繼 CA 鏈已在 8443 完成停權驗收。
 
 撤銷**中繼 CA** 時還須讀回 TAK 信任憑證鏈資料庫（truststore）：若舊中繼 CA 被直接列為信任錨，驗證路徑可能在它結束而不往上檢查 Root CRL。2026-09-25 實測中，僅發布 Root CRL 後 8089 仍接受舊憑證 TLS 交握；從 `truststore-root.jks` 與 `fed-truststore.jks` 移除 `tak-issuing-old`、保留 Root 與新中繼 CA 並重啟 TAK 後，8089 才拒絕舊憑證的新連線。這是 CA 輪替的信任憑證鏈資料庫處理；**平常只撤銷單張裝置葉憑證，不應移除整個簽發中繼 CA**。[實測對照](../validation/2026-09-25-ca-rotation-cutover.md)記錄了前後結果。
 

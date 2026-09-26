@@ -29,7 +29,7 @@
 | 新鏈上線、舊 CA 未撤銷 | 新 DPK 可登入 8089，8443 能查到任務套件；舊 DPK 狀態另記。 | 新 TAK 設定載入 Vx 後，可登入四頻道；確認新 Mumble 伺服器鏈與 DNS SAN。舊 Vx 設定另記。 |
 | Root CRL 發布後 | 舊 DPK 建立**新的** 8089 TLS 連線應遭拒；8443 用同一憑證測試並獨立記錄結果。新 DPK 兩入口仍可用。 | 舊 Vx 設定重新登入 Mumble 的結果**獨立記錄**；再用新 TAK 設定測試四頻道。Vx 使用的 Mumble 密碼／註冊身分不是 TAK 用戶端憑證，舊 Vx 若仍可登入，不能把它誤標為 CA 撤銷失敗，需另行輪替 Mumble 憑據或停用註冊身分。 |
 
-另驗 Mumble 新憑證由 Vx 接受、MediaMTX RTSPS 仍可發布與讀取、ICU QR 仍可套用。Mumble 與 MediaMTX 不會因 TAK Root CRL 更新而自動拒絕原本的伺服器憑證；需檢查實際部署的新憑證。TAK 的 8443 connector 目前未設定 `crlFile`，不能預設它會拒絕舊中繼 CA 鏈；必須在測試中觀察並決定設定。
+另驗 Mumble 新憑證由 Vx 接受、MediaMTX RTSPS 仍可發布與讀取、ICU QR 仍可套用。Mumble 與 MediaMTX 不會因 TAK Root CRL 更新而自動拒絕原本的伺服器憑證；需檢查實際部署的新憑證。TAK 的 8443 connector 目前未設定 `crlFile`，但[本版程式路徑](../validation/2026-09-26-tak-crlfile-source-analysis.md)顯示預設 connector 會取用全域第一筆 CRL；單張葉憑證的 8443 撤銷前後對照已通過。舊中繼 CA 鏈涉及 Root CRL 與信任憑證鏈資料庫，8443 仍須另以該鏈建立新 TLS 連線驗收。
 
 ## 截圖與證據
 

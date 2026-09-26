@@ -68,7 +68,7 @@ docker compose up -d --build share-admin
 
 在清冊選取憑證並於確認視窗勾選後，控制台先停止關聯 QR 分享；主機程式逐筆以 `openssl ca -revoke` 更新中繼 CA 資料庫，整批只發布一次 CRL 並重啟一次 TAK Server。已撤銷憑證的 DPK 從分享來源移到 `runtime/tak-cert-control/retired-packages/`。已下載的副本仍可能存在，撤銷不可回復。
 
-結果分別顯示 CA 撤銷、已發布 CRL 是否包含序號、TAK 重啟，以及使用原憑證新建 8089 TLS 連線的結果。只有收到 `certificate revoked` 警示才標成「8089 已拒絕撤銷憑證」；私鑰缺失、熱點不可達、逾時或其他錯誤都顯示未驗證。若顯示「意外接受憑證」，應檢查 TAK 的 CRL 載入。控制台**不自動驗證 8443**；其 connector 維持沒有 `crlFile`，不能僅從 8089 結果推定 8443 已停權。2026-09-24 另以同一張實機測試憑證手動驗證：撤銷前 8443 回 HTTP 200，撤銷後 TLS 回 `certificate unknown`，詳見[實測紀錄](../validation/2026-09-24-qr-e2e-revocation.md)。
+結果分別顯示 CA 撤銷、已發布 CRL 是否包含序號、TAK 重啟，以及使用原憑證新建 8089 TLS 連線的結果。只有收到 `certificate revoked` 警示才標成「8089 已拒絕撤銷憑證」；私鑰缺失、熱點不可達、逾時或其他錯誤都顯示未驗證。若顯示「意外接受憑證」，應檢查 TAK 的 CRL 載入。控制台**不自動驗證 8443**，不能僅從 8089 結果推定 8443 已停權。2026-09-24 另以同一張實機測試憑證手動驗證：撤銷前 8443 回 HTTP 200，撤銷後 TLS 回 `certificate unknown`，詳見[實測紀錄](../validation/2026-09-24-qr-e2e-revocation.md)。雖然目前 connector 沒有 `crlFile`，[本版程式路徑](../validation/2026-09-26-tak-crlfile-source-analysis.md)顯示預設 8443 connector 會取用全域 `security/tls/crl` 的第一筆；此結果不能推論其他 CRL 均已套用。
 
 若撤銷已寫入 CA 資料庫，但 CRL 發布或 TAK 重啟失敗，可使用清冊的「重新發布 CRL 並重啟」復原操作。此操作重新產生 CRL、重啟 TAK，並重新檢查已撤銷憑證的 8089 新連線；它不會恢復已撤銷憑證。
 

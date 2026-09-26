@@ -155,6 +155,7 @@ def add_table(doc: Document, rows: list[str]) -> None:
     table = doc.add_table(rows=len(parsed), cols=columns)
     table.autofit = True
     for row_index, row in enumerate(parsed):
+        table.rows[row_index]._tr.get_or_add_trPr().append(OxmlElement("w:cantSplit"))
         for col_index in range(columns):
             cell = table.cell(row_index, col_index)
             cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
