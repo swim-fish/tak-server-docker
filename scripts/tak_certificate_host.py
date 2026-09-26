@@ -27,6 +27,7 @@ from cryptography.x509.oid import ExtendedKeyUsageOID, ExtensionOID, NameOID
 
 import tak_api_client
 import tak_vx_package_host
+import tak_video_alias_host
 from certificate_validity import requested_expiry
 from local_network import bind_ip
 
@@ -1008,6 +1009,9 @@ def execute(request: dict) -> dict:
                                       request.get("in_groups"), request.get("out_groups"))}
     if action == "group_batch":
         return {"batch": set_group_batch(request.get("changes"))}
+    if action == "video_alias_batch":
+        return {"batch": tak_video_alias_host.publish_batch(
+            request.get("squad"), request.get("people"), request.get("groups"))}
     if action == "issue":
         return issue(request)
     if action == "batch_issue":

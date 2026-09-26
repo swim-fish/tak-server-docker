@@ -72,6 +72,12 @@
       return true;
     }
 
+    board.setGroupLane = (name, lane) => {
+      const moved = move(name, lane);
+      if (moved) sync();
+      return moved;
+    };
+
     board.addEventListener('click', event => {
       const button = event.target.closest('.group-pick');
       if (!button || readOnly || !board.contains(button)) return;

@@ -1,5 +1,15 @@
 (() => {
   document.addEventListener("change", (event) => {
+    const squad = event.target.closest("[data-certificate-squad]");
+    if (squad) {
+      const row = squad.closest(".batch-device-row, .issue-grid");
+      const board = row?.querySelector("[data-group-board]");
+      if (!board?.setGroupLane) return;
+      if (squad.dataset.previousGroup) board.setGroupLane(squad.dataset.previousGroup, "none");
+      if (squad.value) board.setGroupLane(squad.value, "both");
+      squad.dataset.previousGroup = squad.value;
+      return;
+    }
     const preset = event.target.closest("[data-expiry-preset]");
     if (preset) {
       const input = preset.closest(".batch-device-row, .issue-grid")?.querySelector('input[name="expires_at"]');

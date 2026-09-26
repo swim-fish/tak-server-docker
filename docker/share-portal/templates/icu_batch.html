@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="zh-Hant-TW" data-bs-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ICU 小隊批次交付｜TAK 控制台</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='bootstrap/bootstrap.min.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='console.css') }}">
+<script src="{{ url_for('static', filename='bootstrap/bootstrap.bundle.min.js') }}" defer></script>
+<script src="{{ url_for('static', filename='console_ui.js') }}" defer></script>
+<script src="{{ url_for('static', filename='icu_batch.js') }}" defer></script></head>
+<body class="portal-page"><main class="provision-layout">
+<header class="page-header">{{ console_nav }}{{ console_breadcrumb([('引導式佈建', '/provision'), ('ICU 小隊批次交付', none)]) }}<h1>ICU 小隊批次交付</h1></header>
+{% if group_error %}<div class="alert alert-warning" role="alert">目前無法核對憑證群組：{{ group_error }}</div>{% endif %}
+{% if step == 'configure' %}
+<section class="card"><h2>選擇小隊與隊員</h2>
+<form method="post" action="/provision/icu-batch/preview" class="provision-form">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<div class="provision-limits"><label>小隊<select class="form-select" name="squad" data-batch-squad>{% for squad, group in mapping.items() %}<option value="{{ squad }}" data-group="{{ group }}">{{ squad|capitalize }} → {{ group }}</option>{% endfor %}</select></label>
+<label>起始隊員<select class="form-select" name="start">{% for number in range(1, 11) %}<option value="{{ number }}">{{ number }}</option>{% endfor %}</select></label>
+<label>隊員數量<select class="form-select" name="count">{% for number in range(1, 11) %}<option value="{{ number }}" {% if number == 2 %}selected{% endif %}>{{ number }}</option>{% endfor %}</select></label></div>
+<fieldset><legend class="fs-6">TAK 影像別名可見群組</legend><div class="row g-2">
+{% for squad, group in mapping.items() %}<div class="col-6 col-md-3"><label><input class="form-check-input" type="checkbox" name="group" value="{{ group }}" data-alias-group> {{ group }}</label><small class="d-block text-secondary">可讀憑證 {{ members[group]|length }} 張</small><details><summary>查看憑證</summary><ul>{% for item in members[group] %}<li>{{ item.cn }} · {{ item.serial }}</li>{% else %}<li>目前沒有</li>{% endfor %}</ul></details></div>{% endfor %}
+<div class="col-6 col-md-3"><label><input class="form-check-input" type="checkbox" name="group" value="{{ all_group }}" data-alias-group> {{ all_group }}（全體）</label><small class="d-block text-secondary">可讀憑證 {{ members[all_group]|length }} 張</small><details><summary>查看憑證</summary><ul>{% for item in members[all_group] %}<li>{{ item.cn }} · {{ item.serial }}</li>{% else %}<li>目前沒有</li>{% endfor %}</ul></details></div></div></fieldset>
+<div class="provision-limits"><label>QR 分享時間（分鐘）<input class="form-control" type="number" name="ttl" value="20" min="1" max="10080" required></label>
+<label>每份 QR 下載上限（次）<input class="form-control" type="number" name="limit" value="3" min="1" max="10000" required></label></div>
+<div class="alert alert-info" role="note">每名隊員各有一個 ICU QR，發布路徑為 <code>live/&lt;小隊&gt;/&lt;隊員&gt;/VIDEO_1</code>。Video Alias 群組只決定 TAK 清單可見性；已取得影像觀看帳密的裝置不會因移出群組而立即失去播放能力。</div>
+<button class="btn btn-primary" type="submit">預覽批次</button></form></section>
+{% elif step == 'preview' %}
+<section class="card"><h2>確認批次交付</h2><p>小隊：<strong>{{ values.squad|capitalize }}</strong>　｜　TAK 可見群組：{{ values.groups|join(', ') }}</p>
+<p>目前符合所選 Out 群組的憑證：{% for item in recipients %}{{ item.cn }}（{{ item.serial }}）{% if not loop.last %}、{% endif %}{% else %}無{% endfor %}</p>
+<div class="row g-2">{% for person in values.people %}<div class="col-6 col-md-4 col-xl-3"><div class="card p-2"><strong>隊員 {{ person }}</strong><code>live/{{ values.squad }}/{{ person }}/VIDEO_1</code></div></div>{% endfor %}</div>
+<p class="mt-3">每份 QR 可下載 {{ values.limit }} 次，有效 {{ values.ttl }} 分鐘。執行時會使用固定 UID 更新 TAK Video Alias；若群組改變，會先移除舊別名再建立新別名，清單可能短暫中斷。</p>
+<form method="post" action="/provision/icu-batch/execute" class="provision-form"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="operation_id" value="{{ operation_id }}">
+<input type="hidden" name="squad" value="{{ values.squad }}"><input type="hidden" name="start" value="{{ values.people[0] }}"><input type="hidden" name="count" value="{{ values.people|length }}">
+{% for group in values.groups %}<input type="hidden" name="group" value="{{ group }}">{% endfor %}<input type="hidden" name="ttl" value="{{ values.ttl }}"><input type="hidden" name="limit" value="{{ values.limit }}">
+<label><input class="form-check-input" type="checkbox" name="confirmation" value="yes" required> 我確認更新上述 TAK Video Alias 並建立限時 QR</label>
+<div class="d-flex gap-2 flex-wrap"><button class="btn btn-primary">執行批次</button><a class="btn btn-outline-info" href="/provision/icu-batch">返回修改</a></div></form></section>
+{% else %}
+<section class="card"><h2>批次結果：{{ '完成' if receipt.state == 'complete' else '部分完成，需檢查' }}</h2>
+{% if receipt.error %}<div class="alert alert-warning" role="alert">{{ receipt.error }}</div>{% endif %}
+<p>TAK 可見群組：{{ receipt['values']['groups']|join(', ') }}。每張 QR 各有獨立的期限與下載上限。</p>
+{% if shares %}<div id="icu-batch-carousel" class="carousel slide" data-bs-interval="false" data-bs-touch="true"><div class="carousel-inner">
+{% for person, row in shares %}<div class="carousel-item {% if loop.first %}active{% endif %}"><article class="card mx-auto text-center p-3" style="max-width:28rem"><h3 class="fs-5">{{ receipt['values']['squad']|capitalize }} · 隊員 {{ person }}</h3>
+<code>live/{{ receipt['values']['squad'] }}/{{ person }}/VIDEO_1</code><img class="qr img-fluid rounded mx-auto my-3" src="/qr.png/{{ row.token }}" alt="隊員 {{ person }} ICU QR Code">
+<p class="mb-1">已下載 {{ row.accepted }}／{{ row.max_downloads }} 次</p><p class="mb-2" data-batch-expiry="{{ row.expires_at }}"></p>
+<a href="{{ public_base }}/q/{{ row.token }}" target="_blank" rel="noopener noreferrer">開啟隊員 {{ person }} 分享頁</a></article></div>{% endfor %}</div></div>
+<div class="d-flex justify-content-center align-items-center gap-3 mt-3"><button class="btn btn-outline-info" type="button" data-bs-target="#icu-batch-carousel" data-bs-slide="prev">上一位</button><span id="icu-batch-position" aria-live="polite">1／{{ shares|length }}</span><button class="btn btn-outline-info" type="button" data-bs-target="#icu-batch-carousel" data-bs-slide="next">下一位</button></div>{% endif %}
+{% if receipt.alias_results %}<div class="mt-3"><h3 class="fs-5">TAK Video Alias</h3><ul>{% for item in receipt.alias_results %}<li>隊員 {{ item.person }}：{{ '已發布' if item.state == 'ready' else '失敗：' + item.error }}</li>{% endfor %}</ul></div>{% endif %}
+{% if receipt.state != 'complete' %}<form method="post" action="/provision/icu-batch/retry"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="operation_id" value="{{ operation_id }}"><button class="btn btn-warning">接續未完成作業</button></form>{% endif %}
+<a class="btn btn-outline-info mt-2" href="/provision/icu-batch">建立新批次</a></section>
+{% endif %}
+</main></body></html>

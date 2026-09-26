@@ -74,6 +74,8 @@ function makeRow(item) {
   link.dataset.shareId = item.id;
   link.dataset.qrName = item.display_name;
   link.dataset.qrImage = item.qr_image_url;
+  link.dataset.qrAccepted = item.accepted;
+  link.dataset.qrMax = item.max_downloads ?? "∞";
   link.href = item.qr_url;
   const ended = element("span", "已結束");
   ended.dataset.ended = "";
@@ -112,6 +114,8 @@ function updateRow(row, item) {
   view.href = item.qr_url;
   view.dataset.qrImage = item.qr_image_url;
   view.dataset.qrName = item.display_name;
+  view.dataset.qrAccepted = item.accepted;
+  view.dataset.qrMax = item.max_downloads ?? "∞";
   view.hidden = item.status !== "分享中";
   if (currentQrShareId === String(item.id) && item.status !== "分享中") {
     bootstrap.Modal.getInstance(byId("share-qr-dialog"))?.hide();
@@ -162,6 +166,7 @@ function updateShares(items) {
     String(item.id) === currentQrShareId && item.status === "分享中")) {
     bootstrap.Modal.getInstance(byId("share-qr-dialog"))?.hide();
   }
+  if (currentQrShareId) updateQrCount(items.find((item) => String(item.id) === currentQrShareId));
 
   const live = items.filter((item) => item.status === "分享中");
   const list = byId("live-links");
@@ -178,6 +183,8 @@ function updateShares(items) {
       link.dataset.shareId = item.id;
       link.dataset.qrName = item.display_name;
       link.dataset.qrImage = item.qr_image_url;
+      link.dataset.qrAccepted = item.accepted;
+      link.dataset.qrMax = item.max_downloads ?? "∞";
       entry.append(element("strong", item.display_name), link);
     }
     const link = entry.querySelector("a");
@@ -185,6 +192,8 @@ function updateShares(items) {
     link.href = item.qr_url;
     link.dataset.qrName = item.display_name;
     link.dataset.qrImage = item.qr_image_url;
+    link.dataset.qrAccepted = item.accepted;
+    link.dataset.qrMax = item.max_downloads ?? "∞";
     entry.querySelector("strong").textContent = item.display_name;
     if (list.children[index] !== entry) list.insertBefore(entry, list.children[index] || null);
   });
@@ -280,21 +289,62 @@ async function refresh() {
   }
 }
 
+function updateQrCount(item) {
+  byId("share-qr-count").textContent = item
+    ? `已下載 ${item.accepted}／${item.max_downloads ?? "∞"} 次` : "";
+}
+
 document.addEventListener("click", (event) => {
   const link = event.target.closest("[data-qr-open]");
   if (!link || !window.bootstrap?.Modal) return;
   event.preventDefault();
+  const selected = recordItems.find((item) => String(item.id) === link.dataset.shareId);
+  const group = selected?.kind === "icu" && selected.media_owner ? recordItems.filter((item) =>
+    item.kind === "icu" && item.media_owner === selected.media_owner && item.status === "分享中") :
+    selected?.batch_id ? recordItems.filter((item) =>
+      item.batch_id === selected.batch_id && item.status === "分享中") : [];
+  const items = group.length ? group.sort((a, b) => a.display_name.localeCompare(b.display_name, undefined,
+    {numeric: true})) : [{id: link.dataset.shareId, display_name: link.dataset.qrName,
+      qr_image_url: link.dataset.qrImage, qr_url: link.href,
+      accepted: Number(link.dataset.qrAccepted), max_downloads: link.dataset.qrMax}];
+  const slides = items.map((item) => {
+    const slide = element("div", undefined, "carousel-item");
+    slide.dataset.shareId = item.id;
+    if (String(item.id) === link.dataset.shareId) slide.classList.add("active");
+    const content = element("div", undefined, "text-center");
+    const name = element("h3", item.display_name, "fs-5 mb-0");
+    const image = element("img", undefined, "qr img-fluid rounded mx-auto my-2");
+    image.src = item.qr_image_url;
+    image.alt = `${item.display_name} QR Code`;
+    const url = element("a", item.qr_url);
+    url.href = item.qr_url;
+    url.target = "_blank";
+    url.rel = "noreferrer noopener";
+    content.append(name, image, url);
+    slide.append(content);
+    return slide;
+  });
+  const carousel = byId("share-qr-carousel");
+  bootstrap.Carousel.getInstance(carousel)?.dispose();
+  byId("share-qr-slides").replaceChildren(...slides);
+  byId("share-qr-controls").hidden = items.length < 2;
+  byId("share-qr-position").textContent = `${items.findIndex((item) => String(item.id) === link.dataset.shareId) + 1}／${items.length}`;
   currentQrShareId = link.dataset.shareId;
-  byId("share-qr-name").textContent = link.dataset.qrName;
-  byId("share-qr-image").src = link.dataset.qrImage;
-  const url = byId("share-qr-url");
-  url.textContent = link.href;
-  url.href = link.href;
+  updateQrCount(items.find((item) => String(item.id) === currentQrShareId));
+  bootstrap.Carousel.getOrCreateInstance(carousel, {interval: false, touch: true});
   bootstrap.Modal.getOrCreateInstance(byId("share-qr-dialog")).show();
+});
+byId("share-qr-carousel").addEventListener("slid.bs.carousel", () => {
+  const slides = [...byId("share-qr-slides").children];
+  const index = slides.findIndex((item) => item.classList.contains("active"));
+  currentQrShareId = slides[index]?.dataset.shareId ?? null;
+  updateQrCount(recordItems.find((item) => String(item.id) === currentQrShareId));
+  byId("share-qr-position").textContent = `${index + 1}／${slides.length}`;
 });
 byId("share-qr-dialog").addEventListener("hidden.bs.modal", () => {
   currentQrShareId = null;
-  byId("share-qr-image").removeAttribute("src");
+  byId("share-qr-count").textContent = "";
+  byId("share-qr-slides").replaceChildren();
 });
 updateCountdowns();
 setInterval(updateCountdowns, 1000);

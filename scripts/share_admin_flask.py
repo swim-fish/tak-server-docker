@@ -26,6 +26,7 @@ from console_ui import breadcrumb, navbar
 from build_icu_qr import build_profile
 from certificate_validity import local_expiry
 from icu_profiles import SQUADS, stream_path
+import squad_groups
 
 
 CONTROL_DIR = Path(os.environ.get("MUMBLE_CONTROL_DIR", "/control"))
@@ -135,7 +136,7 @@ def control(action: str, **parameters: object) -> dict:
 
 
 def cert_control(action: str, **parameters: object) -> dict:
-    return worker_control(CERT_CONTROL_DIR, action, timeout=600 if action in {"batch_issue", "group_batch"} else 270,
+    return worker_control(CERT_CONTROL_DIR, action, timeout=600 if action in {"batch_issue", "group_batch", "video_alias_batch"} else 270,
                           **parameters)
 
 
@@ -198,6 +199,32 @@ def group_values(prefix: str) -> list[str]:
     return values
 
 
+def with_all_read(groups: list[str]) -> list[str]:
+    """Give new device certificates access to aliases shared with all teams."""
+    return sorted(set(groups) | {squad_groups.ALL_GROUP})
+
+
+@app.get("/settings/groups")
+def squad_group_settings() -> str:
+    try:
+        mapping, error = squad_groups.load(), None
+    except (OSError, ValueError, KeyError, json.JSONDecodeError) as exc:
+        mapping, error = squad_groups.defaults(), str(exc)
+    return render_template("squad_groups.html", mapping=mapping, squads=squad_groups.SQUADS,
+                           all_group=squad_groups.ALL_GROUP, csrf=CSRF, error=error,
+                           saved=request.args.get("saved") == "1")
+
+
+@app.post("/settings/groups")
+def save_squad_group_settings() -> Response:
+    mapping = {squad: request.form.get(squad, "").strip() for squad in squad_groups.SQUADS}
+    try:
+        squad_groups.save(mapping)
+    except (OSError, ValueError) as exc:
+        return Response(str(exc), 400)
+    return redirect(url_for("squad_group_settings", saved="1"), code=303)
+
+
 def selected(field: str) -> list[dict]:
     items = []
     seen = set()
@@ -251,18 +278,23 @@ def provision_values() -> dict:
         values.update(name=name, path=path)
     elif kind == "icu":
         squad = request.form.get("squad", "default")
-        person = request.form.get("person", "")
         mode = request.form.get("icu_mode", "standard")
         if mode not in {"standard", "advanced"}:
             raise ValueError("Invalid ICU mode")
         custom = request.form.get("custom", "") if mode == "advanced" else ""
         if mode == "advanced" and not custom:
             raise ValueError("Advanced ICU Stream Path is required")
-        path = stream_path(squad, person, custom)
-        if squad != "default" and not path.startswith(f"live/{squad}/"):
-            raise ValueError("ICU Stream Path must stay within the selected squad")
-        values.update(squad=squad, person=person, custom=custom, icu_mode=mode,
-                      stream_path=path, expected_path=path + "VIDEO_1")
+        people = request.form.getlist("person") if mode == "standard" else []
+        if mode == "standard" and (not 1 <= len(people) <= 10 or len(people) != len(set(people))):
+            raise ValueError("Select between 1 and 10 distinct ICU members")
+        paths = []
+        for person in people if mode == "standard" else [""]:
+            path = stream_path(squad, person, custom)
+            if squad != "default" and not path.startswith(f"live/{squad}/"):
+                raise ValueError("ICU Stream Path must stay within the selected squad")
+            paths.append({"person": person, "stream_path": path, "expected_path": path + "VIDEO_1"})
+        values.update(squad=squad, people=sorted(people, key=int), custom=custom, icu_mode=mode,
+                      paths=sorted(paths, key=lambda item: int(item["person"])) if people else paths)
     else:
         raise ValueError("Select a provisioning purpose")
     return values
@@ -274,14 +306,15 @@ def provision() -> str:
     if flow == "vx":
         return render_template("vx_provision.html", step="configure", job_id=uuid.uuid4().hex, csrf=CSRF)
     if flow == "tak-new":
-        group_choices = ["local-test"]
+        group_choices = squad_groups.catalog(["local-test"])
         group_error = None
         try:
-            group_choices = sorted(set(cert_control("snapshot").get("group_choices", [])) | {"local-test"})
+            group_choices = squad_groups.catalog(cert_control("snapshot").get("group_choices", []) + ["local-test"])
         except (RuntimeError, OSError, ValueError) as exc:
             group_error = str(exc)
         return render_template("new_certificate_provision.html", step="configure", csrf=CSRF,
-                               group_choices=group_choices, group_error=group_error)
+                               group_choices=group_choices, group_error=group_error,
+                               squad_mapping=squad_groups.load())
     snapshot = None
     error = None
     if flow == "tak":
@@ -291,6 +324,143 @@ def provision() -> str:
             error = str(exc)
     return render_template("provision.html", step="configure" if flow else "choose", flow=flow,
                            snapshot=snapshot, error=error, csrf=CSRF, squads=SQUADS)
+
+
+def icu_batch_values() -> dict:
+    squad = request.form.get("squad", "")
+    if squad not in squad_groups.SQUADS:
+        raise ValueError("Choose a named ICU squad")
+    start, count = int(request.form.get("start", "0")), int(request.form.get("count", "0"))
+    if not 1 <= start <= 10 or not 1 <= count <= 10 or start + count > 11:
+        raise ValueError("Choose a continuous range within member 1–10")
+    groups = request.form.getlist("group")
+    allowed = set(squad_groups.load().values()) | {squad_groups.ALL_GROUP}
+    if not groups or len(groups) != len(set(groups)) or not set(groups) <= allowed:
+        raise ValueError("Choose distinct configured TAK groups")
+    ttl, limit = int(request.form.get("ttl", "20")), int(request.form.get("limit", "3"))
+    if not 1 <= ttl <= 10080 or not 1 <= limit <= 10000:
+        raise ValueError("Invalid QR share limits")
+    return {"squad": squad, "people": list(range(start, start + count)),
+            "groups": sorted(groups), "ttl": ttl, "limit": limit}
+
+
+@app.get("/provision/icu-batch")
+def icu_batch() -> str:
+    members, group_error = icu_group_members()
+    return render_template("icu_batch.html", step="configure", csrf=CSRF,
+                           mapping=squad_groups.load(), all_group=squad_groups.ALL_GROUP,
+                           members=members, group_error=group_error)
+
+
+def icu_group_members() -> tuple[dict[str, list[dict]], str | None]:
+    groups = set(squad_groups.load().values()) | {squad_groups.ALL_GROUP}
+    members = {group: [] for group in groups}
+    try:
+        snapshot = cert_control("snapshot")
+        for record in snapshot["certificates"]:
+            if record.get("revoked") or record.get("expired") or record.get("registered") is not True:
+                continue
+            for group in groups & set(record.get("out_groups", [])):
+                members[group].append({"cn": record["cn"], "serial": record["serial"]})
+        return members, None
+    except (OSError, RuntimeError, ValueError, KeyError) as exc:
+        return members, str(exc)
+
+
+@app.post("/provision/icu-batch/preview")
+def icu_batch_preview() -> str | Response:
+    try:
+        values = icu_batch_values()
+    except (ValueError, OSError, TypeError) as exc:
+        return Response(str(exc), 400)
+    members, group_error = icu_group_members()
+    recipients = {item["serial"]: item for group in values["groups"] for item in members[group]}
+    return render_template("icu_batch.html", step="preview", csrf=CSRF, values=values,
+                           members=members, recipients=list(recipients.values()), group_error=group_error,
+                           operation_id=uuid.uuid4().hex)
+
+
+def run_icu_batch(operation_id: str, receipt: dict) -> dict:
+    values = receipt["values"]
+    squad = values["squad"]
+    publisher = None
+    for person in values["people"]:
+        publisher = media.ensure_squad(squad, f"live/{squad}/{person}/VIDEO_1")
+    batch = cert_control("video_alias_batch", squad=squad, people=values["people"],
+                         groups=values["groups"])["batch"]
+    receipt["alias_results"] = batch["results"]
+    save_operation(operation_id, receipt)
+    shared = {item["person"] for item in receipt["results"]}
+    for item in batch["results"]:
+        if item["state"] != "ready" or item["person"] in shared:
+            continue
+        person = item["person"]
+        path = f"live/{squad}/{person}/"
+        profile = build_profile("takbox.local", 8322, path,
+                                publisher["user"], publisher["password"])
+        share_id = portal.create_share("icu", "", values["ttl"], values["limit"],
+                                       profile=profile, media_owner="squad:" + squad,
+                                       media_path=path, display_name=f"ICU-{squad}-{person}",
+                                       batch_id=operation_id)
+        receipt["results"].append({"person": person, "share_id": share_id, "alias_uid": item["uid"]})
+        save_operation(operation_id, receipt)
+    receipt["state"] = "complete" if batch["state"] == "complete" and len(receipt["results"]) == len(
+        values["people"]) else "partial"
+    if receipt["state"] == "partial":
+        receipt["error"] = "Some Video Alias entries were not published; inspect each result"
+    save_operation(operation_id, receipt)
+    return receipt
+
+
+@app.post("/provision/icu-batch/execute")
+def icu_batch_execute() -> Response:
+    if request.form.get("confirmation") != "yes":
+        return Response("Confirm ICU batch creation", 400)
+    operation_id = request.form.get("operation_id", "")
+    try:
+        values = icu_batch_values()
+        if begin_operation(operation_id, "provision:icu-batch"):
+            receipt = read_operation(operation_id, "provision:icu-batch")
+            receipt["values"] = values
+            save_operation(operation_id, receipt)
+        else:
+            receipt = read_operation(operation_id, "provision:icu-batch")
+            if receipt["values"] != values:
+                raise ValueError("ICU batch settings changed after preview")
+        if receipt["state"] != "complete":
+            try:
+                run_icu_batch(operation_id, receipt)
+            except (OSError, RuntimeError, ValueError, KeyError) as exc:
+                receipt.update(state="partial", error=str(exc)[:200])
+                save_operation(operation_id, receipt)
+    except (OSError, RuntimeError, ValueError, KeyError, TypeError) as exc:
+        return Response(str(exc), 409)
+    return redirect(url_for("icu_batch_result", operation_id=operation_id), code=303)
+
+
+@app.get("/provision/icu-batch/result/<operation_id>")
+def icu_batch_result(operation_id: str) -> str | Response:
+    try:
+        receipt = read_operation(operation_id, "provision:icu-batch")
+    except (OSError, ValueError, json.JSONDecodeError):
+        return Response("ICU batch operation was not found", 404)
+    shares = [(item["person"], portal.get_share_by_id(item["share_id"]))
+              for item in receipt["results"]]
+    return render_template("icu_batch.html", step="result", receipt=receipt,
+                           shares=[(person, row) for person, row in shares if row is not None],
+                           csrf=CSRF, operation_id=operation_id, public_base=portal.PUBLIC_BASE)
+
+
+@app.post("/provision/icu-batch/retry")
+def icu_batch_retry() -> Response:
+    operation_id = request.form.get("operation_id", "")
+    try:
+        receipt = read_operation(operation_id, "provision:icu-batch")
+        if receipt["state"] != "complete":
+            run_icu_batch(operation_id, receipt)
+    except (OSError, RuntimeError, ValueError, KeyError) as exc:
+        return Response(str(exc), 409)
+    return redirect(url_for("icu_batch_result", operation_id=operation_id), code=303)
 
 
 def new_certificate_values() -> dict:
@@ -318,7 +488,7 @@ def new_certificate_values() -> dict:
         if not any(groups):
             raise ValueError("Each device needs at least one In or Out group")
         seen.add(cn)
-        items.append({"name": name, "cn": cn, "in_groups": groups[0], "out_groups": groups[1],
+        items.append({"name": name, "cn": cn, "in_groups": groups[0], "out_groups": with_all_read(groups[1]),
                       "expires_at": local_expiry(expiry)})
     ttl = int(request.form.get("ttl", "20"))
     limit = int(request.form.get("limit", "3"))
@@ -372,6 +542,10 @@ def new_certificate_execute() -> Response:
         if (not 1 <= int(values.get("ttl", 0)) <= 10080 or
                 not 1 <= int(values.get("limit", 0)) <= 10000):
             raise ValueError("Invalid batch share limits")
+        for item in values["items"]:
+            if not isinstance(item, dict) or not isinstance(item.get("out_groups"), list):
+                raise ValueError("Invalid batch certificate groups")
+            item["out_groups"] = with_all_read(item["out_groups"])
         if begin_operation(job_id, "provision:tak-new"):
             receipt = read_operation(job_id, "provision:tak-new")
             receipt["values"] = values
@@ -498,16 +672,17 @@ def provision_execute() -> str | Response:
                 save_operation(operation_id, receipt)
         elif values["kind"] == "icu":
             owner = "squad:" + values["squad"]
-            publisher = media.ensure_squad(values["squad"], values["expected_path"])
-            profile = build_profile("takbox.local", 8322, values["stream_path"],
-                                    publisher["user"], publisher["password"])
-            share_id = portal.create_share("icu", "", values["ttl"], values["limit"], profile=profile,
-                                           media_owner=owner, media_path=values["stream_path"],
-                                           display_name=(f"ICU-ADV-{values['stream_path'].strip('/')}"
-                                                         if values["icu_mode"] == "advanced" else
-                                                         f"ICU-{values['squad']}-{values['person'] or '未指定'}"))
-            receipt["results"].append({"label": values["expected_path"], "share_id": share_id})
-            save_operation(operation_id, receipt)
+            for item in values["paths"]:
+                publisher = media.ensure_squad(values["squad"], item["expected_path"])
+                profile = build_profile("takbox.local", 8322, item["stream_path"],
+                                        publisher["user"], publisher["password"])
+                label = (f"ICU-ADV-{item['stream_path'].strip('/')}"
+                         if values["icu_mode"] == "advanced" else f"ICU-{values['squad']}-{item['person']}")
+                share_id = portal.create_share("icu", "", values["ttl"], values["limit"], profile=profile,
+                                               media_owner=owner, media_path=item["stream_path"],
+                                               display_name=label, batch_id=operation_id)
+                receipt["results"].append({"label": label, "share_id": share_id})
+                save_operation(operation_id, receipt)
         else:
             receipt["device_key"], _ = media.create_device(values["name"], values["path"])
             save_operation(operation_id, receipt)
@@ -694,6 +869,14 @@ def media_update() -> str | Response:
                    for key in keys):
                 raise ValueError("Select enabled ICU squads only")
             changed = [(key, registry[key]) for key in keys]
+            requested_paths = request.form.getlist("reshare_path")
+            available_paths = {f"{key}|{path}" for key, item in changed for path in item["paths"]}
+            if not requested_paths and request.form.get("path_selection_present") != "yes":
+                requested_paths = sorted(available_paths)
+            if (not requested_paths or len(requested_paths) != len(set(requested_paths)) or
+                    not set(requested_paths) <= available_paths):
+                raise ValueError("Select valid ICU QR paths from the selected squads")
+            selected_paths = set(requested_paths)
         else:
             changed = media.update_many(keys, action)
         previous_labels = {(row["media_owner"], row["media_path"]): portal.share_label(row)
@@ -704,6 +887,8 @@ def media_update() -> str | Response:
             shares = []
             if action in {"reset", "reshare"} and item["kind"] == "squad":
                 for actual in item["paths"]:
+                    if action == "reshare" and f"{key}|{actual}" not in selected_paths:
+                        continue
                     path = actual.removesuffix("VIDEO_1")
                     profile = build_profile("takbox.local", 8322, path, item["user"], item["password"])
                     share_id = portal.create_share("icu", "", ttl, limit, profile=profile,
@@ -764,7 +949,7 @@ def stats() -> Response:
         {"id": row["id"], "status": portal.share_status(row, paused, now),
          "inactive": portal.share_status(row, False, now) != "分享中",
          "filename": row["filename"], "display_name": portal.share_label(row),
-         "kind": row["kind"],
+         "kind": row["kind"], "batch_id": row["batch_id"], "media_owner": row["media_owner"],
          "created_at": portal.local_time(row["created_at"]),
          "expires_at": portal.local_time(row["expires_at"]),
          "expires_at_epoch": row["expires_at"],
@@ -890,7 +1075,10 @@ def certificate_new() -> str:
         snapshot = cert_control("snapshot")
     except (RuntimeError, OSError, ValueError) as exc:
         error = str(exc)
-    return render_template("certificate_new.html", snapshot=snapshot, error=error, csrf=CSRF)
+    if snapshot:
+        snapshot["group_choices"] = squad_groups.catalog(snapshot.get("group_choices", []))
+    return render_template("certificate_new.html", snapshot=snapshot, error=error, csrf=CSRF,
+                           squad_mapping=squad_groups.load())
 
 
 @app.get("/certificates/ca")
@@ -971,6 +1159,7 @@ def certificate_groups_overview() -> str:
     snapshot, error = None, None
     try:
         snapshot = cert_control("snapshot")
+        snapshot["group_choices"] = squad_groups.catalog(snapshot.get("group_choices", []))
     except (RuntimeError, OSError, ValueError) as exc:
         error = str(exc)
     groups, unassigned = certificate_group_index(snapshot["certificates"], snapshot.get("group_choices")) if snapshot else ([], [])
@@ -1002,6 +1191,7 @@ def certificate_groups_batch() -> Response:
 def certificate_detail(serial: str) -> str | Response:
     try:
         snapshot = cert_control("snapshot")
+        snapshot["group_choices"] = squad_groups.catalog(snapshot.get("group_choices", []))
         record = next((item for item in snapshot["certificates"] if item["serial"] == serial), None)
         if record is None:
             abort(404)
@@ -1038,7 +1228,7 @@ def certificate_issue() -> Response:
         result = cert_control("issue", name=request.form.get("name", ""),
                               cn=request.form.get("cn", ""),
                               expires_at=expiry,
-                              in_groups=group_values("in"), out_groups=group_values("out"))
+                              in_groups=group_values("in"), out_groups=with_all_read(group_values("out")))
     except (RuntimeError, OSError, ValueError) as exc:
         return Response(str(exc), 409)
     return redirect(url_for("certificate_detail", serial=result["serial"], result="issued"), code=303)

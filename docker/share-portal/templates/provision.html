@@ -8,7 +8,7 @@
 <script src="{{ url_for('static', filename='console_ui.js') }}" defer></script></head>
 <body class="portal-page"><main class="provision-layout">
   <header class="page-header">{{ console_nav }}
-  {% set flow_names = {'tak': 'TAK Server 連線', 'tak-new': '新增 TAK 用戶端', 'icu': 'ICU 影像發布', 'advanced': 'MediaMTX Advanced', 'device': '一般設備', 'vx': 'Vx 任務'} %}
+  {% set flow_names = {'tak': 'TAK Server 連線', 'tak-new': '新增 TAK 用戶端', 'icu': 'ICU 小隊發布', 'advanced': 'MediaMTX Advanced', 'device': '一般設備', 'vx': 'Vx 任務'} %}
   {% if flow %}{{ console_breadcrumb([('引導式佈建', '/provision'), (flow_names.get(flow, '設定'), none)]) }}{% endif %}
   <h1>引導式佈建</h1></header>
   {% if error %}<div class="alert alert-danger" role="alert">{{ error }}</div>{% endif %}
@@ -16,7 +16,8 @@
   <section class="card"><h2>選擇用途</h2><div class="provision-choices">
     <a class="provision-choice" href="/provision?flow=tak"><strong>TAK Server 連線</strong><span>選擇既有憑證，建立獨立 DPK QR 分享。</span></a>
     <a class="provision-choice" href="/provision?flow=tak-new"><strong>新增 TAK 用戶端</strong><span>單筆或批次簽發憑證、設定 In／Out 群組並建立 DPK QR。</span></a>
-    <a class="provision-choice" href="/provision?flow=icu"><strong>ICU 影像發布</strong><span>設定串流路徑，產生 ICU 設定 QR。</span></a>
+    <a class="provision-choice" href="/provision?flow=icu"><strong>ICU 小隊發布</strong><span>選一名、多名或全部隊員，分別產生 ICU 設定 QR。</span></a>
+    <a class="provision-choice" href="/provision/icu-batch"><strong>ICU 小隊批次交付</strong><span>一次產生多名隊員 QR，並更新 TAK Video Alias 群組清單。</span></a>
     <a class="provision-choice" href="/provision?flow=advanced"><strong>MediaMTX Advanced</strong><span>選擇 ICU QR 或一般設備發布網址與 QR。</span></a>
     <a class="provision-choice" href="/provision?flow=vx"><strong>Vx 任務</strong><span>產生套件並發布至 TAK Server Data Packages。</span></a>
   </div></section>
@@ -34,16 +35,17 @@
     <p class="muted">每張憑證各有獨立 QR。<a href="/provision?flow=tak-new">新增單筆或批次憑證</a></p><button class="btn btn-primary">預覽</button>
   </form>{% endif %}</section>
   {% elif step == 'configure' and flow == 'icu' %}
-  <section class="card"><h2>ICU 影像發布 · 設定</h2><form method="post" action="/provision/preview" class="provision-form">
+  <section class="card"><h2>ICU 小隊發布 · 設定</h2><form method="post" action="/provision/preview" class="provision-form">
     <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="kind" value="icu">
     <fieldset><legend class="fs-6">路徑模式</legend><label><input class="form-check-input" type="radio" name="icu_mode" value="standard" {% if request.args.get('mode') != 'advanced' %}checked{% endif %}> 標準</label> <label><input class="form-check-input" type="radio" name="icu_mode" value="advanced" {% if request.args.get('mode') == 'advanced' %}checked{% endif %}> Advanced：ICU QR Code</label></fieldset>
-    <div class="provision-limits"><label>小隊<select class="form-select" name="squad">{% for squad in squads %}<option value="{{ squad }}">{{ squad|title }}</option>{% endfor %}</select></label><label>人員代號<select class="form-select" name="person"><option value="">未指定</option>{% for number in range(1, 11) %}<option value="{{ number }}">{{ number }}</option>{% endfor %}</select></label></div>
+    <label>小隊<select class="form-select" name="squad">{% for squad in squads %}<option value="{{ squad }}" {% if (request.args.get('mode') == 'advanced' and squad == 'default') or (request.args.get('mode') != 'advanced' and squad == 'alpha') %}selected{% endif %}>{{ squad|title }}</option>{% endfor %}</select></label>
+    <fieldset id="icu-standard-members" {% if request.args.get('mode') == 'advanced' %}hidden{% endif %}><legend class="fs-6">隊員（預設全選）</legend><div class="d-flex flex-wrap gap-2 mb-2"><button class="btn btn-outline-info" id="icu-members-all" type="button">全選隊員</button><button class="btn btn-outline-secondary" id="icu-members-none" type="button">全部不選</button><span class="muted" id="icu-members-count" role="status" aria-live="polite"></span></div><div class="row g-2">{% for number in range(1, 11) %}<div class="col-6 col-sm-4 col-lg-2"><label class="border rounded p-2 w-100"><input class="form-check-input" type="checkbox" name="person" value="{{ number }}" checked {% if request.args.get('mode') == 'advanced' %}disabled{% endif %}> 隊員 {{ number }}</label></div>{% endfor %}</div></fieldset>
     <div id="icu-advanced-path" class="icu-advanced-path" {% if request.args.get('mode') != 'advanced' %}hidden{% endif %}>
       <label for="icu-custom-path">PATH 預覽</label>
       <div class="input-group icu-url-group"><span class="input-group-text" id="icu-url-base">rtsps://takbox.local:8322/</span><input class="form-control" id="icu-custom-path" name="custom" value="live/" placeholder="live/alpha/camera-2/" maxlength="160" pattern="live/([A-Za-z0-9_-]+/)*" title="以 live/ 開頭，使用英文字母、數字、底線或連字號分段，並以 / 結尾" aria-describedby="icu-url-base icu-path-help" {% if request.args.get('mode') != 'advanced' %}disabled{% else %}required{% endif %} spellcheck="false" autocapitalize="off"></div>
       <p class="muted" id="icu-path-help">預期發布 URL：<output id="icu-path-preview" for="icu-custom-path">rtsps://takbox.local:8322/live/VIDEO_1</output></p>
     </div>
-    <p class="muted">標準模式依小隊與人員代號產生路徑；Advanced 模式須保留所選小隊的 live/&lt;小隊&gt;/ 前綴。ICU 會在結尾加上 VIDEO_1。同隊可共用 QR，匯入後各自更改小隊後段。</p>
+    <p class="muted">小隊發布會為每名所選隊員建立獨立 QR；Advanced 模式自訂單一路徑，須保留所選小隊的 live/&lt;小隊&gt;/ 前綴。ICU 會在結尾加上 VIDEO_1。</p>
     <div class="provision-limits"><label>分享時間（分鐘）<input class="form-control" name="ttl" type="number" min="1" max="10080" value="20" required></label><label>下載上限（次）<input class="form-control" name="limit" type="number" min="1" max="10000" value="3" required></label></div>
     <button class="btn btn-primary">預覽</button>
   </form></section>
@@ -61,20 +63,21 @@
   {% elif step == 'preview' %}
   <section class="card"><h2>預覽與確認</h2>
   {% if flow == 'tak' %}<p>即將為 {{ values.records|length }} 張憑證建立獨立的短效 DPK 分享。</p><ul>{% for record in values.records %}<li>{{ record.name }} · {{ record.serial }} · {{ record.package }}</li>{% endfor %}</ul>
-  {% elif flow == 'icu' %}<p>ICU 路徑：<code>{{ values.stream_path }}</code></p><p>預期發布：<code>{{ values.expected_path }}</code></p><div class="alert alert-warning" role="note">下載的設定檔會包含小隊發布密碼，請只在受控熱點分享。</div>
+  {% elif flow == 'icu' %}<p>小隊：{{ values.squad }}；{{ 'Advanced 自訂路徑' if values.icu_mode == 'advanced' else '選取 ' ~ (values.paths|length) ~ ' 名隊員' }}</p><div class="row g-2">{% for item in values.paths %}<div class="col-6 col-md-4"><div class="card p-2"><strong>{{ 'Advanced' if values.icu_mode == 'advanced' else '隊員 ' ~ item.person }}</strong><code>{{ item.expected_path }}</code></div></div>{% endfor %}</div><div class="alert alert-warning mt-3" role="note">下載的設定檔會包含小隊發布密碼，請只在受控熱點分享。</div>
   {% else %}<p>設備：{{ values.name }}</p><p>完整發布路徑：<code>{{ values.path }}</code></p><p>帳密只授權此路徑。RTSP 僅供受控熱點測試；RTSPS 設備須信任 TAK CA 鏈及 takbox.local。</p>{% endif %}
   {% if flow != 'device' %}<p>分享時間：{{ values.ttl }} 分鐘；下載上限：{{ values.limit }} 次。兩項先到者停止。</p>{% endif %}
   <form method="post" action="/provision/execute" class="provision-form">
     <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="operation_id" value="{{ operation_id }}"><input type="hidden" name="kind" value="{{ flow }}"><input type="hidden" name="ttl" value="{{ values.ttl }}"><input type="hidden" name="limit" value="{{ values.limit }}">
     {% if flow == 'tak' %}{% for item in values.selected %}<input type="hidden" name="certificate" value="{{ item.serial }}:{{ item.fingerprint }}">{% endfor %}
-    {% elif flow == 'icu' %}<input type="hidden" name="squad" value="{{ values.squad }}"><input type="hidden" name="person" value="{{ values.person }}"><input type="hidden" name="custom" value="{{ values.custom }}"><input type="hidden" name="icu_mode" value="{{ values.icu_mode }}">
+    {% elif flow == 'icu' %}<input type="hidden" name="squad" value="{{ values.squad }}">{% for person in values.people %}<input type="hidden" name="person" value="{{ person }}">{% endfor %}<input type="hidden" name="custom" value="{{ values.custom }}"><input type="hidden" name="icu_mode" value="{{ values.icu_mode }}">
     {% else %}<input type="hidden" name="name" value="{{ values.name }}"><input type="hidden" name="path" value="{{ values.path }}">{% endif %}
     <label><input class="form-check-input" type="checkbox" name="confirmation" value="yes" required> 我已確認上述設定</label><div class="d-flex flex-wrap gap-2"><button class="btn btn-primary">建立並顯示 QR</button><button class="btn btn-outline-info" type="button" onclick="history.back()">返回修改</button></div>
   </form></section>
   {% elif step == 'result' %}
   <section class="card {{ 'warning' if error else 'success' }}"><h2>{{ '部分完成，需檢查' if error else '佈建完成' }}</h2>{% if error %}<div class="alert alert-warning" role="alert">{{ error }}</div>{% endif %}
   {% if flow == 'device' %}{% with key=device_key %}{% include 'device_links.html' %}{% endwith %}
+  {% elif flow == 'icu' %}<div id="icu-batch-carousel" class="carousel slide" data-bs-interval="false" data-bs-touch="true"><div class="carousel-inner">{% for label, row, expiry in results %}<div class="carousel-item {% if loop.first %}active{% endif %}"><article class="card mx-auto text-center p-3" style="max-width:28rem"><h3 class="fs-5">{{ label }}</h3><img class="qr img-fluid rounded mx-auto my-3" src="/qr.png/{{ row.token }}" alt="{{ label }} QR Code"><p>分享至 {{ expiry }}；最多 {{ row.max_downloads }} 次下載</p><a href="{{ public_base }}/q/{{ row.token }}" target="_blank" rel="noopener noreferrer">開啟分享頁</a></article></div>{% endfor %}</div></div>{% if results|length > 1 %}<div class="d-flex justify-content-center align-items-center gap-3 mt-3"><button class="btn btn-outline-info" type="button" data-bs-target="#icu-batch-carousel" data-bs-slide="prev">上一位</button><span id="icu-batch-position" aria-live="polite">1／{{ results|length }}</span><button class="btn btn-outline-info" type="button" data-bs-target="#icu-batch-carousel" data-bs-slide="next">下一位</button></div>{% endif %}
   {% else %}<div class="provision-choices">{% for label, row, expiry in results %}<article class="provision-choice"><strong>{{ label }}</strong><span>分享至 {{ expiry }}；最多 {{ row.max_downloads }} 次下載</span><img class="qr img-fluid" src="/qr.png/{{ row.token }}" alt="{{ label }} QR Code"><a href="{{ public_base }}/q/{{ row.token }}" target="_blank" rel="noopener noreferrer">開啟分享頁</a></article>{% endfor %}</div>{% endif %}
   <p><a class="btn btn-outline-info" href="/">查看分享紀錄</a> <a class="btn btn-outline-info" href="/media">MediaMTX 管理</a></p></section>
   {% endif %}
-</main><script src="{{ url_for('static', filename='device_links.js') }}" defer></script><script src="{{ url_for('static', filename='icu_path.js') }}" defer></script><script src="{{ url_for('static', filename='device_path.js') }}" defer></script><script src="{{ url_for('static', filename='bootstrap/bootstrap.bundle.min.js') }}" defer></script></body></html>
+</main><script src="{{ url_for('static', filename='device_links.js') }}" defer></script><script src="{{ url_for('static', filename='icu_path.js') }}" defer></script><script src="{{ url_for('static', filename='icu_batch.js') }}" defer></script><script src="{{ url_for('static', filename='device_path.js') }}" defer></script><script src="{{ url_for('static', filename='bootstrap/bootstrap.bundle.min.js') }}" defer></script></body></html>

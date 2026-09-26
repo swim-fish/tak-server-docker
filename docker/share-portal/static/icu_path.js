@@ -7,10 +7,19 @@
   const preview = document.getElementById("icu-path-preview");
   const modes = document.querySelectorAll('input[name="icu_mode"]');
   const squad = document.querySelector('select[name="squad"]');
+  const memberSection = document.getElementById("icu-standard-members");
+  const members = [...memberSection.querySelectorAll('input[name="person"]')];
+  const memberCount = document.getElementById("icu-members-count");
   let suggestedPath = "live/";
+
+  function updateMemberCount() {
+    memberCount.textContent = `已選 ${members.filter((member) => member.checked).length}／${members.length} 名隊員`;
+  }
 
   function update() {
     const advanced = document.querySelector('input[name="icu_mode"]:checked')?.value === "advanced";
+    memberSection.hidden = advanced;
+    members.forEach((member) => { member.disabled = advanced; });
     section.hidden = !advanced;
     input.disabled = !advanced;
     input.required = advanced;
@@ -30,5 +39,15 @@
     update();
   });
   input.addEventListener("input", update);
+  document.getElementById("icu-members-all").addEventListener("click", () => {
+    members.forEach((member) => { member.checked = true; });
+    updateMemberCount();
+  });
+  document.getElementById("icu-members-none").addEventListener("click", () => {
+    members.forEach((member) => { member.checked = false; });
+    updateMemberCount();
+  });
+  members.forEach((member) => member.addEventListener("change", updateMemberCount));
+  updateMemberCount();
   update();
 })();
