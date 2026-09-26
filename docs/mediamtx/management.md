@@ -14,6 +14,10 @@ Windows 本機控制台把 MediaMTX 管理分為「ICU」(`http://127.0.0.1:1006
 
 「觀看工作階段」子頁每 5 秒向公開 viewer 的 MediaMTX API 更新一次，顯示觀看路徑、連線狀態、MediaMTX 所回報的來源位址、開始時間、累計傳送資料量與 Session ID。可依路徑、位址或 ID 搜尋，也可立即更新。這裡只計公開 viewer 的 WebRTC 讀取連線；控制台預覽使用獨立的 `media-preview`，不列入。來源位址是 MediaMTX 看到的位址，若經過代理或 NAT，不一定是觀看者的原始 IP。清單最多顯示前 500 筆，超過時會提示。
 
+![MediaMTX 公開觀看工作階段頁](../images/console-media-viewer-sessions.png)
+
+圖：2026-09-26 擷取時沒有公開觀看工作階段。此圖用來辨識子頁與空清單，不代表已重新執行播放測試。
+
 若管理頁預覽收到 HTTP 401，先確認 `runtime/mediamtx/viewer-preview.yml` 的管理帳密是否仍與 `runtime/secrets/share_admin_password` 同步。這台本機環境可執行 `python scripts/provision_mediamtx.py --dns takbox.local` 重新產生設定，再執行 `docker compose up -d --force-recreate --no-deps media-preview` 載入新設定。請勿把密碼或產生的設定檔提交至 Git。
 
 目前 `takbox.local` 與 `.env` 的 `TAK_BIND_IP` 只預期在同一個本機網路可達。**尚未開放網際網路觀看**；公開 FQDN、HTTPS 憑證、Router NAT、防火牆及 ICE 外部可達性仍須另行設定與實測。匿名觀看的 `live/` 路徑可預測，對外開放前應確認影像內容可以公開。
