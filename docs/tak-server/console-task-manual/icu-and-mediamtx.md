@@ -51,7 +51,7 @@
 2. 預覽後建立設備身分。結果頁按「顯示連線資訊」，RTSP 與 RTSPS 各有一組完整網址、「複製網址」按鈕及 QR；每台裝置有獨立帳密與指定路徑。網址格式為 `rtsps://<帳號>:<密碼>@takbox.local:8322/<Stream Path>`，RTSP 使用 `rtsp://` 與 `8554`。
 3. 優先用 RTSPS 發布並驗證 TAK CA 憑證鏈與 `takbox.local`；僅支援 RTSP 的裝置可在受控熱點使用 `8554`。最後在 MediaMTX 確認完整路徑上線，再用另一個讀取端驗證影像。
 
-發布網址與 QR 含帳密，不要貼進日誌或 Git。一般設備的 QR 沒有 ICU 分享的下載期限；停用身分或重設密碼才會讓舊連線資訊失效。一般設備不會自動附加 `VIDEO_1`。
+發布網址與 QR 含帳密，不要貼進日誌或 Git。一般裝置使用的 QR 沒有 ICU 分享下載期限；停用身分或重設密碼才會讓舊連線資訊失效。一般設備不會自動附加 `VIDEO_1`。
 
 ![一般設備 URL input group](../../images/console-task-06-device.png)
 
@@ -88,7 +88,7 @@
 1. 在「MediaMTX 管理」選線上串流，按「即時預覽」；看完按「關閉預覽」。
 2. 熱點裝置使用 `http://takbox.local:8889/live/<path>/` 觀看，末尾斜線需保留。
 3. 以「公開 WebRTC 觀看」開關控制新觀看與現有公開工作階段；此開關不停止 ICU 推流。切到「觀看工作階段」子頁，核對公開觀看的數量、路徑、來源位址與連線狀態；管理頁即時預覽不列入。此頁每 5 秒更新，可搜尋或按「立即更新」。
-4. 若在 ATAK CIV 5.7.0.15 觀看 ICU 影像，先確認發布端仍在線；在 ATAK 手動建立 RTSP 來源，使用 `takbox.local:8554`、實際 `live/.../VIDEO_1` 路徑及 `atak-viewer` 讀取帳密，並勾選 **Reliable P2P Connection (consumes more resources)**，讓 RTSP 走 TCP。ICU 自動分享的 RTSPS 來源不能直接用這版 ATAK 內建播放器開啟。RTSP 只限受控區域網路或 VPN；見[實機紀錄](../../validation/2026-09-25-atak-icu-viewer.md)。
+4. 若在 ATAK CIV 5.7.0.15 觀看 ICU 影像，先確認發布端仍持續發布；在 ATAK 手動建立 RTSP 來源，使用 `takbox.local:8554`、實際 `live/.../VIDEO_1` 路徑及 `atak-viewer` 讀取帳密，並勾選 **Reliable P2P Connection (consumes more resources)**，讓 RTSP 走 TCP。ICU 自動分享的 RTSPS 來源不能直接用這版 ATAK 內建播放器開啟。RTSP 只限受控區域網路或 VPN；見[實機紀錄](../../validation/2026-09-25-atak-icu-viewer.md)。
 
 目前只驗證熱點觀看；網際網路仍需 FQDN、HTTPS、NAT 與 ICE 驗收。下方圖 13 截圖時沒有線上串流。
 
@@ -131,7 +131,7 @@
 
 圖 18：「其他」子頁提供狀態篩選、搜尋、每頁筆數及設備列的重新啟用入口。
 
-### 重新啟用已停用的一般設備
+### 重新啟用已停用的裝置
 
 1. 切到「其他」→「停用」，找到設備後按「重新啟用」。
 2. 在對話框選「沿用舊密碼」或「產生新密碼」，勾選確認再送出。沿用時原網址恢復可用；產生新密碼後，原網址失效。

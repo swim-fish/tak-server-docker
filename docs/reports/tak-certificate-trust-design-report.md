@@ -2,7 +2,7 @@
 
 本報告供本機 TAK 5.8 測試環境的管理人員核對憑證信任鏈、撤銷邊界與中繼 CA 替換結果。結論是：撤銷舊中繼 CA 時，除了發布 Root CRL，還必須檢查 TAK 信任憑證鏈資料庫是否仍把舊中繼 CA 當成直接信任錨。2026-09-25 的實測中，移除該項目並重啟後，舊裝置憑證的新 8089 連線才遭拒絕。
 
-本次文件更新日期為 2026-09-26。新增的控制台圖片用來說明現行介面，沒有重新執行 CA 替換。證據範圍包括 OpenSSL、TAK 8089、兩台 Android 的群組路由、A 裝置的舊／新 DPK 與 Vx，以及憑證控制台的瀏覽器操作；8443 與完整自動輪替仍須另行驗收。
+本次文件更新日期為 2026-09-26。新增的控制台圖片用來說明現行介面，沒有重新執行 CA 替換。證據範圍包括 OpenSSL、TAK 8089、兩台 Android 的群組路由、A 裝置的舊／新 DPK 與 Vx、憑證控制台的瀏覽器操作，以及 8443 的單張憑證撤銷與受控 Root CRL 對照。原始 8443 設定的跨代 CA 停權保證及完整自動輪替仍須驗收。
 
 ## 信任鏈與服務分工
 
@@ -32,7 +32,9 @@ Root CRL 記錄中繼 CA 的撤銷；簽發中繼 CA 的 CRL 記錄其葉憑證�
 
 圖 4：從新 CA 上線、Root CRL 發布到裝置端重新登入的驗收順序。
 
-目前 `CoreConfig.xml` 的 `security/tls/crl` 與用戶端憑證撤銷檢查用於 8089。8443 的 `network/connector` 尚未設定 `crlFile`，因此不能把 8089 的結果直接推論為 8443 已完成 TLS 層撤銷檢查。詳見[憑證與撤銷設定](../security/certificates.md)及[8443 驗證紀錄](../validation/2026-09-23-tak-crl-8443.md)。
+目前 `CoreConfig.xml` 的 `security/tls/crl` 已設定多筆 CRL；8443 的 `network/connector` 尚未設定 `crlFile`。本版發行套件的[bytecode 核對](../validation/2026-09-26-tak-crlfile-source-analysis.md)顯示，預設 8443 connector 從全域清單取得**第一筆** CRL 檔，而 8089 的共用 TLS trust manager 逐筆讀取全域 CRL。這可解釋[獨立的 8443 前後對照](../validation/2026-09-24-qr-e2e-revocation.md)：同一張用戶端憑證撤銷前可取得 HTTP 200，撤銷後的新 TLS 請求遭拒。不能據此推論 8443 已載入其餘 CRL，或舊中繼 CA 鏈的撤銷已在 8443 生效。
+
+2026-09-26 另做[受控對照](../validation/2026-09-26-ca-rotation-8443-retest.md)：暫時讓 8443 的第一筆 CRL 指向包含各代中繼 CA 與 Root CA CRL 的合併檔。撤銷前的 Root CRL 下，舊 Alpha 與現行管理員憑證都取得 HTTP 200；只換成含舊 CA 撤銷紀錄的 Root CRL 並重啟後，舊 Alpha 的新 TLS 連線遭 `certificate_unknown` 拒絕，現行管理員仍取得 HTTP 200。測試後已還原原始設定並驗證容器健康。這證明**8443 實際載入 Root CRL 時能阻擋舊 CA 鏈**；原始設定目前只直接載入第一筆現行中繼 CA CRL，不應把受控結果誤認為已正式部署合併 CRL。
 
 ## 實測結果與可見範圍
 
@@ -40,10 +42,12 @@ Root CRL 記錄中繼 CA 的撤銷；簽發中繼 CA 的 CRL 記錄其葉憑證�
 | --- | --- | --- |
 | 舊 CA／舊 DPK | 移除直接信任錨後，舊憑證無法重新登入 ATAK | 驗證的是新的 8089 連線，不代表所有既有連線立即中止 |
 | 新 CA／新 DPK | ATAK 可重新登入，Vx 的 Primary、Alternate、Medical、Emergency 四頻道可加入 | A 裝置的實機結果；其他版本應重測 |
-| 短效裝置憑證 | Alpha 7 天與 Bravo 14 天憑證分別交付對應 DPK，ATAK 實機確認可連上 8089 | 已確認短效期憑證可用；未測試到期後的自動斷線行為 |
-| 20 分鐘憑證到期 | 到期後的新 8089 TLS 連線收到 `certificate expired`；到期前建立的連線在不中斷的觀察期間，即使憑證過期仍能繼續收發資料 | 憑證到期不能當成即時中斷既有連線的措施；ATAK 畫面與手動重連結果另待確認。見[到期測試](../validation/2026-09-26-certificate-expiry-20m.md) |
+| 短效裝置憑證 | Alpha 7 天與 Bravo 14 天憑證分別交付對應 DPK，ATAK 實機確認可連上 8089 | 已確認短效期憑證可用；到期行為另以 20 分鐘憑證測試 |
+| 20 分鐘憑證到期 | 到期後的新 8089 TLS 連線收到 `certificate expired`；到期前建立的連線在不中斷的觀察期間，即使憑證過期仍能繼續收發資料 | 使用者確認 ATAK 既有連線未立即斷線，下次重新連線才無法使用；未保存該次 Android 錯誤截圖。見[到期測試](../validation/2026-09-26-certificate-expiry-20m.md) |
 | Mumble 既有身分 | 舊 TAK 憑證失效後，既有 Mumble 身分仍可登入 Vx | Mumble 身分須在 Mumble 管理頁另行處理 |
 | 控制台憑證操作 | 重啟 Compose 後，瀏覽器簽發短效測試憑證、讀回群組並撤銷；CRL 包含該序號，新 8089 連線遭拒 | 該張瀏覽器測試憑證未匯入 Android |
+| 8443 撤銷後存取 | 同一張測試憑證在撤銷前可取得 HTTP 200，撤銷後的新 TLS 請求遭拒 | 手動前後對照已通過；控制台尚未自動判讀 8443，且預設 connector 只取全域第一筆 CRL |
+| 8443 舊 CA 受控對照 | 第一筆 CRL 暫時使用合併檔：撤銷前 Root CRL 讓舊 Alpha 取得 HTTP 200；含舊 CA 撤銷紀錄的 Root CRL 使它的新 TLS 連線遭拒，現行管理員兩階段均為 HTTP 200 | 已還原原始設定；證明 Root CRL 載入後的效果，不等於原始設定已有跨代 CA 停權保證 |
 
 ![憑證清冊的篩選與識別資訊](../images/certificate-console-inventory.png)
 
@@ -80,6 +84,6 @@ Root CRL 記錄中繼 CA 的撤銷；簽發中繼 CA 的 CRL 記錄其葉憑證�
 1. 操作前核對本機備份、CA 指紋、舊／新 DPK 身分及 TAK 信任憑證鏈資料庫內容。
 2. 切換時發布 Root CRL、移除舊中繼 CA 的直接信任項目並重啟 TAK；分別測試舊與新憑證的新連線。
 3. 切換後逐台交付新 DPK，分開驗收 ATAK 與 Vx；如需停用語音，另處理 Mumble 註冊身分與密碼。
-4. 8443 TLS 層 CRL 與完整自動輪替尚未在本輪文件更新中實測，應依[CA 輪替驗證紀錄](../validation/2026-09-25-ca-rotation-cutover.md)安排後續測試。
+4. 8443 的單張用戶端憑證撤銷及合併 CRL 的舊 CA 受控對照均已通過；若要將跨代 CA 停權列為正式部署保證，須確保 8443 持續載入所需 CRL，並驗收自動更新與完整輪替流程，見[8443 對照](../validation/2026-09-26-ca-rotation-8443-retest.md)。
 
-資料來源：[CA 輪替切換實測](../validation/2026-09-25-ca-rotation-cutover.md)、[瀏覽器簽發與撤銷](../validation/2026-09-25-certificate-browser.md)、[雙裝置群組基線](../validation/2026-09-24-ca-rotation-device-baseline.md)、[憑證操作說明](../tak-server/certificate-operator-guide.md)。
+資料來源：[CA 輪替切換實測](../validation/2026-09-25-ca-rotation-cutover.md)、[8443 受控對照](../validation/2026-09-26-ca-rotation-8443-retest.md)、[瀏覽器簽發與撤銷](../validation/2026-09-25-certificate-browser.md)、[雙裝置群組基線](../validation/2026-09-24-ca-rotation-device-baseline.md)、[憑證操作說明](../tak-server/certificate-operator-guide.md)。

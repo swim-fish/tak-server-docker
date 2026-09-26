@@ -30,11 +30,11 @@
 | [交付 ICU 設定](console-task-manual/icu-and-mediamtx.md#task-05) | 引導式佈建 → ICU 影像發布 | ICU 顯示外部設定，並在 MediaMTX 看見預期 `live/.../VIDEO_1` |
 | [設定無人機或編碼器](console-task-manual/icu-and-mediamtx.md#task-06) | 引導式佈建 → Advanced → 一般設備 | 個別帳密及 RTSP／RTSPS 發布網址、QR |
 | [檢視或關閉影像](console-task-manual/icu-and-mediamtx.md#task-07) | MediaMTX 管理 → ICU／觀看工作階段 | 串流清單、即時預覽、公開觀看開關及觀看工作階段符合預期 |
-| [停用、重新啟用或輪替影像發布身分](console-task-manual/icu-and-mediamtx.md#task-08) | MediaMTX 管理 → ICU／其他 | 小隊或設備身分狀態符合操作結果，舊連線依密碼選項處理 |
+| [停用、重新啟用或輪替影像發布身分](console-task-manual/icu-and-mediamtx.md#task-08) | MediaMTX 管理 → ICU／其他 | 小隊或裝置身分狀態符合操作結果，舊連線依密碼選項處理 |
 | [停止設定檔或 DPK 下載](console-task-manual/sharing-and-troubleshooting.md#task-09) | 檔案分享 → 分享紀錄 | QR 無法再下載；目前有效連結消失 |
 | [中斷語音或管理註冊身分](console-task-manual/vx-and-mumble.md#task-10) | Mumble 管理 | 線上連線或註冊清單反映變更 |
 | [撤銷 TAK 裝置憑證](console-task-manual/certificates-and-groups.md#task-11) | 用戶端憑證 → 憑證清冊 | CRL 發布、TAK 重啟，舊憑證新連線遭拒 |
-| [替換中繼 CA 並選擇重簽裝置](console-task-manual/certificates-and-groups.md#task-ca-replace) | 用戶端憑證 → CA 替換 | 本機輪替及舊鏈拒絕已驗；Android 新 DPK、8443 與 Vx 另驗 |
+| [替換中繼 CA 並選擇重簽裝置](console-task-manual/certificates-and-groups.md#task-ca-replace) | 用戶端憑證 → CA 替換 | 新 DPK 可登入 ATAK 與 Vx；8443 須以舊／新憑證建立新連線，逐次確認停權與可用性 |
 
 ## 驗收範圍
 

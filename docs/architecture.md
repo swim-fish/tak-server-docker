@@ -48,7 +48,7 @@ TAK 用戶端群組的日常讀寫使用 5.8 管理 API；新憑證的指紋綁�
 - 已驗證：MediaMTX RTSP／RTSPS TCP 及 Compose 內 UDP 發布／讀取；TAK ICU 7.5.1 經 RTSPS 與帳密發布，獨立用戶端成功讀取影像。
 - 已驗證：分享頁的時間／次數先到停止、QR 與檔案下載；引導頁的批次憑證、Vx 伺服器端替換、ICU QR 及 MediaMTX 小隊發布身分。Flask 管理頁能列出 Mumble session 與註冊身分；管理頁異動操作尚未對真實 Vx 身分執行。
 - 已驗證：Android ICU 經 RTSPS 發布 `live/alpha/1/VIDEO_1`，Chrome 由控制台預覽與熱點 WebRTC 入口觀看；公開觀看開關及工作階段數量會更新。網際網路入口尚未建置。
-- 待驗：雙向 PTT、UDP 音訊品質、同 UUID 任務重複下載的覆寫／去重行為。
+- 使用者回報：手機上的 Vx 雙頻道語音測試成功。雙向 PTT 按鍵對應、實際 UDP 路徑與音訊品質尚未留下可核對的測試紀錄；同 UUID 任務重複下載的覆寫／去重行為仍待驗。
 - 已驗：ATAK 5.7.0.15 手動 RTSP 來源使用讀取帳密與 Reliable／TCP，可觀看 ICU 發布的影像；自動 RTSPS 通告無法直接播放。待驗 MediaMTX 跨網路 UDP、其他 ATAK 版本與 ICU 憑證拒絕行為。
 - 尚未實作：公開 8446／ACME、Linux 遷移與 Federation Hub，見[後續計畫](plans/roadmap.md)。
 

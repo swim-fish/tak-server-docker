@@ -8,17 +8,19 @@
 | --- | --- | --- |
 | Windows mDNS | 主機與 Android 名稱解析曾通過；仍需在每個部署網段確認 | [2026-09-21](2026-09-21-windows-mdns.md) |
 | TAK 與 DPK | 裝置憑證連線、群組與 CRL 撤銷測試 | [2026-09-21](2026-09-21-tak-server-dpk.md) |
-| TAK 8443／8089 CRL | 歷史測試：8443 曾設定 `crlFile` 並驗證撤銷；目前已移除該屬性，8089 保留 CRL | [2026-09-23](2026-09-23-tak-crl-8443.md) |
+| TAK 8443／8089 CRL | 歷史測試曾同時設定兩個 `crlFile`；目前 8443 未設 connector 欄位，但全域第一筆 CRL 仍進入預設 connector，且單張葉憑證撤銷後 8443 新連線遭拒 | [歷史測試](2026-09-23-tak-crl-8443.md)／[前後對照](2026-09-24-qr-e2e-revocation.md)／[程式路徑](2026-09-26-tak-crlfile-source-analysis.md) |
 | 用戶端憑證控制台早期測試 | 臨時 CA 完成簽發／撤銷、群組讀回與 Flask 測試；當時尚未執行實機驗收，後續結果見 2026-09-24 紀錄 | [2026-09-23](2026-09-23-client-certificate-console.md) |
 | Mumble TLS／頻道 | 服務與頻道可用；早期 40000 測試不可單獨證明 Vx 任務端點已更新 | [2026-09-21](2026-09-21-mumble-server.md) |
 | Vx Local SD | 清除設定及重新安裝後仍未建立任務，撤回早期成功判斷 | [2026-09-22](2026-09-22-tak-vx-dpk.md#清除既有設定後重測) |
 | Vx Server Download | Vx-only 任務、首次密碼提示、登入及加入頻道成功 | [下載實測](2026-09-22-tak-vx-dpk.md#tak-server-下載實測成功) |
-| Vx 雙頻道 | 同一伺服器的兩個 session 同時位於 Primary／Alternate；不包含音訊驗收 | [雙頻道結果](2026-09-22-tak-vx-dpk.md#雙頻道實測結果) |
+| Vx 雙頻道 | 早期紀錄只證明兩條 session；使用者後續確認手機的雙頻道語音可用，尚未保存 UDP 與雙向按鍵紀錄 | [早期雙頻道結果](2026-09-22-tak-vx-dpk.md#雙頻道實測結果) |
 | TAK／Vx／ICU 分離佈建 | TAK 憑證 QR 成功；Vx QR 一般匯入不建立 Mission，改由 TAK Server Download 建立四頻道並逐一加入；ICU QR 發布 RTSPS 成功 | [2026-09-23](2026-09-23-qr-tak-vx-icu.md) |
 | 全新憑證 QR 與撤銷 | 清除 ATAK 資料後重新匯入、Vx 四頻道、ICU RTSPS、CRL 撤銷及實機重連；發現 ATAK Data Packages 需要 8443 可達 | [2026-09-24](2026-09-24-qr-e2e-revocation.md) |
 | 中繼 CA 輪替前置驗證 | Root DB 缺少中繼 CA 紀錄；隔離副本補登／撤銷與 OpenSSL 鏈驗證通過，本機快照完成；尚未切換服務 | [2026-09-24](2026-09-24-ca-rotation-preflight.md) |
 | CA 輪替前實機與群組基線 | 兩張短效憑證分組簽發並在兩台 Android 連線；同網段標記互見尚需排除本機傳播；群組移除與還原通過 | [2026-09-24](2026-09-24-ca-rotation-device-baseline.md) |
 | 中繼 CA 切換與 Root CRL | 新鏈的 A 裝置 ATAK、Vx、8443 套件查詢通過；發布 Root CRL 後仍須移除舊 CA 直接信任錨，8089 才拒絕舊 Alpha TLS 握手 | [2026-09-25](2026-09-25-ca-rotation-cutover.md) |
+| 20 分鐘裝置憑證到期 | 到期後 8089 新連線遭拒，既有連線仍可收發；使用者確認 ATAK 直到下次重新連線才無法使用 | [2026-09-26](2026-09-26-certificate-expiry-20m.md) |
+| CA 輪替後 8443 舊憑證重測 | 原設定拒絕舊 Alpha；受控測試在第一筆 CRL 載入四份合併檔後，只替換 Root CRL，使舊 Alpha 從 HTTP 200 變成 TLS 遭拒。原設定已還原，不宣稱其已載入 Root CRL | [2026-09-26](2026-09-26-ca-rotation-8443-retest.md) |
 | `.env` Wi-Fi 位址與 CA 控制台替換 | Wi-Fi 綁定、Android mDNS／TCP、控制台 CA 替換及 Root CRL 通過；批次 API 就緒逾時後人工復原，Android 新 DPK 驗收另記；防火牆 UAC 首次取消 | [2026-09-25](2026-09-25-wifi-env-ca-console.md) |
 | 憑證控制台瀏覽器 | Chrome 在桌面、平板、手機寬度的清冊、篩選、詳細頁及群組頁通過唯讀互動驗證；附去識別截圖 | [2026-09-25](2026-09-25-certificate-browser.md) |
 | 引導式批次憑證與 Vx 替換 | 兩張測試憑證合併註冊並由 API 讀回；伺服器固定名稱 Vx 套件替換及 metadata 讀回通過，Android 新套件待驗 | [2026-09-24](2026-09-24-guided-provisioning.md) |
