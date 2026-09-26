@@ -85,6 +85,18 @@ if (reactivateModal) reactivateModal.addEventListener("show.bs.modal", (event) =
   reactivateModal.querySelector('input[value="rotate"]').checked = true;
   reactivateModal.querySelector('input[name="confirmation"]').checked = false;
 });
+const thumbnails = [...document.querySelectorAll("[data-thumbnail-url]")];
+if ("IntersectionObserver" in window) {
+  const observer = new IntersectionObserver((observations) => {
+    for (const {target, isIntersecting} of observations) {
+      if (isIntersecting && !target.hasAttribute("src")) target.src = target.dataset.thumbnailUrl;
+      if (!isIntersecting && target.hasAttribute("src")) target.removeAttribute("src");
+    }
+  }, {rootMargin: "100px 0px"});
+  thumbnails.forEach((frame) => observer.observe(frame));
+} else {
+  thumbnails.forEach((frame) => { frame.src = frame.dataset.thumbnailUrl; });
+}
 document.querySelectorAll("[data-preview-url]").forEach((button) => button.addEventListener("click", () => {
   const panel = document.getElementById("media-preview");
   const frame = document.getElementById("media-preview-frame");

@@ -643,6 +643,25 @@ class SharePortalTests(unittest.TestCase):
                 self.assertIn(b"live/alpha/2/VIDEO_1", result.data)
                 self.assertIn(b"team-alpha", result.data)
 
+    def test_media_overview_shows_live_thumbnail_and_track_names(self) -> None:
+        import share_admin_flask as admin
+
+        auth = "Basic " + base64.b64encode(b"admin:test-admin-password-that-is-long-enough").decode()
+        headers = {"Authorization": auth, "Host": "127.0.0.1:8766"}
+        path = {"name": "live/alpha/3/VIDEO_1", "tracks": ["H264", "KLV"]}
+        viewer = {"desired": True, "sessions": 1, "local_base": "http://takbox.local:8889"}
+        with patch.object(admin.media, "load", return_value={"publishers": {}}), \
+                patch.object(admin.media, "active_paths", return_value=[path]), \
+                patch.object(admin.media, "viewer_status", return_value=viewer):
+            response = admin.app.test_client().get("/media", headers=headers)
+        markup = response.data.decode("utf-8")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('class="card media-viewer-card live"', markup)
+        self.assertIn('class="media-stream-card"', markup)
+        self.assertIn('data-thumbnail-url="/media/preview/live/alpha/3/VIDEO_1/', markup)
+        self.assertIn("H264、KLV", markup)
+        self.assertNotIn("H264、KLV、", markup)
+
     def test_icu_reshare_can_select_member_paths(self) -> None:
         import share_admin_flask as admin
 

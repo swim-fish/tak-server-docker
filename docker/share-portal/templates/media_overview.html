@@ -1,0 +1,42 @@
+{% if viewer %}
+<section class="card media-viewer-card {{ 'live' if viewer.desired else 'warning' }}">
+  <div class="media-viewer-summary">
+    <div class="media-viewer-heading">
+      <h2>公開 WebRTC 觀看</h2>
+      <p id="viewer-live-status" role="status" aria-live="polite"><span class="badge status-badge {{ 'text-bg-success' if viewer.desired else 'text-bg-secondary' }}">{{ '已開啟' if viewer.desired else '已關閉' }}</span> <span>目前 {{ viewer.sessions }} 個公開觀看工作階段</span></p>
+    </div>
+    <p class="media-viewer-address">熱點入口：<code>{{ viewer.local_base }}</code></p>
+    <div class="alert alert-warning media-viewer-alert" role="note">外網尚未就緒，需公開網域、HTTPS、Router NAT 與 ICE 可達性。</div>
+  </div>
+  <form method="post" action="/media/viewer" class="media-viewer-toggle">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <input type="hidden" name="view" value="{{ view }}">
+    <input type="hidden" name="enabled" value="{{ 'no' if viewer.desired else 'yes' }}">
+    <label><input class="form-check-input" type="checkbox" name="confirmation" value="yes" required> 確認{{ '關閉' if viewer.desired else '開啟' }}公開觀看</label>
+    <button class="btn {{ 'btn-danger' if viewer.desired else 'btn-primary' }}" type="submit">{{ '關閉公開觀看' if viewer.desired else '開啟公開觀看' }}</button>
+  </form>
+</section>
+{% endif %}
+<section class="card media-stream-section">
+  <div class="media-stream-heading"><h2>目前發布的串流</h2><span class="badge text-bg-info status-badge">{{ paths|length }} 路線上</span></div>
+  <div class="media-stream-grid">
+    {% for path in paths %}
+    <article class="media-stream-card">
+      <div class="media-stream-thumb">
+        <iframe data-thumbnail-url="{{ path.preview_url }}?controls=false&amp;muted=true&amp;autoplay=true" title="{{ path.name }} 小圖預覽" tabindex="-1" aria-hidden="true" loading="lazy" referrerpolicy="no-referrer" allow="autoplay"></iframe>
+        <button class="media-stream-preview-trigger" type="button" data-preview-url="{{ path.preview_url }}" aria-label="放大預覽 {{ path.name }}"><span>放大預覽</span></button>
+      </div>
+      <div class="media-stream-details">
+        <strong>{{ path.name }}</strong>
+        <div class="media-stream-meta"><span class="badge text-bg-success status-badge">直播中</span>{% if path.tracks %}<span>{{ path.tracks|join('、') }}</span>{% endif %}</div>
+        {% if viewer and viewer.desired %}<a href="{{ path.public_url }}" target="_blank" rel="noopener noreferrer">開啟熱點觀看連結</a>{% endif %}
+      </div>
+    </article>
+    {% else %}<p class="muted">目前沒有發布中的 live/ 串流。</p>{% endfor %}
+  </div>
+  <div id="media-preview" hidden>
+    <div class="d-flex align-items-center justify-content-between gap-2 mt-3 mb-2"><h3 class="fs-6 m-0">管理頁即時預覽</h3><button class="btn btn-outline-secondary" type="button" id="media-preview-close">關閉預覽</button></div>
+    <iframe id="media-preview-frame" title="MediaMTX 即時預覽" loading="lazy" referrerpolicy="no-referrer" allow="autoplay"></iframe>
+    <p class="muted">預覽僅在 Windows 本機控制台顯示。</p>
+  </div>
+</section>

@@ -8,9 +8,11 @@ Windows 本機控制台把 MediaMTX 管理分為「ICU」(`http://127.0.0.1:1006
 
 ## 即時影像
 
-在「目前發布的串流」選擇「即時預覽」，影像會載入控制台內的同來源預覽區。按「關閉預覽」會卸載 iframe，結束該預覽連線。公開觀看連結則指向 `http://takbox.local:8889/live/<path>/`；路徑結尾的 `/` 是必要的，否則 MediaMTX 的頁面可能把最後一段路徑當成檔名。管理頁每 3 秒更新公開觀看工作階段數量，不會重整選取中的表單。
+「目前發布的串流」以卡片顯示路徑、影像軌道與小型即時畫面；縮圖只在進入畫面附近時建立預覽連線，移出畫面後卸載。點「放大預覽」會在控制台內開啟同一串流，按「關閉預覽」會卸載放大播放器。公開觀看連結指向 `http://takbox.local:8889/live/<path>/`；路徑結尾的 `/` 是必要的，否則 MediaMTX 的頁面可能把最後一段路徑當成檔名。管理頁每 3 秒更新公開觀看工作階段數量，不會重整選取中的表單。
 
 公開觀看預設開啟。控制台總開關關閉後，公開入口拒絕新的觀看請求，並透過內部 API 中斷既有公開 WebRTC 工作階段；管理頁預覽與 ICU 發布維持獨立。預覽由控制台代為向 `media-preview` 驗證，瀏覽器不需要連到 `127.0.0.1:8890` 或輸入第二組帳密。
+
+若管理頁預覽收到 HTTP 401，先確認 `runtime/mediamtx/viewer-preview.yml` 的管理帳密是否仍與 `runtime/secrets/share_admin_password` 同步。這台本機環境可執行 `python scripts/provision_mediamtx.py --dns takbox.local` 重新產生設定，再執行 `docker compose up -d --force-recreate --no-deps media-preview` 載入新設定。請勿把密碼或產生的設定檔提交至 Git。
 
 目前 `takbox.local` 與 `.env` 的 `TAK_BIND_IP` 只預期在同一個本機網路可達。**尚未開放網際網路觀看**；公開 FQDN、HTTPS 憑證、Router NAT、防火牆及 ICE 外部可達性仍須另行設定與實測。匿名觀看的 `live/` 路徑可預測，對外開放前應確認影像內容可以公開。
 
