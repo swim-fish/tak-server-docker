@@ -132,3 +132,26 @@ async function refreshViewerStatus() {
 }
 setInterval(refreshViewerStatus, 3000);
 document.addEventListener("visibilitychange", refreshViewerStatus);
+const squadLiveBadges = [...document.querySelectorAll("[data-squad-live]")];
+const livePathBadges = [...document.querySelectorAll("[data-live-path]")];
+async function refreshSquadStreams() {
+  if ((!squadLiveBadges.length && !livePathBadges.length) || document.hidden) return;
+  try {
+    const response = await fetch("/media/squads/status", {cache: "no-store"});
+    if (!response.ok) throw new Error("squad stream status unavailable");
+    const {counts, paths} = await response.json();
+    const activePaths = new Set(paths);
+    for (const badge of squadLiveBadges) {
+      const count = Number(counts[badge.dataset.squadLive] || 0);
+      badge.hidden = count < 1;
+      badge.textContent = `串流中 · ${count}`;
+    }
+    livePathBadges.forEach((badge) => { badge.hidden = !activePaths.has(badge.dataset.livePath); });
+  } catch (_error) {
+    squadLiveBadges.forEach((badge) => { badge.hidden = true; });
+    livePathBadges.forEach((badge) => { badge.hidden = true; });
+  }
+}
+refreshSquadStreams();
+setInterval(refreshSquadStreams, 3000);
+document.addEventListener("visibilitychange", refreshSquadStreams);

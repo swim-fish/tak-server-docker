@@ -1,0 +1,5 @@
+<nav class="nav nav-tabs media-subpages" aria-label="MediaMTX 子頁">
+  <a class="nav-link {{ 'active' if view == 'icu' else '' }}" href="/media" {% if view == 'icu' %}aria-current="page"{% endif %}>ICU</a>
+  <a class="nav-link {{ 'active' if view == 'other' else '' }}" href="/media/other" {% if view == 'other' %}aria-current="page"{% endif %}>其他</a>
+  <a class="nav-link {{ 'active' if view == 'sessions' else '' }}" href="/media/sessions" {% if view == 'sessions' %}aria-current="page"{% endif %}>觀看工作階段</a>
+</nav>

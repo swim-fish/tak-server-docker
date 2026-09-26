@@ -23,7 +23,7 @@
 {% if ca and job.state not in ('staging', 'cutover', 'renewing', 'revoking', 'failed', 'interrupted') %}
 <section class="card wide">
 <h2>撤銷目前中繼 CA 並重新簽署</h2>
-<div class="alert alert-warning" role="note">替換會更新 TAK Server、Mumble 與 MediaMTX 的服務憑證，發布 Root CRL，移除舊中繼 CA 的直接信任，並中斷既有連線。所有由舊 CA 簽發的用戶端憑證都會標示「簽發 CA 已撤銷」；只有勾選的裝置會取得新憑證與 DPK。舊 Vx 的 Mumble 身分須另行管理。</div>
+<div class="alert alert-danger" role="alert">替換會更新 TAK Server、Mumble 與 MediaMTX 的服務憑證，發布 Root CRL，移除舊中繼 CA 的直接信任，並中斷既有連線。所有由舊 CA 簽發的用戶端憑證都會標示「簽發 CA 已撤銷」；只有勾選的裝置會取得新憑證與 DPK。舊 Vx 的 Mumble 身分須另行管理。</div>
 <form method="post" action="/certificates/ca" id="ca-rotation-form">
 <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="expected_ca_id" value="{{ ca.id }}">
 <h3 class="h5">選擇要重簽的裝置</h3><p class="muted">可不勾選任何裝置。勾選時預設保留 CN、顯示名稱、In／Out 群組及原到期日；可逐張調整到期時間或展延，範圍為送出後 5 分鐘至 730 天。到期時間採台灣時間。</p>

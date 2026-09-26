@@ -737,7 +737,10 @@ def media_management() -> str:
     kind = "device" if view == "other" else "squad"
     rows = sorted(((key, item) for key, item in registry["publishers"].items()
                    if item["kind"] == kind), key=lambda row: row[1]["name"].casefold())
-    return render_template("media.html", view=view, rows=rows, paths=paths, viewer=viewer, error=error, csrf=CSRF,
+    live_counts = media.squad_stream_counts(registry, paths) if view == "icu" else {}
+    live_paths = {item["name"] for item in paths if item.get("ready")}
+    return render_template("media.html", view=view, rows=rows, paths=paths, viewer=viewer, live_counts=live_counts,
+                           live_paths=live_paths, error=error, csrf=CSRF,
                            result=request.args.get("result", ""), operation_id=uuid.uuid4().hex)
 
 
@@ -745,6 +748,29 @@ def media_management() -> str:
 def media_live_status() -> Response:
     try:
         return jsonify(media.viewer_status())
+    except (RuntimeError, OSError, ValueError) as exc:
+        return jsonify({"error": str(exc)}), 503
+
+
+@app.get("/media/squads/status")
+def media_squad_live_status() -> Response:
+    try:
+        paths = media.active_paths()
+        return jsonify({"counts": media.squad_stream_counts(media.load(), paths),
+                        "paths": [item["name"] for item in paths if item.get("ready")]})
+    except (RuntimeError, OSError, ValueError) as exc:
+        return jsonify({"error": str(exc)}), 503
+
+
+@app.get("/media/sessions")
+def media_viewer_sessions_page() -> str:
+    return render_template("media_sessions.html", view="sessions")
+
+
+@app.get("/media/sessions/status")
+def media_viewer_sessions_status() -> Response:
+    try:
+        return jsonify({"viewer": media.viewer_status(), **media.viewer_sessions()})
     except (RuntimeError, OSError, ValueError) as exc:
         return jsonify({"error": str(exc)}), 503
 
