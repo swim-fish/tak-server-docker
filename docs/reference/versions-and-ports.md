@@ -17,6 +17,8 @@ Vx 標籤中的 `[5.6.0]` 是套件標示；與 ATAK 5.7 的可用性以本次�
 
 ## 網路預設值
 
+下表為快速對照；完整的 TCP／UDP 連線方向、WebRTC 預覽與 Windows 防火牆範圍見[通訊埠與連線方向](../network/ports-and-protocols.md)。
+
 | 用途 | 主機端 | 容器端／說明 |
 | --- | --- | --- |
 | Wi-Fi／Windows 行動熱點 | `.env` 的 `TAK_BIND_IP`／`TAK_ALLOWED_SUBNET`；預設 `192.168.137.1`／`192.168.137.0/24` | 裝置需在允許子網路內 |
@@ -26,7 +28,9 @@ Vx 標籤中的 `[5.6.0]` 是套件標示；與 ATAK 5.7 的可用性以本次�
 | Mumble | `40000/TCP`、`40000/UDP` | `64738/TCP`、`64738/UDP` |
 | MediaMTX RTSP | `8554/TCP`、`8000-8001/UDP` | TCP 控制／媒體、UDP RTP／RTCP |
 | MediaMTX RTSPS | `8322/TCP`、`8004-8005/UDP` | TLS 控制／TCP 媒體、UDP SRTP／SRTCP |
-| 公開 WebRTC 觀看 | `8889/TCP`，綁定 `TAK_BIND_IP` | 匿名 viewer gateway；控制台預覽只在 Compose 網路內 |
+| 公開 WebRTC 觀看 | `8889/TCP`，綁定 `TAK_BIND_IP` | 匿名 viewer gateway；控制台預覽另綁 Windows loopback |
+| 公開 WebRTC ICE | `8189/TCP`、`8189/UDP`，綁定 `TAK_BIND_IP` | Viewer 媒體連線；需與 `8889/TCP` 一起驗證 |
+| 控制台即時預覽 | `127.0.0.1:8890/TCP`、`127.0.0.1:8190/TCP/UDP` | 僅 Windows 本機；與公開觀看分開 |
 | 分享下載與 QR | `10065/TCP`，綁定 `TAK_BIND_IP` | 容器端 `8765/TCP`；僅在 `sharing` profile 啟動 |
 | 控制台管理 | `127.0.0.1:10066/TCP` | 容器端 `8766/TCP`；Windows 管理 worker 由登入後排程啟動 |
 | PostgreSQL | 不發布 | `5432/TCP`，限 `tak-backend` |

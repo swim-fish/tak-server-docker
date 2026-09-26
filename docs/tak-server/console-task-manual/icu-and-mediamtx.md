@@ -31,15 +31,15 @@
 
 下列圖片由使用者提供的實機截圖裁切，保留原始設定內容。圖 A 顯示已勾選的狀態；圖 B、C 只顯示設定入口，**不能單靠截圖證明裝置已套用 900 kbps 或公尺 MSL**。掃描新 QR 後，須在 ICU 開啟選項核對，並以 MediaMTX 的線上路徑驗證發布。設定鍵與可用值見 [ICU QR 設定](../../mediamtx/icu-qrcode.md#室內定位與影像設定)。
 
-<a href="../../images/icu-disable-local-broadcasting.jpg"><img src="../../images/icu-disable-local-broadcasting.jpg" alt="ICU 已勾選 Disable Local Broadcasting" width="420"></a>
+![ICU 已勾選 Disable Local Broadcasting](../../images/icu-disable-local-broadcasting.jpg)
 
 圖 A：室內 GPS 失效時，使用者觀察到未勾選這項設定可能使影像發布中斷；新 QR 預設勾選，仍需實機複測。
 
-<a href="../../images/icu-stream-quality-preferences.jpg"><img src="../../images/icu-stream-quality-preferences.jpg" alt="ICU 串流解析度、影格率與位元率設定入口" width="420"></a>
+![ICU 串流解析度、影格率與位元率設定入口](../../images/icu-stream-quality-preferences.jpg)
 
 圖 B：串流畫質看 Resolution、TS Frame Rate、Stream Bit Rate；MP4 錄影使用另一組設定。
 
-<a href="../../images/icu-display-preferences.jpg"><img src="../../images/icu-display-preferences.jpg" alt="ICU 座標格式與高度顯示設定入口" width="420"></a>
+![ICU 座標格式與高度顯示設定入口](../../images/icu-display-preferences.jpg)
 
 圖 C：Altitude Display 控制公尺或英尺；Coordinate Display 控制座標格式。
 
@@ -87,7 +87,7 @@
 
 1. 在「MediaMTX 管理」選線上串流，按「即時預覽」；看完按「關閉預覽」。
 2. 熱點裝置使用 `http://takbox.local:8889/live/<path>/` 觀看，末尾斜線需保留。
-3. 以「公開 WebRTC 觀看」開關控制新觀看與現有公開工作階段；此開關不停止 ICU 推流。
+3. 以「公開 WebRTC 觀看」開關控制新觀看與現有公開工作階段；此開關不停止 ICU 推流。切到「觀看工作階段」子頁，核對公開觀看的數量、路徑、來源位址與連線狀態；管理頁即時預覽不列入。此頁每 5 秒更新，可搜尋或按「立即更新」。
 4. 若在 ATAK CIV 5.7.0.15 觀看 ICU 影像，先確認發布端仍在線；在 ATAK 手動建立 RTSP 來源，使用 `takbox.local:8554`、實際 `live/.../VIDEO_1` 路徑及 `atak-viewer` 讀取帳密，並勾選 **Reliable P2P Connection (consumes more resources)**，讓 RTSP 走 TCP。ICU 自動分享的 RTSPS 來源不能直接用這版 ATAK 內建播放器開啟。RTSP 只限受控區域網路或 VPN；見[實機紀錄](../../validation/2026-09-25-atak-icu-viewer.md)。
 
 目前只驗證熱點觀看；網際網路仍需 FQDN、HTTPS、NAT 與 ICE 驗收。下方圖 13 截圖時沒有線上串流。
@@ -100,12 +100,16 @@
 
 圖 14：推流與觀看分屬不同路徑；控制台預覽僅供 Windows 本機使用。
 
+![MediaMTX 公開觀看工作階段頁](../../images/console-media-viewer-sessions.png)
+
+圖 14a：2026-09-26 截圖時沒有公開觀看工作階段；這是空清單的頁面檢查，未驗證實際播放。來源位址若經 NAT 或代理，不一定是觀看裝置的原始 IP。
+
 <a id="task-08"></a>
 
 ## 任務八　停用或輪替 MediaMTX 發布身分
 
 1. 開啟「MediaMTX 管理」。切到「ICU」管理小隊卡片；切到「其他」管理一般設備表格。兩頁的線上串流與觀看開關共用。
-2. 搜尋並切換「啟用中／停用／顯示全部」。在「其他」可設定每頁 10／20／30 筆，並使用上一頁／下一頁。勾選要修改的身分。
+2. 搜尋並切換「啟用中／停用／顯示全部」。在「ICU」，「啟用」表示身分允許登入；「串流中」徽章與路徑數表示 MediaMTX 目前有可用發布串流，展開「QR 路徑」可逐條核對。在「其他」可設定每頁 10／20／30 筆，並使用上一頁／下一頁。勾選要修改的身分。
 3. 再次發布時展開小隊卡片的 QR 路徑，預設全選，也能逐條勾選或使用「全選／全部不選」；至少選一條。接著依目的選「再次發布 ICU QR」、「停用選取身分」或「重設選取密碼」，勾選頁面確認後送出。
 4. 重設小隊密碼後，整個小隊須重新掃 QR；一般設備則重新取得專屬發布網址。核對原發布連線已中斷。
 
