@@ -12,6 +12,7 @@
   }]));
   let working = cloneGroups(original);
   let statusFilter = "active";
+  const hideEmpty = document.getElementById("group-hide-empty");
   let addGroup = null;
   let moveSelection = null;
   const selectedAdd = new Set();
@@ -73,7 +74,13 @@
     link.textContent = record.name;
     const detail = document.createElement("small");
     detail.textContent = `CN ${record.cn} · CRL ID ${record.serial}`;
-    node.append(link, badge(record), detail);
+    const main = document.createElement("div");
+    main.className = "group-member-main";
+    const heading = document.createElement("div");
+    heading.className = "group-member-heading";
+    heading.append(link, badge(record));
+    main.append(heading, detail);
+    node.append(main);
     if (editable(record) && group) {
       const move = document.createElement("button");
       move.type = "button";
@@ -81,12 +88,6 @@
       move.dataset.memberMove = "";
       move.textContent = "移動";
       node.append(move);
-      const remove = document.createElement("button");
-      remove.type = "button";
-      remove.className = "btn btn-sm btn-outline-danger";
-      remove.dataset.memberRemove = "";
-      remove.textContent = "從此群組移除";
-      node.append(remove);
     }
     return node;
   }
@@ -110,6 +111,7 @@
   }
 
   function render() {
+    let visibleGroups = 0;
     for (const card of cards) {
       const group = card.dataset.groupCard;
       let total = 0;
@@ -131,6 +133,8 @@
       }
       card.querySelector("[data-group-total]").textContent = statusFilter === "all"
         ? `${total} 張` : `${shown} / ${total} 張`;
+      card.hidden = hideEmpty.checked && shown === 0;
+      if (!card.hidden) visibleGroups++;
     }
     const unassigned = document.getElementById("group-unassigned-list");
     unassigned.replaceChildren();
@@ -141,6 +145,10 @@
       }
     }
     document.getElementById("group-unassigned-empty").hidden = unassigned.children.length > 0;
+    const unassignedCard = document.getElementById("group-unassigned");
+    unassignedCard.hidden = hideEmpty.checked && unassigned.children.length === 0;
+    document.getElementById("group-filter-empty").hidden = visibleGroups > 0 || !unassignedCard.hidden;
+    document.getElementById("group-cards-visible-count").textContent = `顯示群組 ${visibleGroups} / ${cards.length}`;
     const visible = records.filter(matchesFilter).length;
     document.getElementById("group-visible-count").textContent = `顯示 ${visible} / ${records.length}`;
     const pending = changes().length;
@@ -181,6 +189,16 @@
     return true;
   }
 
+  function updateMoveAction() {
+    const removing = document.querySelector('input[name="group-move-action"]:checked').value === "remove";
+    document.getElementById("group-move-fields").hidden = removing;
+    document.getElementById("group-move-remove-note").hidden = !removing;
+    const apply = document.getElementById("group-move-apply");
+    apply.textContent = removing ? "暫存移除" : "暫存移動";
+    apply.classList.toggle("btn-danger", removing);
+    apply.classList.toggle("btn-primary", !removing);
+  }
+
   document.querySelectorAll("[data-group-status]").forEach((button) => button.addEventListener("click", () => {
     statusFilter = button.dataset.groupStatus;
     document.querySelectorAll("[data-group-status]").forEach((option) => {
@@ -190,6 +208,7 @@
     });
     render();
   }));
+  hideEmpty.addEventListener("change", render);
 
   document.getElementById("group-discard").addEventListener("click", () => {
     working = cloneGroups(original);
@@ -267,15 +286,12 @@
       document.getElementById("group-move-name").textContent = bySerial.get(moveSelection.serial).name;
       document.getElementById("group-move-target").value = moveSelection.group;
       document.getElementById("group-move-lane").value = member.dataset.lane;
+      document.getElementById("group-move-action-move").checked = true;
+      document.getElementById("group-move-remove-note").textContent =
+        `將移除此憑證在 ${moveSelection.group} 的 In／Out 權限；其他群組不變。`;
+      updateMoveAction();
       bootstrap.Modal.getOrCreateInstance(moveDialog).show();
       return;
-    }
-    const remove = event.target.closest("[data-member-remove]");
-    if (remove) {
-      const member = remove.closest("[data-serial]");
-      if (!removeMembership(member.dataset.serial, member.dataset.group)) {
-        warn("無法移除這張憑證的群組。");
-      }
     }
   });
 
@@ -327,12 +343,21 @@
     statusFilter = "all";
     document.querySelector('[data-group-status="all"]').click();
   });
+  document.querySelectorAll('input[name="group-move-action"]').forEach((option) => {
+    option.addEventListener("change", updateMoveAction);
+  });
   document.getElementById("group-move-apply").addEventListener("click", () => {
     if (!moveSelection) return;
-    const target = document.getElementById("group-move-target").value;
-    const lane = document.getElementById("group-move-lane").value;
-    if (moveMembership(moveSelection.serial, moveSelection.group, target, lane)) {
+    const removing = document.getElementById("group-move-action-remove").checked;
+    const applied = removing
+      ? removeMembership(moveSelection.serial, moveSelection.group)
+      : moveMembership(moveSelection.serial, moveSelection.group,
+        document.getElementById("group-move-target").value,
+        document.getElementById("group-move-lane").value);
+    if (applied) {
       bootstrap.Modal.getInstance(moveDialog).hide();
+    } else {
+      warn("無法更新這張憑證的群組；請重新整理並核對權限。");
     }
   });
 

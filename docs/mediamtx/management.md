@@ -1,6 +1,6 @@
 # MediaMTX 管理與 WebRTC 預覽
 
-Windows 本機控制台把 MediaMTX 管理分為「ICU」(`http://127.0.0.1:10066/media`) 與「其他」(`http://127.0.0.1:10066/media/other`) 兩個子頁。兩頁共用線上 `live/` 串流、即時預覽及公開觀看開關；ICU 身分以卡片呈現，一般設備身分以表格呈現。頁面使用控制台既有的 Basic 驗證；MediaMTX Control API 只在 Compose 網路內開放。
+Windows 本機控制台把 MediaMTX 管理分為「ICU」(`http://127.0.0.1:10066/media`)、「其他」(`http://127.0.0.1:10066/media/other`) 與「觀看工作階段」(`http://127.0.0.1:10066/media/sessions`) 三個子頁。前兩頁共用線上 `live/` 串流、即時預覽及公開觀看開關；ICU 身分以卡片呈現，一般設備身分以表格呈現。頁面使用控制台既有的 Basic 驗證；MediaMTX Control API 只在 Compose 網路內開放。
 
 ![ICU 小隊卡片](../images/console-media-icu-cards.png)
 
@@ -11,6 +11,8 @@ Windows 本機控制台把 MediaMTX 管理分為「ICU」(`http://127.0.0.1:1006
 「目前發布的串流」以卡片顯示路徑、影像軌道與小型即時畫面；縮圖只在進入畫面附近時建立預覽連線，移出畫面後卸載。點「放大預覽」會在控制台內開啟同一串流，按「關閉預覽」會卸載放大播放器。公開觀看連結指向 `http://takbox.local:8889/live/<path>/`；路徑結尾的 `/` 是必要的，否則 MediaMTX 的頁面可能把最後一段路徑當成檔名。管理頁每 3 秒更新公開觀看工作階段數量，不會重整選取中的表單。
 
 公開觀看預設開啟。控制台總開關關閉後，公開入口拒絕新的觀看請求，並透過內部 API 中斷既有公開 WebRTC 工作階段；管理頁預覽與 ICU 發布維持獨立。預覽由控制台代為向 `media-preview` 驗證，瀏覽器不需要連到 `127.0.0.1:8890` 或輸入第二組帳密。
+
+「觀看工作階段」子頁每 5 秒向公開 viewer 的 MediaMTX API 更新一次，顯示觀看路徑、連線狀態、MediaMTX 所回報的來源位址、開始時間、累計傳送資料量與 Session ID。可依路徑、位址或 ID 搜尋，也可立即更新。這裡只計公開 viewer 的 WebRTC 讀取連線；控制台預覽使用獨立的 `media-preview`，不列入。來源位址是 MediaMTX 看到的位址，若經過代理或 NAT，不一定是觀看者的原始 IP。清單最多顯示前 500 筆，超過時會提示。
 
 若管理頁預覽收到 HTTP 401，先確認 `runtime/mediamtx/viewer-preview.yml` 的管理帳密是否仍與 `runtime/secrets/share_admin_password` 同步。這台本機環境可執行 `python scripts/provision_mediamtx.py --dns takbox.local` 重新產生設定，再執行 `docker compose up -d --force-recreate --no-deps media-preview` 載入新設定。請勿把密碼或產生的設定檔提交至 Git。
 
@@ -31,6 +33,8 @@ Windows 本機控制台把 MediaMTX 管理分為「ICU」(`http://127.0.0.1:1006
 同隊裝置可匯入**同一張尚未到期且未達下載上限的 QR**，再於 ICU 將 Stream Path 的小隊後段改為各自的識別值，例如從 `live/alpha/1/` 改成 `live/alpha/2/`；帳號、密碼、主機及通訊埠都不用更動。若 QR 已達下載限制，先在 ICU 子頁再次發布同隊 QR。兩台裝置不可同時使用相同的**完整**路徑，否則會互相搶占發布工作階段。Alpha／2 已由 Android ICU 實機改值、MediaMTX RTSPS 發布紀錄與控制台線上路徑確認；詳見[驗證紀錄](../validation/2026-09-25-icu-squad-path-scope.md)。
 
 在 `/media` 勾選一個或多個**啟用中的 ICU 小隊**，展開各小隊的「QR 路徑」選擇要再次發布的路徑。路徑預設全部勾選；工具列的「全選／全部不選」只作用於目前選取的小隊，亦可逐條取消勾選。至少保留一條路徑，再設定 QR 分享時間與下載上限，按「再次發布 ICU QR」。此操作沿用現有小隊密碼，不停止原有 QR，也不踢除目前串流；每條選取的路徑會有獨立的限時、限次 QR。若要讓舊設定失效，使用「重設選取密碼」。結果頁有獨立網址；重新整理不會再次建立 QR 或重設密碼。分享紀錄的 QR 彈窗會將設定名稱放在 QR 上方，標題列以徽章顯示目前下載次數與上限，切換同小隊 QR 時會同步更新。作業異常時會顯示已完成項目，避免在未檢查狀態前重複執行。
+
+ICU 小隊發布身分卡片在該小隊有在線 `live/<小隊>/…/VIDEO_1` 串流時顯示「串流中」徽章與路徑數量；展開「QR 路徑」後，每條正在串流的路徑也會分別顯示「串流中」。兩處每 3 秒更新。此徽章表示 MediaMTX 已有可用的發布路徑；「啟用」徽章則表示發布身分可供登入，兩者意義不同。串流狀態 API 暫時失敗時，頁面會隱藏「串流中」徽章，避免顯示過期狀態。
 
 QR 指向 `icu://download?url=...`，下載的 `initial.prefs` 含發布密碼。Android 必須連上 `.env` 所設定的允許網段、解析 `takbox.local` 並點開掃碼器顯示的**完整** `icu://` 連結。單憑「Externally configured」提示不足以判定影像已發布，仍應檢查 ICU 欄位及 MediaMTX 在線路徑。詳見 [ICU QR Code](icu-qrcode.md)。
 

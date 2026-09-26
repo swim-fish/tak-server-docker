@@ -75,11 +75,37 @@ class ReactivateDeviceTests(unittest.TestCase):
         self.assertIn("live/alpha/2/VIDEO_1", item["paths"])
         apply.assert_called_once()
 
+    def test_squad_stream_counts_follow_publishing_permissions(self) -> None:
+        squad = {"kind": "squad", "paths": ["live/alpha/1/VIDEO_1"]}
+        registry = {"publishers": {"squad:alpha": squad,
+                                   "squad:bravo": {"kind": "squad", "paths": ["live/bravo/1/VIDEO_1"]},
+                                   "device:drone": {"kind": "device", "paths": ["live/drone/camera"]}}}
+        paths = [{"name": name, "ready": True} for name in (
+            "live/alpha/1/VIDEO_1", "live/alpha/2/VIDEO_1", "live/bravo/1/VIDEO_1",
+            "live/alpha/2/OTHER", "live/alphabeta/2/VIDEO_1", "live/drone/camera")]
+        paths.append({"name": "live/alpha/3/VIDEO_1", "ready": False})
+        self.assertEqual(media.squad_stream_counts(registry, paths),
+                         {"squad:alpha": 2, "squad:bravo": 1})
+
     def test_other_publisher_cannot_claim_squad_namespace(self) -> None:
         with self.assertRaisesRegex(ValueError, "reserved for an ICU squad"):
             media.create_device("drone", "live/alpha/drone")
         with self.assertRaisesRegex(ValueError, "selected squad"):
             media.ensure_squad("alpha", "live/bravo/2/VIDEO_1")
+
+    def test_public_viewer_sessions_exclude_publishers_and_private_query(self) -> None:
+        response = {"itemCount": 3, "items": [
+            {"id": "reader-1", "state": "read", "path": "live/alpha/1/VIDEO_1",
+             "remoteAddr": "10.0.20.50:50000", "created": "2026-09-26T10:00:00Z",
+             "peerConnectionEstablished": True, "outboundBytes": 2048,
+             "query": "token=secret", "userAgent": "Browser"},
+            {"id": "publisher-1", "state": "publish", "path": "live/test"}]}
+        with patch.object(media, "api_request", return_value=response) as request:
+            result = media.viewer_sessions()
+        self.assertEqual(request.call_args.kwargs["base_url"], media.VIEWER_API_URL)
+        self.assertEqual(result["shown"], 1)
+        self.assertEqual(result["items"][0]["outbound_bytes"], 2048)
+        self.assertNotIn("query", result["items"][0])
 
 
 if __name__ == "__main__":

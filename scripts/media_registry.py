@@ -6,6 +6,7 @@ import base64
 import copy
 import json
 import os
+import re
 import secrets
 import threading
 import time
@@ -231,6 +232,21 @@ def active_paths() -> list[dict]:
     return [item for item in result.get("items", []) if item.get("name", "").startswith("live/") and item.get("ready")]
 
 
+def squad_stream_counts(registry: dict, paths: list[dict]) -> dict[str, int]:
+    """Count ready streams within each squad publisher's permitted paths."""
+    counts = {}
+    names = [item.get("name", "") for item in paths if item.get("ready")]
+    for key, publisher in registry["publishers"].items():
+        if publisher["kind"] != "squad":
+            continue
+        rules = permission_paths(key, publisher)
+        exact = {rule for rule in rules if not rule.startswith("~")}
+        patterns = [re.compile(rule[1:]) for rule in rules if rule.startswith("~")]
+        counts[key] = sum(name in exact or any(pattern.fullmatch(name) for pattern in patterns)
+                          for name in names)
+    return counts
+
+
 def device_url(item: dict, scheme: str, host: str = "takbox.local") -> str:
     if item["kind"] != "device" or scheme not in {"rtsp", "rtsps"}:
         raise ValueError("Unsupported device publishing protocol")
@@ -256,8 +272,22 @@ def viewer_status() -> dict:
     current = api_request("/v3/config/global/get", base_url=VIEWER_API_URL)
     sessions = api_request("/v3/webrtc/sessions/list?itemsPerPage=500", base_url=VIEWER_API_URL) if current.get("webrtc") else {"items": []}
     return {"desired": desired, "running": current.get("webrtc") is True,
-            "sessions": len(sessions.get("items", [])), "internet_ready": False,
+            "sessions": sessions.get("itemCount", len(sessions.get("items", []))), "internet_ready": False,
             "local_base": "http://takbox.local:8889"}
+
+
+def viewer_sessions() -> dict:
+    """Return only the fields needed to display public WebRTC readers."""
+    result = api_request("/v3/webrtc/sessions/list?itemsPerPage=500", base_url=VIEWER_API_URL)
+    items = [{"id": item.get("id", ""), "path": item.get("path", ""),
+              "remote_addr": item.get("remoteAddr", ""), "created": item.get("created", ""),
+              "state": item.get("state", ""),
+              "connected": item.get("peerConnectionEstablished") is True,
+              "outbound_bytes": item.get("outboundBytes", item.get("bytesSent", 0)),
+              "user_agent": item.get("userAgent", "")}
+             for item in result.get("items", []) if item.get("state") == "read"]
+    return {"items": items, "shown": len(items),
+            "total": result.get("itemCount", len(result.get("items", [])))}
 
 
 def set_viewer_enabled(enabled: bool) -> dict:

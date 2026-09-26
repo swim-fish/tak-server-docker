@@ -662,6 +662,50 @@ class SharePortalTests(unittest.TestCase):
         self.assertIn("H264、KLV", markup)
         self.assertNotIn("H264、KLV、", markup)
 
+    def test_icu_live_badge_uses_ready_squad_streams(self) -> None:
+        import share_admin_flask as admin
+
+        auth = "Basic " + base64.b64encode(b"admin:test-admin-password-that-is-long-enough").decode()
+        headers = {"Authorization": auth, "Host": "127.0.0.1:8766"}
+        registry = {"publishers": {"squad:alpha": {"kind": "squad", "name": "Alpha",
+                    "user": "icu-alpha", "paths": ["live/alpha/1/VIDEO_1", "live/alpha/2/VIDEO_1"],
+                    "enabled": True}}}
+        paths = [{"name": "live/alpha/2/VIDEO_1", "ready": True, "tracks": []}]
+        with patch.object(admin.media, "load", return_value=registry), \
+                patch.object(admin.media, "active_paths", return_value=paths), \
+                patch.object(admin.media, "viewer_status", return_value={"desired": True,
+                             "sessions": 0, "local_base": "http://takbox.local:8889"}):
+            client = admin.app.test_client()
+            page = client.get("/media", headers=headers)
+            state = client.get("/media/squads/status", headers=headers)
+        self.assertEqual(page.status_code, 200)
+        self.assertIn('data-squad-live="squad:alpha"', page.data.decode())
+        self.assertIn("串流中 · 1", page.data.decode())
+        self.assertIn("1 Online", page.data.decode())
+        self.assertIn('data-live-path="live/alpha/1/VIDEO_1" hidden', page.data.decode())
+        self.assertIn('data-live-path="live/alpha/2/VIDEO_1"', page.data.decode())
+        self.assertEqual(state.json["counts"], {"squad:alpha": 1})
+        self.assertEqual(state.json["paths"], ["live/alpha/2/VIDEO_1"])
+
+    def test_media_viewer_sessions_page_and_status_require_admin_login(self) -> None:
+        import share_admin_flask as admin
+
+        client = admin.app.test_client()
+        self.assertEqual(client.get("/media/sessions").status_code, 401)
+        self.assertEqual(client.get("/media/sessions/status").status_code, 401)
+        auth = "Basic " + base64.b64encode(b"admin:test-admin-password-that-is-long-enough").decode()
+        headers = {"Authorization": auth, "Host": "127.0.0.1:8766"}
+        page = client.get("/media/sessions", headers=headers)
+        self.assertEqual(page.status_code, 200)
+        self.assertIn(b"media_sessions.js", page.data)
+        self.assertIn(b'aria-current="page"', page.data)
+        with patch.object(admin.media, "viewer_status", return_value={"desired": True, "sessions": 1}), \
+                patch.object(admin.media, "viewer_sessions", return_value={"items": [{
+                    "id": "reader-1", "path": "live/alpha/1/VIDEO_1"}], "shown": 1, "total": 1}):
+            response = client.get("/media/sessions/status", headers=headers)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json["items"][0]["path"], "live/alpha/1/VIDEO_1")
+
     def test_icu_reshare_can_select_member_paths(self) -> None:
         import share_admin_flask as admin
 
@@ -739,6 +783,8 @@ class SharePortalTests(unittest.TestCase):
         self.assertIn('data-group-status="revoked"', markup)
         self.assertIn('data-group-status="all"', markup)
         self.assertIn('data-group-status="active" aria-pressed="true"', markup)
+        self.assertIn('type="checkbox" id="group-hide-empty"', markup)
+        self.assertIn('id="group-filter-empty" hidden', markup)
         self.assertIn('id="group-add-dialog"', markup)
         self.assertIn("搜尋尚未加入的使用中憑證", markup)
 

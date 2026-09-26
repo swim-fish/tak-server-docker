@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="zh-Hant-TW" data-bs-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>觀看工作階段 · MediaMTX 管理</title><link rel="stylesheet" href="{{ url_for('static', filename='bootstrap/bootstrap.min.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='console.css') }}"><script src="{{ url_for('static', filename='console_ui.js') }}" defer></script><script src="{{ url_for('static', filename='media_sessions.js') }}" defer></script><script src="{{ url_for('static', filename='bootstrap/bootstrap.bundle.min.js') }}" defer></script></head>
+<body class="portal-page"><main class="media-layout">
+<header class="page-header">{{ console_nav }}{{ console_breadcrumb([('MediaMTX 管理', '/media'), ('觀看工作階段', none)]) }}<h1>MediaMTX 管理</h1>{% include 'media_nav.html' %}</header>
+<section class="card">
+  <div class="d-flex flex-wrap align-items-center gap-2"><h2 class="m-0">公開觀看工作階段</h2><span class="badge text-bg-secondary status-badge" id="session-viewer-state">讀取中</span><span class="badge text-bg-info status-badge" id="session-total">—</span></div>
+  <p class="muted mt-2 mb-3">只顯示公開 WebRTC 觀看入口的連線；管理頁的即時預覽不列入。資料每 5 秒更新。</p>
+  <div class="d-flex flex-wrap align-items-center gap-2 mb-3"><label class="media-session-search">搜尋 <input class="form-control" id="session-search" type="search" placeholder="路徑、來源位址、ID"></label><button class="btn btn-outline-info" type="button" id="session-refresh">立即更新</button><span class="spinner-border spinner-border-sm" id="session-loading" role="status" aria-label="載入中"></span><span class="muted" id="session-updated" role="status" aria-live="polite">正在取得工作階段…</span></div>
+  <div class="alert alert-danger" id="session-error" role="alert" hidden>無法取得公開觀看工作階段，請稍後重試。</div>
+  <div class="media-session-list" id="session-list" aria-live="polite"></div>
+  <p class="muted mb-0" id="session-empty" hidden>目前沒有公開觀看工作階段。</p>
+  <p class="muted mb-0" id="session-limited" hidden>工作階段超過 500 筆；此頁顯示前 500 筆。</p>
+</section>
+</main></body></html>
