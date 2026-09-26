@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="zh-Hant-TW" data-bs-theme="dark">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>小隊與 TAK 群組｜TAK 控制台</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='bootstrap/bootstrap.min.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='console.css') }}">
+<script src="{{ url_for('static', filename='bootstrap/bootstrap.bundle.min.js') }}" defer></script>
+<script src="{{ url_for('static', filename='console_ui.js') }}" defer></script></head>
+<body class="portal-page"><main class="certificate-layout">
+<header class="wide page-header">{{ console_nav }}{{ console_breadcrumb([('小隊與 TAK 群組', none)]) }}<h1>小隊與 TAK 群組</h1></header>
+{% if error %}<div class="alert alert-danger wide" role="alert">讀取群組對應失敗：{{ error }}</div>{% endif %}
+{% if saved %}<div class="alert alert-success wide" role="status">群組對應已儲存。既有憑證與影像別名未變更。</div>{% endif %}
+<section class="card wide"><h2>小隊對應</h2>
+<p>簽發裝置憑證時，可選小隊將對應群組放入 In + Out。每張新憑證也會自動取得 <code>{{ all_group }}</code> 的 Out 權限。</p>
+<form method="post" action="/settings/groups"><input type="hidden" name="csrf" value="{{ csrf }}">
+<div class="row g-3">{% for squad in squads %}<div class="col-12 col-md-6 col-xl-3"><label class="form-label w-100"><span class="text-capitalize">{{ squad }}</span><input class="form-control mt-1" name="{{ squad }}" value="{{ mapping[squad] }}" maxlength="64" pattern="team-[A-Za-z0-9][A-Za-z0-9_-]{0,58}" required></label></div>{% endfor %}</div>
+<div class="alert alert-info mt-3" role="note">{{ all_group }} 是全體共用的具名群組，不會自動包含其他群組。修改對應不會搬移既有憑證或影像別名；請另行調整後再交付。</div>
+<button class="btn btn-primary" type="submit">儲存對應</button></form></section>
+</main></body></html>

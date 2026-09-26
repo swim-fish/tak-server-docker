@@ -81,6 +81,8 @@ def initialize() -> None:
             db.execute("ALTER TABLE shares ADD COLUMN media_path TEXT")
         if "display_name" not in existing:
             db.execute("ALTER TABLE shares ADD COLUMN display_name TEXT")
+        if "batch_id" not in existing:
+            db.execute("ALTER TABLE shares ADD COLUMN batch_id TEXT")
         db.execute("""CREATE TABLE IF NOT EXISTS downloads (
             id TEXT PRIMARY KEY, share_id TEXT NOT NULL, started_at INTEGER NOT NULL,
             finished_at INTEGER, outcome TEXT NOT NULL, bytes_sent INTEGER NOT NULL DEFAULT 0
@@ -247,7 +249,7 @@ def source_file(value: str, kind: str = "file") -> Path:
 def create_share(kind: str, source: str, ttl_minutes: int | None,
                  max_downloads: int | None, *, profile: bytes | None = None,
                  media_owner: str | None = None, media_path: str | None = None,
-                 display_name: str | None = None) -> str:
+                 display_name: str | None = None, batch_id: str | None = None) -> str:
     if ttl_minutes is None and max_downloads is None:
         raise ValueError("截止時間與下載上限至少填一項")
     if ttl_minutes is not None and not 1 <= ttl_minutes <= 10080:
@@ -262,6 +264,8 @@ def create_share(kind: str, source: str, ttl_minutes: int | None,
         raise ValueError("Media share metadata is invalid")
     if display_name is not None and (not display_name or len(display_name) > 200):
         raise ValueError("Share display name is invalid")
+    if batch_id is not None and (len(batch_id) != 32 or any(c not in "0123456789abcdef" for c in batch_id)):
+        raise ValueError("Share batch ID is invalid")
     share_id = uuid.uuid4().hex
     stored_name = uuid.uuid4().hex
     target = FILE_DIR / stored_name
@@ -285,11 +289,11 @@ def create_share(kind: str, source: str, ttl_minutes: int | None,
         with connection() as db:
             db.execute("BEGIN IMMEDIATE")
             db.execute("""INSERT INTO shares
-                (id,token,kind,filename,stored_name,created_at,expires_at,max_downloads,media_owner,media_path,display_name)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
+                (id,token,kind,filename,stored_name,created_at,expires_at,max_downloads,media_owner,media_path,display_name,batch_id)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (share_id, secrets.token_urlsafe(24), kind, filename, stored_name,
                  now, now + ttl_minutes * 60 if ttl_minutes is not None else None,
-                 max_downloads, media_owner, media_path, display_name))
+                 max_downloads, media_owner, media_path, display_name, batch_id))
             db.commit()
     except Exception:
         target.unlink(missing_ok=True)
@@ -376,7 +380,7 @@ def admin_page(csrf: str) -> bytes:
     active_rows = [row for row in rows if share_status(row, paused) == "分享中"]
     live_links = "".join(
         f"<li id='active-{row['id']}'><strong>{esc(share_label(row))}</strong>"
-        f"<a data-qr-open data-share-id='{row['id']}' data-qr-name='{esc(share_label(row))}' data-qr-image='/qr.png/{esc(row['token'])}' href='{esc(PUBLIC_BASE)}/q/{esc(row['token'])}'>"
+        f"<a data-qr-open data-share-id='{row['id']}' data-qr-name='{esc(share_label(row))}' data-qr-image='/qr.png/{esc(row['token'])}' data-qr-accepted='{row['accepted']}' data-qr-max='{row['max_downloads'] or '∞'}' href='{esc(PUBLIC_BASE)}/q/{esc(row['token'])}'>"
         f"{esc(PUBLIC_BASE)}/q/{esc(row['token'])}</a></li>" for row in active_rows)
     table = "".join(
         f"<tr id='row-{row['id']}' class='{'inactive' if terminal else ''}'>"
@@ -385,7 +389,7 @@ def admin_page(csrf: str) -> bytes:
         f"<small class='share-countdown' {'hidden' if status != '分享中' else ''}>{remaining_text(row['expires_at'] - now) if row['expires_at'] else '無時間限制'}</small></td>"
         f"<td data-label='已使用／上限' id='count-{row['id']}'>{row['accepted']} / {row['max_downloads'] or '∞'}</td>"
         f"<td data-label='建立／截止時間'>{esc(local_time(row['created_at']))}<br>截止：{esc(local_time(row['expires_at']))}</td>"
-        f"<td data-label='查看'><a class='btn btn-outline-info view' data-qr-open data-share-id='{row['id']}' data-qr-name='{esc(share_label(row))}' data-qr-image='/qr.png/{esc(row['token'])}' href='{esc(PUBLIC_BASE)}/q/{esc(row['token'])}' {'hidden' if status != '分享中' else ''}>檢視 QR</a>"
+        f"<td data-label='查看'><a class='btn btn-outline-info view' data-qr-open data-share-id='{row['id']}' data-qr-name='{esc(share_label(row))}' data-qr-image='/qr.png/{esc(row['token'])}' data-qr-accepted='{row['accepted']}' data-qr-max='{row['max_downloads'] or '∞'}' href='{esc(PUBLIC_BASE)}/q/{esc(row['token'])}' {'hidden' if status != '分享中' else ''}>檢視 QR</a>"
         f"<span data-ended {'hidden' if status == '分享中' else ''}>{'已暫停' if status == '全部暫停' else '已結束'}</span></td>"
         f"<td data-label='控制' class='action-danger'><form data-active method='post' action='/stop' {'hidden' if terminal else ''}><input type='hidden' name='csrf' value='{csrf}'>"
         f"<input type='hidden' name='id' value='{row['id']}'>"
@@ -430,11 +434,15 @@ def admin_page(csrf: str) -> bytes:
             "</ul></nav></section>"
             "<div class='modal fade' id='share-qr-dialog' tabindex='-1' aria-labelledby='share-qr-title' aria-hidden='true'>"
             "<div class='modal-dialog modal-dialog-centered'><div class='modal-content'>"
-            "<div class='modal-header'><h2 class='modal-title fs-5' id='share-qr-title'>分享 QR Code</h2>"
+            "<div class='modal-header'><h2 class='modal-title fs-5 me-auto' id='share-qr-title'>分享 QR Code</h2>"
+            "<span class='badge text-bg-info' id='share-qr-count' role='status' aria-live='polite'></span>"
             "<button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='關閉'></button></div>"
-            "<div class='modal-body share-qr-body'><strong id='share-qr-name'></strong>"
-            "<img id='share-qr-image' class='qr img-fluid rounded' alt='分享 QR Code'>"
-            "<a id='share-qr-url' target='_blank' rel='noreferrer noopener'></a>"
+            "<div class='modal-body share-qr-body'>"
+            "<div id='share-qr-carousel' class='carousel slide' data-bs-interval='false'><div class='carousel-inner' id='share-qr-slides'></div></div>"
+            "<div class='d-flex justify-content-center align-items-center gap-2 mt-2' id='share-qr-controls'>"
+            "<button class='btn btn-outline-info' type='button' data-bs-target='#share-qr-carousel' data-bs-slide='prev'>上一筆</button>"
+            "<span id='share-qr-position' aria-live='polite'></span>"
+            "<button class='btn btn-outline-info' type='button' data-bs-target='#share-qr-carousel' data-bs-slide='next'>下一筆</button></div>"
             "<p class='muted'>掃描後請點相機顯示的完整連結。</p></div></div></div></div>")
     script = ("<script src='/static/bootstrap/bootstrap.bundle.min.js' defer></script>"
               "<script src='/static/console_ui.js' defer></script><script src='/admin.js' defer></script>")

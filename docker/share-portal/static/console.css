@@ -106,6 +106,8 @@ body.portal-detail { max-width: 1100px; }
 .share-qr-body { display: grid; justify-items: center; gap: .75rem; text-align: center; }
 #share-qr-dialog .modal-content { border-color: var(--portal-cyan); }
 .share-qr-body .qr { width: min(100%, 320px); }
+.share-qr-body .carousel-item > div { display: flex; flex-direction: column; align-items: center; gap: .55rem; }
+.share-qr-body .carousel-item h3, .share-qr-body .carousel-item a { max-width: 100%; overflow-wrap: anywhere; }
 .share-qr-body #share-qr-name { overflow-wrap: anywhere; }
 .share-qr-body #share-qr-url { max-width: 100%; overflow-wrap: anywhere; font-size: .85rem; }
 .share-qr-body p { margin: 0; }

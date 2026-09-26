@@ -46,6 +46,8 @@ docker compose up -d --build share-admin
 
 ## 新裝置憑證與 DPK
 
+控制台的「小隊與 TAK 群組」頁面保存 Alpha 至 Hotel 的明確對應，預設為 `alpha → team-alpha` 等同名對應。簽發單筆或批次裝置憑證時，選小隊會把對應群組放入 In + Out；簽發前仍可調整群組清單。新憑證一律自動取得 `team-all` 的 Out／讀取權限，且不自動取得 `team-all` 的 In／寫入權限。`team-all` 是具名群組，不是其他群組的萬用選項。改動小隊對應不會改寫既有憑證或 Video Alias；現有裝置若需讀取全體別名，應在群組頁補上 `team-all` Out。
+
 輸入裝置顯示名稱、ASCII 憑證 CN、In／Out 群組及選用的憑證到期日期時間後，主機程式用現有中繼 CA 與 `openssl ca` 資料庫簽發用戶端憑證。到期欄位使用日曆與時間選擇器，按台灣時間（UTC+8）解讀；留空維持約兩年預設，快捷選單可選一小時、一天、7 天、14 天、28 天或 90 天。有效時間須介於 5 分鐘與 730 天，且不得晚於中繼 CA 到期前一天。這是**憑證效期**，與下方 QR 分享的下載期限分開。簽發前檢查中繼 CA 效期並備份 CA 資料庫。每筆裝置有獨立的加密私鑰、PKCS#12 密碼與 DPK，不覆寫 bootstrap 原有的 `clientCert.p12` 或 `atak-local-test.dpk`。
 
 產出的 `atak-<CN>-<serial>.dpk` 位於 `runtime/packages/atak/`，包含 Root 與中繼 CA 信任憑證鏈資料庫、裝置憑證、私鑰及 `takbox.local:8089:ssl` 連線設定。PKCS#12 密碼依 ATAK 匯入格式寫在 DPK 的 `servers.pref`，因此整份 DPK 都是敏感資料。TAK 5.8 的已驗證 REST API 可管理群組，但沒有供此流程設定憑證指紋的介面；新簽發的 CN、SHA-256 指紋與群組會寫入 bind mount 的 `runtime/tak/UserAuthenticationFile.xml`，保留檔案 inode，再重啟 TAK 一次並由 API 讀回驗證。若簽發成功但註冊失敗，清冊保留該憑證並標示未驗證，可從群組頁重試。簽發是不可回復的 CA 紀錄，不能因後續步驟失敗就刪除 CA 資料庫列。

@@ -108,6 +108,56 @@ def package_request(method: str, path: str, body: bytes | None = None,
         connection.close()
 
 
+def video_request(method: str, uid: str | None = None, *, groups: list[str] | None = None,
+                  payload: dict | None = None) -> object:
+    """Use only the Video V2 endpoints required for managed aliases."""
+    import uuid
+    from urllib.parse import urlencode
+
+    if uid is not None:
+        try:
+            uid = str(uuid.UUID(uid))
+        except (ValueError, TypeError, AttributeError) as exc:
+            raise ValueError("Invalid video alias UID") from exc
+    if method == "GET" and (groups is not None or payload is not None):
+        raise ValueError("Invalid video read request")
+    if method == "DELETE" and (uid is None or groups is not None or payload is not None):
+        raise ValueError("Invalid video delete request")
+    if method == "POST" and (uid is not None or not groups or len(groups) > 20 or
+                              len(set(groups)) != len(groups) or payload is None):
+        raise ValueError("Invalid video create request")
+    if method not in {"GET", "DELETE", "POST"}:
+        raise ValueError("Unsupported video request")
+    if groups and any(not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.:-]{0,63}", group)
+                      for group in groups):
+        raise ValueError("Invalid video group")
+    path = "/Marti/api/video" + ("/" + uid if uid else "")
+    if groups:
+        path += "?" + urlencode([("group", group) for group in groups])
+    body = json.dumps(payload, separators=(",", ":")).encode("utf-8") if payload is not None else None
+    if body is not None and len(body) > 256 * 1024:
+        raise ValueError("Video alias request is too large")
+    context = ssl.create_default_context(cafile=str(CERTS / "root-ca.pem"))
+    context.minimum_version = ssl.TLSVersion.TLSv1_2
+    context.load_cert_chain(certfile=str(CERTS / "admin.pem"), keyfile=str(KEY),
+                            password=KEY_PASSWORD.read_text(encoding="ascii").strip())
+    connection = TakConnection(HOST, api_port(), context=context, timeout=20)
+    try:
+        connection.request(method, path, body=body,
+                           headers={"Content-Type": "application/json"} if body is not None else {})
+        response = connection.getresponse()
+        content = response.read(1024 * 1024 + 1)
+        if len(content) > 1024 * 1024:
+            raise RuntimeError("TAK video API response exceeded the size limit")
+        if method == "GET" and response.status == 404:
+            return None
+        if not 200 <= response.status < 300:
+            raise RuntimeError(f"TAK video API returned HTTP {response.status}")
+        return json.loads(content) if content.strip() else None
+    finally:
+        connection.close()
+
+
 def get_groups(username: str) -> dict:
     data = request("GET", f"{API_ROOT}/get-groups-for-user/{quote(username, safe='')}")
     if not isinstance(data, dict) or data.get("username") != username:

@@ -158,7 +158,7 @@ class SharePortalTests(unittest.TestCase):
             self.assertEqual(response.status_code, 303)
             control.assert_called_once_with("issue", name="Tablet 02", cn="tablet-02",
                                             expires_at=selected_expiry,
-                                            in_groups=["local-test"], out_groups=["local-test"])
+                                            in_groups=["local-test"], out_groups=["local-test", "team-all"])
             control.reset_mock()
             invalid = client.post("/certificates/issue", headers=headers,
                                   data={"csrf": admin.CSRF, "expires_at": "2020-01-01T00:00"})
@@ -358,6 +358,8 @@ class SharePortalTests(unittest.TestCase):
         self.assertIn("ICU-ADV-live/command/camera", markup)
         self.assertIn("tablet-1002", markup)
         self.assertNotIn("完成 0", markup)
+        self.assertIn("id='share-qr-count'", markup)
+        self.assertIn("data-qr-accepted='0' data-qr-max='3'", markup)
 
         import share_admin_flask as admin
         auth = "Basic " + base64.b64encode(b"admin:test-admin-password-that-is-long-enough").decode()
@@ -440,6 +442,42 @@ class SharePortalTests(unittest.TestCase):
             self.assertIn("PATH 預覽", markup)
             self.assertIn("/static/icu_path.js", markup)
 
+    def test_icu_squad_provision_accepts_selected_members(self) -> None:
+        import share_admin_flask as admin
+
+        operation_dir = self.root / "operations"
+        operation_dir.mkdir()
+        auth = "Basic " + base64.b64encode(b"admin:test-admin-password-that-is-long-enough").decode()
+        headers = {"Authorization": auth, "Host": "127.0.0.1:8766"}
+        client = admin.app.test_client()
+        values = {"csrf": admin.CSRF, "kind": "icu", "icu_mode": "standard", "squad": "alpha",
+                  "person": ["1", "3"], "ttl": "20", "limit": "3"}
+        configure = client.get("/provision?flow=icu", headers=headers)
+        self.assertEqual(configure.status_code, 200)
+        self.assertIn("ICU 小隊發布 · 設定", configure.data.decode())
+        self.assertEqual(configure.data.count(b'name="person"'), 10)
+        preview = client.post("/provision/preview", headers=headers, data=values)
+        self.assertEqual(preview.status_code, 200)
+        self.assertIn(b"live/alpha/1/VIDEO_1", preview.data)
+        self.assertIn(b"live/alpha/3/VIDEO_1", preview.data)
+        self.assertNotIn(b"live/alpha/2/VIDEO_1", preview.data)
+        missing = client.post("/provision/preview", headers=headers, data={**values, "person": []})
+        self.assertEqual(missing.status_code, 400)
+        with patch.object(admin, "OPERATIONS_DIR", operation_dir), \
+                patch.object(admin.media, "ensure_squad", return_value={
+                    "user": "icu-alpha", "password": "test-squad-secret"}):
+            execution = client.post("/provision/execute", headers=headers, data={**values,
+                                    "operation_id": "e" * 32, "confirmation": "yes"})
+            self.assertEqual(execution.status_code, 303)
+            rows, _ = portal.list_shares()
+            self.assertEqual({row["media_path"] for row in rows}, {"live/alpha/1/", "live/alpha/3/"})
+            self.assertEqual(len({row["token"] for row in rows}), 2)
+            result = client.get("/provision/result/" + "e" * 32, headers=headers)
+            self.assertEqual(result.status_code, 200)
+            self.assertIn(b"icu-batch-carousel", result.data)
+            self.assertIn(b"ICU-alpha-1", result.data)
+            self.assertIn(b"ICU-alpha-3", result.data)
+
     def test_source_folders_and_finished_row_layout(self) -> None:
         (portal.ICU_DIR / "initial.prefs").write_text("<preferences/>", encoding="utf-8")
         with zipfile.ZipFile(portal.PACKAGE_DIR / "atak.dpk", "w") as package:
@@ -515,6 +553,7 @@ class SharePortalTests(unittest.TestCase):
         hidden.feed(preview.data.decode("utf-8"))
         self.assertEqual(json.loads(hidden.value)["items"][1]["cn"], "test-two")
         self.assertEqual(json.loads(hidden.value)["items"][0]["expires_at"], selected_expiry)
+        self.assertIn("team-all", json.loads(hidden.value)["items"][0]["out_groups"])
         self.assertNotEqual(json.loads(hidden.value)["items"][1]["expires_at"], selected_expiry)
         invalid = {**form, "expires_at": ["2020-01-01T00:00", ""]}
         self.assertEqual(client.post("/provision/tak-new/preview", data=invalid,
@@ -560,11 +599,92 @@ class SharePortalTests(unittest.TestCase):
         self.assertIn('<option value="336">14 天</option>', markup)
         self.assertIn('<option value="672">28 天</option>', markup)
         self.assertIn('<option value="2160">90 天</option>', markup)
-        self.assertIn('name="in_groups" value="local-test"', markup)
-        self.assertIn('name="out_groups" value="local-test"', markup)
+        self.assertIn('name="in_groups" value=""', markup)
+        self.assertIn('name="out_groups" value="team-all"', markup)
+        self.assertIn('data-certificate-squad', markup)
         self.assertIn('data-group="team-a"', markup)
         self.assertIn('data-lane="none"', markup)
         self.assertIn('data-lane="both"', markup)
+
+    def test_icu_batch_creates_distinct_qr_shares(self) -> None:
+        import share_admin_flask as admin
+        import squad_groups
+
+        operation_dir = self.root / "operations"
+        operation_dir.mkdir()
+        auth = "Basic " + base64.b64encode(b"admin:test-admin-password-that-is-long-enough").decode()
+        headers = {"Authorization": auth, "Host": "127.0.0.1:8766"}
+        client = admin.app.test_client()
+        values = {"csrf": admin.CSRF, "squad": "alpha", "start": "1", "count": "2",
+                  "group": ["team-alpha"], "ttl": "20", "limit": "3"}
+        with patch.object(squad_groups, "MAPPING_FILE", self.root / "squad-groups.json"):
+            self.assertEqual(client.get("/provision/icu-batch", headers=headers).status_code, 200)
+            preview = client.post("/provision/icu-batch/preview", headers=headers, data=values)
+            self.assertEqual(preview.status_code, 200)
+            self.assertIn(b"live/alpha/2/VIDEO_1", preview.data)
+            with patch.object(admin, "OPERATIONS_DIR", operation_dir), \
+                    patch.object(admin.media, "ensure_squad", return_value={
+                        "user": "icu-alpha", "password": "test-publish-password"}), \
+                    patch.object(admin, "cert_control", return_value={"batch": {"state": "complete", "results": [
+                        {"person": person, "state": "ready", "uid": f"test-{person}"} for person in (1, 2)]}}):
+                submitted = {**values, "operation_id": "a" * 32, "confirmation": "yes"}
+                response = client.post("/provision/icu-batch/execute", headers=headers, data=submitted)
+                self.assertEqual(response.status_code, 303)
+                receipt = admin.read_operation("a" * 32, "provision:icu-batch")
+                self.assertEqual(receipt["state"], "complete")
+                rows, _ = portal.list_shares()
+                self.assertEqual(len(rows), 2)
+                self.assertEqual({row["batch_id"] for row in rows}, {"a" * 32})
+                self.assertEqual(len({row["token"] for row in rows}), 2)
+                result = client.get("/provision/icu-batch/result/" + "a" * 32, headers=headers)
+                self.assertEqual(result.status_code, 200)
+                self.assertIn(b"carousel-item", result.data)
+                self.assertIn(b"live/alpha/1/VIDEO_1", result.data)
+                self.assertIn(b"live/alpha/2/VIDEO_1", result.data)
+                self.assertIn(b"team-alpha", result.data)
+
+    def test_icu_reshare_can_select_member_paths(self) -> None:
+        import share_admin_flask as admin
+
+        publisher = {"kind": "squad", "name": "Alpha", "user": "icu-alpha",
+                     "password": "test-squad-secret", "enabled": True,
+                     "paths": ["live/alpha/1/VIDEO_1", "live/alpha/2/VIDEO_1"]}
+        operation_dir = self.root / "operations"
+        operation_dir.mkdir()
+        auth = "Basic " + base64.b64encode(b"admin:test-admin-password-that-is-long-enough").decode()
+        headers = {"Authorization": auth, "Host": "127.0.0.1:8766"}
+        client = admin.app.test_client()
+        base = {"csrf": admin.CSRF, "view": "icu", "action": "reshare",
+                "confirmation": "yes", "publisher": ["squad:alpha"],
+                "path_selection_present": "yes", "ttl": "20", "limit": "3"}
+        with patch.object(admin, "OPERATIONS_DIR", operation_dir), \
+                patch.object(admin.media, "load", return_value={"publishers": {"squad:alpha": publisher}}), \
+                patch.object(admin.media, "active_paths", return_value=[]), \
+                patch.object(admin.media, "viewer_status", return_value={"desired": True, "sessions": 0,
+                                                                           "local_base": "http://takbox.local:8889"}):
+            page = client.get("/media", headers=headers)
+            self.assertEqual(page.status_code, 200)
+            self.assertIn(b"media-path-select-all", page.data)
+            self.assertIn(b"media-path-select-none", page.data)
+            self.assertEqual(page.data.count(b'name="reshare_path"'), 2)
+
+            one = client.post("/media/update", headers=headers, data={**base, "operation_id": "b" * 32,
+                              "reshare_path": ["squad:alpha|live/alpha/2/VIDEO_1"]})
+            self.assertEqual(one.status_code, 303)
+            shares, _ = portal.list_shares()
+            self.assertEqual([row["media_path"] for row in shares], ["live/alpha/2/"])
+
+            none = client.post("/media/update", headers=headers, data={**base, "operation_id": "c" * 32})
+            self.assertEqual(none.status_code, 303)
+            self.assertEqual(admin.read_operation("c" * 32, "media:update")["state"], "failed")
+            self.assertEqual(len(portal.list_shares()[0]), 1)
+
+            all_paths = client.post("/media/update", headers=headers, data={**base,
+                                    "operation_id": "d" * 32, "reshare_path": [
+                                        "squad:alpha|live/alpha/1/VIDEO_1",
+                                        "squad:alpha|live/alpha/2/VIDEO_1"]})
+            self.assertEqual(all_paths.status_code, 303)
+            self.assertEqual(len(portal.list_shares()[0]), 3)
 
     def test_certificate_group_overview_classifies_each_permission(self) -> None:
         import share_admin_flask as admin

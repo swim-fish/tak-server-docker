@@ -21,7 +21,7 @@ ICU 自動通告的 RTSPS 來源在這版 ATAK 無法直接播放；上述 RTSP 
 
 ## 自動通告與手動來源的欄位差異
 
-| ATAK 影像項目 | 自動收到的 `VIDEO_1` | 手動建立的 `V1` |
+| ATAK 影像項目 | 自動收到的 `VIDEO_1` | 手動建立的 Video Alias 測試資料（實際別名為 `V1`） |
 | --- | --- | --- |
 | 通告／選擇的協定 | 解析 log 顯示 `rtsps`；ATAK 5.7.0.15 轉成 `raw` | `rtsp` |
 | 主機、通訊埠、路徑 | `takbox.local`、`8322`、`live/alpha/1/VIDEO_1` | `takbox.local`、`8554`、`live/alpha/1/VIDEO_1` |
@@ -29,4 +29,4 @@ ICU 自動通告的 RTSPS 來源在這版 ATAK 無法直接播放；上述 RTSP 
 | Reliable P2P Connection | 自動項目沒有啟用紀錄 | 已勾選，RTSP 改走 TCP |
 | 播放器實際得到的連線 | `raw` 只產生 `takbox.local`，隨即失敗 | 完整 RTSP 來源及 `?tcp`，成功播放 |
 
-ATAK 的格式選單列出 `raw`，但沒有 `rtsps`。`raw` 是未知協定的備援解析結果，不能視為 RTSPS 播放選項。上述通告欄位是由 `using raw for: rtsps`、`ConnectionEntry` 與播放器 log 還原；**未直接擷取 ICU 發出的原始 CoT XML**。自動的 `VIDEO_1` 會持續隨通告更新，本次成功的是獨立手動建立的 `V1`，沒有證明修改 `VIDEO_1` 後可持久保留設定。
+ATAK 的格式選單列出 `raw`，但沒有 `rtsps`。`raw` 是未知協定的備援解析結果，不能視為 RTSPS 播放選項。上述通告欄位是由 `using raw for: rtsps`、`ConnectionEntry` 與播放器 log 還原；**未直接擷取 ICU 發出的原始 CoT XML**。自動的 `VIDEO_1` 會持續隨通告更新，本次成功的是獨立手動建立的 Video Alias 測試資料，沒有證明修改 `VIDEO_1` 後可持久保留設定。

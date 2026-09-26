@@ -24,6 +24,13 @@ function refresh() {
   }
   const selected = form.querySelectorAll('input[name="publisher"]:checked').length;
   const selectedEntries = visible.filter((entry) => entry.querySelector('input[name="publisher"]').checked);
+  const selectedPaths = selectedEntries.flatMap((entry) => [...entry.querySelectorAll('input[name="reshare_path"]')]);
+  for (const entry of entries) {
+    const pathEnabled = entry.querySelector('input[name="publisher"]').checked && entry.dataset.enabled === "yes";
+    entry.querySelectorAll('input[name="reshare_path"]').forEach((path) => { path.disabled = !pathEnabled; });
+  }
+  const pathCount = document.getElementById("media-path-count");
+  if (pathCount) pathCount.textContent = `已選 ${selectedPaths.filter((path) => path.checked).length}／${selectedPaths.length} 條路徑`;
   document.getElementById("media-count").textContent = pageSizeInput
     ? `顯示 ${visible.length}／符合搜尋 ${matches.length}／總計 ${entries.length}；已選 ${selected}`
     : `顯示 ${visible.length}／總計 ${entries.length}；隱藏 ${entries.length - visible.length}；已選 ${selected}`;
@@ -34,7 +41,8 @@ function refresh() {
   if (nextPage) nextPage.disabled = currentPage === pageCount;
   form.querySelectorAll('button[type="submit"]').forEach((button) => {
     button.disabled = selected === 0 ||
-      (button.value === "reshare" && !selectedEntries.every((entry) => entry.dataset.enabled === "yes")) ||
+      (button.value === "reshare" && (!selectedEntries.every((entry) => entry.dataset.enabled === "yes") ||
+        !selectedPaths.some((path) => path.checked))) ||
       (button.value === "reset" && !selectedEntries.every((entry) => entry.dataset.enabled === "yes"));
   });
 }
@@ -55,6 +63,19 @@ if (previousPage) previousPage.addEventListener("click", () => { currentPage--; 
 if (nextPage) nextPage.addEventListener("click", () => { currentPage++; refresh(); });
 document.getElementById("media-select-visible").addEventListener("click", () => { entries.forEach((entry) => { if (!entry.hidden) entry.querySelector('input[name="publisher"]').checked = true; }); refresh(); });
 document.getElementById("media-select-none").addEventListener("click", () => { entries.forEach((entry) => entry.querySelector('input[name="publisher"]').checked = false); refresh(); });
+const selectAllPaths = document.getElementById("media-path-select-all");
+const selectNoPaths = document.getElementById("media-path-select-none");
+if (selectAllPaths && selectNoPaths) {
+  const choosePaths = (checked) => {
+    entries.filter((entry) => !entry.hidden && entry.querySelector('input[name="publisher"]').checked)
+      .forEach((entry) => entry.querySelectorAll('input[name="reshare_path"]').forEach((path) => {
+        path.checked = checked;
+      }));
+    refresh();
+  };
+  selectAllPaths.addEventListener("click", () => choosePaths(true));
+  selectNoPaths.addEventListener("click", () => choosePaths(false));
+}
 refresh();
 const reactivateModal = document.getElementById("device-reactivate");
 if (reactivateModal) reactivateModal.addEventListener("show.bs.modal", (event) => {
