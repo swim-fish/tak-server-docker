@@ -9,6 +9,7 @@ from html.parser import HTMLParser
 import os
 import sys
 import tempfile
+import time
 import unittest
 import zipfile
 from concurrent.futures import ThreadPoolExecutor
@@ -275,10 +276,14 @@ class SharePortalTests(unittest.TestCase):
         self.assertEqual(portal.get_share(row["token"])["completed"], 1)
 
     def test_reissued_share_uses_new_download_filename_and_keeps_source_identity(self) -> None:
-        first = self.share(ttl_minutes=10, max_downloads=2)
-        second = self.share(ttl_minutes=10, max_downloads=2)
+        timestamp_ns = time.time_ns()
+        with patch.object(portal.time, "time_ns", return_value=timestamp_ns):
+            first = self.share(ttl_minutes=10, max_downloads=2)
+            second = self.share(ttl_minutes=10, max_downloads=2)
         self.assertEqual(first["filename"], second["filename"])
         self.assertNotEqual(first["delivery_filename"], second["delivery_filename"])
+        for row in (first, second):
+            self.assertRegex(row["delivery_filename"], r"^TAK_\d{8}_\d{6}_\d{6}\.dpk$")
         self.assertEqual(
             (portal.FILE_DIR / first["stored_name"]).read_bytes(),
             (portal.FILE_DIR / second["stored_name"]).read_bytes(),
@@ -286,6 +291,25 @@ class SharePortalTests(unittest.TestCase):
         self.assertEqual(portal.stop_file_shares("example.dpk"), 2)
         self.assertIsNone(portal.reserve_download(first["token"]))
         self.assertIsNone(portal.reserve_download(second["token"]))
+
+    def test_group_prefix_and_zip_extension(self) -> None:
+        import share_admin_flask as admin
+
+        with patch.object(admin.squad_groups, "load", return_value={"alpha": "team-alpha", "bravo": "team-bravo"}):
+            self.assertEqual(admin.package_download_prefix(["team-alpha"], ["team-all"]), "Alpha")
+            self.assertEqual(admin.package_download_prefix(["team-alpha"], ["team-bravo"]), "TAK")
+            self.assertEqual(admin.package_download_prefix(["team-all"]), "TAK")
+        with zipfile.ZipFile(portal.PACKAGE_DIR / "example.zip", "w") as package:
+            package.writestr("example.txt", "example-package")
+        share_id = portal.create_share("file", "atak:example.zip", 10, 1, download_prefix="Alpha")
+        row = portal.get_share_by_id(share_id)
+        self.assertRegex(row["delivery_filename"], r"^Alpha_\d{8}_\d{6}_\d{6}\.zip$")
+        self.assertEqual(row["filename"], "example.zip")
+
+    def test_download_filename_uses_taiwan_time(self) -> None:
+        timestamp_us = int(datetime(2026, 9, 29, 4, 5, 6, tzinfo=timezone.utc).timestamp()) * 1_000_000 + 123456
+        self.assertEqual(portal.dated_download_filename("Alpha", "source.dpk", timestamp_us),
+                         "Alpha_20260929_120506_123456.dpk")
 
     def test_existing_share_without_delivery_filename_keeps_original_url(self) -> None:
         row = self.share(ttl_minutes=10, max_downloads=1)
@@ -594,8 +618,8 @@ class SharePortalTests(unittest.TestCase):
         self.assertEqual(client.post("/provision/tak-new/preview", data=invalid,
                                      headers=headers).status_code, 400)
         values = {
-            "items": [{"name": "Test One", "cn": "test-one", "in_groups": ["local-test"],
-                       "out_groups": ["local-test"]},
+            "items": [{"name": "Test One", "cn": "test-one", "in_groups": ["team-alpha"],
+                       "out_groups": ["team-alpha"]},
                       {"name": "Test Two", "cn": "test-two", "in_groups": ["team-a"],
                        "out_groups": ["team-b"]}], "ttl": 20, "limit": 3}
         entries = [{"request": item, "state": "registered", "serial": serial,
@@ -607,12 +631,15 @@ class SharePortalTests(unittest.TestCase):
         with patch.object(admin, "OPERATIONS_DIR", operation_dir), \
                 patch.object(admin, "cert_control", return_value={"batch": {
                     "state": "complete", "items": entries}}) as worker, \
+                patch.object(admin.squad_groups, "load", return_value={"alpha": "team-alpha"}), \
                 patch.object(portal, "create_share", side_effect=[101, 102]) as create:
             self.assertEqual(client.post("/provision/tak-new/execute", data=execution,
                                          headers=headers).status_code, 303)
             self.assertEqual(client.post("/provision/tak-new/execute", data=execution,
                                          headers=headers).status_code, 303)
             self.assertEqual(create.call_count, 2)
+            self.assertEqual([call.kwargs["download_prefix"] for call in create.call_args_list],
+                             ["Alpha", "TAK"])
             self.assertEqual(worker.call_count, 1)
             receipt = admin.read_operation(job_id, "provision:tak-new")
             self.assertEqual(receipt["state"], "complete")

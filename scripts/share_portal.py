@@ -250,10 +250,17 @@ def source_file(value: str, kind: str = "file") -> Path:
     return path
 
 
+def dated_download_filename(prefix: str, filename: str, timestamp_us: int) -> str:
+    local_date = datetime.fromtimestamp(timestamp_us // 1_000_000, TIMEZONE)
+    suffix = f"{local_date:%Y%m%d_%H%M%S}_{timestamp_us % 1_000_000:06d}"
+    return f"{prefix}_{suffix}{Path(filename).suffix}"
+
+
 def create_share(kind: str, source: str, ttl_minutes: int | None,
                  max_downloads: int | None, *, profile: bytes | None = None,
                  media_owner: str | None = None, media_path: str | None = None,
-                 display_name: str | None = None, batch_id: str | None = None) -> str:
+                 display_name: str | None = None, batch_id: str | None = None,
+                 download_prefix: str = "TAK") -> str:
     if ttl_minutes is None and max_downloads is None:
         raise ValueError("截止時間與下載上限至少填一項")
     if ttl_minutes is not None and not 1 <= ttl_minutes <= 10080:
@@ -270,6 +277,8 @@ def create_share(kind: str, source: str, ttl_minutes: int | None,
         raise ValueError("Share display name is invalid")
     if batch_id is not None and (len(batch_id) != 32 or any(c not in "0123456789abcdef" for c in batch_id)):
         raise ValueError("Share batch ID is invalid")
+    if kind == "file" and not re.fullmatch(r"[A-Za-z][A-Za-z0-9_-]{0,31}", download_prefix):
+        raise ValueError("Share download prefix is invalid")
     share_id = uuid.uuid4().hex
     stored_name = uuid.uuid4().hex
     target = FILE_DIR / stored_name
@@ -288,12 +297,18 @@ def create_share(kind: str, source: str, ttl_minutes: int | None,
             shutil.copyfileobj(src, dst, length=1024 * 1024)
         if display_name is None:
             display_name = bootstrap_package_label(filename, target)
-    delivery_filename = (f"{Path(filename).stem}-{share_id[:12]}{Path(filename).suffix}"
-                         if kind == "file" else None)
     try:
-        now = int(time.time())
         with connection() as db:
             db.execute("BEGIN IMMEDIATE")
+            timestamp_us = time.time_ns() // 1_000
+            now = timestamp_us // 1_000_000
+            delivery_filename = None
+            if kind == "file":
+                delivery_filename = dated_download_filename(download_prefix, filename, timestamp_us)
+                while db.execute("SELECT 1 FROM shares WHERE delivery_filename=?",
+                                 (delivery_filename,)).fetchone():
+                    timestamp_us += 1
+                    delivery_filename = dated_download_filename(download_prefix, filename, timestamp_us)
             db.execute("""INSERT INTO shares
                 (id,token,kind,filename,stored_name,created_at,expires_at,max_downloads,media_owner,media_path,display_name,batch_id,delivery_filename)
                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",

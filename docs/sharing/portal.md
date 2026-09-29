@@ -26,7 +26,7 @@ docker compose --profile sharing up -d --build share-admin share-public
 | ICU 設定 | 可即時用目前 `mediamtx_publish_password` 產生 `initial.prefs`，或選 `runtime/packages/icu/` 內的 `.prefs`。QR 開啟 `icu://download?url=...`。 |
 | ATAK DPK／ZIP | 從 `runtime/packages/atak/` 選檔，建立當下複製快照。QR 使用 `tak://com.atakmap.app/import?url=...` 交給 ATAK 下載及匯入；仍須由使用者確認。直接用瀏覽器下載則須自行在 ATAK 匯入。 |
 
-每次建立 DPK／ZIP 分享時，都會使用不同的下載檔名，副檔名維持 `.dpk`／`.zip`；來源檔名、快照內容與憑證辨識名稱不變。這可避開裝置端同名下載檔的覆寫路徑。若要更新 ATAK 設定或憑證，先[重建 DPK](../atak/connection.md#修正信任包而不重建-pki)或簽發新套件，再建立分享；重新分享舊 DPK 不會改變 Manifest `uid` 或檔案內容。已建立的舊分享仍沿用原本下載檔名。
+每次建立 DPK／ZIP 分享時，下載檔名使用 `<前綴>_YYYYMMDD_HHMMSS_ffffff.dpk` 或 `.zip`，時間為臺灣時間，末尾六碼是微秒。例如單一 Alpha 群組的憑證套件為 `Alpha_20260929_120506_123456.dpk`；沒有可辨識的單一群組時使用 `TAK` 前綴。引導式佈建及憑證分享會依群組自動選前綴，其他套件分享預設為 `TAK`。即使同一微秒建立兩筆分享，也會遞增時間戳記，確保下載檔名不同；來源檔名、快照內容與憑證辨識名稱不變。這可避開裝置端同名下載檔的覆寫路徑。若要更新 ATAK 設定或憑證，先[重建 DPK](../atak/connection.md#修正信任包而不重建-pki)或簽發新套件，再建立分享；重新分享舊 DPK 不會改變 Manifest `uid` 或檔案內容。已建立的舊分享仍沿用建立時的下載檔名。
 
 新增分享的來源選單依 `runtime/packages/icu/`、`runtime/packages/atak/` 分組；ICU 即時產生另列一組。舊測試目錄 `runtime/share-inbox/` 不再顯示，也無法作為新增分享來源；需要保留的 DPK／ZIP 可手動移至 `runtime/packages/atak/`。手動產生的 ICU 設定檔與 QR 放在 `runtime/packages/icu/`，其產生器見 [ICU QR Code](../mediamtx/icu-qrcode.md)。分享頁產生的快照存於 Docker `share-files` volume，統計存於 `share-state` volume，兩者都可能含憑證或密碼。不要公開備份或使用 `docker compose down -v` 清除整套服務資料。
 
@@ -42,7 +42,7 @@ docker compose --profile sharing up -d --build share-admin share-public
 
 公開傳輸目前為 HTTP。ICU 設定含可重複使用的 MediaMTX 發布密碼，ATAK DPK 也可能含裝置私鑰；只在受控熱點短時間分享，設小額度並在完成後停止。掃碼裝置需與熱點位於相同可達網段，且能解析 `takbox.local`。若要跨網段或長期使用，需先部署經 ICU 實機驗證的 HTTPS 與存取控制。
 
-ATAK QR 的下載 URL 會以原始 `.dpk`／`.zip` 檔名結尾，讓匯入器辨識格式。TAK 憑證 DPK 內含裝置私鑰，必須為每台裝置建立各自的短效分享。Vx-only DPK 不含 TAK 憑證，但本次 QR 實測只進入 ATAK 一般匯入流程，未建立 Mission；分享頁會辨識其 `onReceiveAction`，從來源清單排除並拒絕建立 QR 分享。Vx 設定應從 [TAK Server Data Packages](../atak/vx-missions.md#從-tak-server-下載任務) 下載。ICU QR 使用獨立的 `icu://download?url=...`；TAK 連線與 ICU 可各自建立及停止 QR 分享。
+ATAK QR 的下載 URL 會以帶時間戳記的 `.dpk`／`.zip` 檔名結尾，讓匯入器辨識格式。TAK 憑證 DPK 內含裝置私鑰，必須為每台裝置建立各自的短效分享。Vx-only DPK 不含 TAK 憑證，但本次 QR 實測只進入 ATAK 一般匯入流程，未建立 Mission；分享頁會辨識其 `onReceiveAction`，從來源清單排除並拒絕建立 QR 分享。Vx 設定應從 [TAK Server Data Packages](../atak/vx-missions.md#從-tak-server-下載任務) 下載。ICU QR 使用獨立的 `icu://download?url=...`；TAK 連線與 ICU 可各自建立及停止 QR 分享。
 
 ## Mumble 管理
 
