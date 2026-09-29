@@ -13,6 +13,7 @@ ICU_PACKAGES = ROOT / "runtime" / "packages" / "icu"
 ATAK_PACKAGES = ROOT / "runtime" / "packages" / "atak"
 CONTROL = ROOT / "runtime" / "share-control"
 CERT_CONTROL = ROOT / "runtime" / "tak-cert-control"
+SERVICE_CONTROL = ROOT / "runtime" / "service-control"
 
 
 def main() -> None:
@@ -24,6 +25,8 @@ def main() -> None:
     (CERT_CONTROL / "inbox").mkdir(parents=True, exist_ok=True)
     (CERT_CONTROL / "outbox").mkdir(parents=True, exist_ok=True)
     (CERT_CONTROL / "backups").mkdir(parents=True, exist_ok=True)
+    (SERVICE_CONTROL / "inbox").mkdir(parents=True, exist_ok=True)
+    (SERVICE_CONTROL / "outbox").mkdir(parents=True, exist_ok=True)
     PASSWORD.parent.mkdir(parents=True, exist_ok=True)
     if PASSWORD.exists():
         if not PASSWORD.is_file() or len(PASSWORD.read_text(encoding="utf-8").strip()) < 24:

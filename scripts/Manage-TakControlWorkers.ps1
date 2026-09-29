@@ -17,7 +17,8 @@ $projectRoot = Split-Path -Parent $PSScriptRoot
 $runner = Join-Path $PSScriptRoot 'run_host_worker.py'
 $workers = @(
     @{ Name = 'certificate'; Task = 'TAK-Certificate-Worker'; Control = 'runtime\tak-cert-control' },
-    @{ Name = 'mumble'; Task = 'TAK-Mumble-Worker'; Control = 'runtime\share-control' }
+    @{ Name = 'mumble'; Task = 'TAK-Mumble-Worker'; Control = 'runtime\share-control' },
+    @{ Name = 'service'; Task = 'TAK-Service-Worker'; Control = 'runtime\service-control' }
 )
 
 function Get-WorkerTask([string]$taskName) {
@@ -56,6 +57,10 @@ if ($Action -eq 'Install') {
         -DontStopIfGoingOnBatteries -ExecutionTimeLimit ([TimeSpan]::Zero) `
         -MultipleInstances IgnoreNew -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1)
     foreach ($worker in $workers) {
+        if (Get-WorkerTask $worker.Task) {
+            Write-Output "$($worker.Task) is already installed."
+            continue
+        }
         $arguments = '"{0}" {1}' -f $runner, $worker.Name
         $taskAction = New-ScheduledTaskAction -Execute $pythonw -Argument $arguments `
             -WorkingDirectory $projectRoot
@@ -70,10 +75,13 @@ if ($Action -eq 'Install') {
 
 if ($Action -eq 'Start') {
     foreach ($worker in $workers) {
-        if (-not (Get-WorkerTask $worker.Task)) {
+        $task = Get-WorkerTask $worker.Task
+        if (-not $task) {
             throw "$($worker.Task) is not installed. Run -Action Install first."
         }
-        Start-ScheduledTask -TaskName $worker.Task
+        if ($task.State -ne 'Running') {
+            Start-ScheduledTask -TaskName $worker.Task
+        }
         Wait-WorkerHeartbeat $worker.Control $worker.Task
         Write-Output "$($worker.Task) is responding."
     }

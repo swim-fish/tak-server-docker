@@ -22,6 +22,7 @@ from markupsafe import Markup
 
 import share_portal as portal
 import media_registry as media
+import service_health
 from console_ui import breadcrumb, navbar
 from build_icu_qr import build_profile
 from certificate_validity import local_expiry
@@ -31,6 +32,7 @@ import squad_groups
 
 CONTROL_DIR = Path(os.environ.get("MUMBLE_CONTROL_DIR", "/control"))
 CERT_CONTROL_DIR = Path(os.environ.get("TAK_CERT_CONTROL_DIR", "/cert-control"))
+SERVICE_CONTROL_DIR = Path(os.environ.get("TAK_SERVICE_CONTROL_DIR", "/service-control"))
 OPERATIONS_DIR = portal.STATE_DIR / "operations"
 ADMIN_PASSWORD = portal.ADMIN_PASSWORD_FILE.read_text(encoding="utf-8").strip()
 if len(ADMIN_PASSWORD) < 24:
@@ -140,6 +142,20 @@ def cert_control(action: str, **parameters: object) -> dict:
                           **parameters)
 
 
+def service_control(action: str, **parameters: object) -> dict:
+    return worker_control(SERVICE_CONTROL_DIR, action, timeout=200 if action == "control" else 15,
+                          **parameters)
+
+
+def service_report() -> tuple[dict, str | None]:
+    containers, error = None, None
+    try:
+        containers = service_control("snapshot")["services"]
+    except (RuntimeError, OSError, ValueError, KeyError) as exc:
+        error = str(exc)
+    return service_health.collect(containers), error
+
+
 def operation_path(operation_id: str) -> Path:
     if not re.fullmatch(r"[0-9a-f]{32}", operation_id):
         raise ValueError("Invalid operation ID")
@@ -245,6 +261,41 @@ def selected(field: str) -> list[dict]:
 @app.get("/healthz")
 def healthz() -> str:
     return "ok"
+
+
+@app.get("/readyz")
+def readyz() -> Response:
+    report, error = service_report()
+    return jsonify({**report, "error": error}), 200 if report["overall"] == "ready" else 503
+
+
+@app.get("/services")
+def services_page() -> str:
+    report, error = service_report()
+    result = request.args.get("result") if request.args.get("result") in {"start", "stop", "restart"} else None
+    return render_template("services.html", report=report, error=error, result=result, csrf=CSRF,
+                           labels=service_health.SERVICE_LABELS, controllable=service_health.CONTROLLABLE)
+
+
+@app.get("/services/status")
+def services_status() -> Response:
+    report, error = service_report()
+    return jsonify({**report, "error": error})
+
+
+@app.post("/services/control")
+def services_control() -> Response:
+    if request.form.get("confirmation") != "yes":
+        return Response("Confirm the service action before execution", 400)
+    service = request.form.get("service", "")
+    verb = request.form.get("verb", "")
+    if service not in service_health.CONTROLLABLE or verb not in {"start", "stop", "restart"}:
+        return Response("Service or action is not allowed", 400)
+    try:
+        service_control("control", service=service, verb=verb)
+    except (RuntimeError, OSError, ValueError) as exc:
+        return Response(str(exc), 409)
+    return redirect(url_for("services_page", result=verb), code=303)
 
 
 @app.get("/")

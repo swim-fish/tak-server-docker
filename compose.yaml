@@ -252,6 +252,7 @@ services:
       - share-files:/files
       - ./runtime/share-control:/control
       - ./runtime/tak-cert-control:/cert-control
+      - ./runtime/service-control:/service-control
       - ./runtime/packages/atak:/imports/packages:ro
       - ./runtime/packages/icu:/imports/icu:ro
       - ./runtime/mediamtx:/media-config

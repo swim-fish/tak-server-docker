@@ -9,6 +9,7 @@ PAGES = (
     ("/", "檔案分享"),
     ("/provision", "引導式佈建"),
     ("/media", "MediaMTX 管理"),
+    ("/services", "服務狀態"),
     ("/mumble", "Mumble 管理"),
     ("/certificates", "用戶端憑證"),
     ("/settings/groups", "小隊與群組"),
@@ -16,7 +17,7 @@ PAGES = (
 
 
 def active_page(path: str) -> str:
-    for prefix in ("/provision", "/media", "/mumble", "/certificates", "/settings/groups"):
+    for prefix in ("/provision", "/media", "/services", "/mumble", "/certificates", "/settings/groups"):
         if path == prefix or path.startswith(prefix + "/"):
             return prefix
     return "/"
