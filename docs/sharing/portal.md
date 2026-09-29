@@ -26,6 +26,8 @@ docker compose --profile sharing up -d --build share-admin share-public
 | ICU 設定 | 可即時用目前 `mediamtx_publish_password` 產生 `initial.prefs`，或選 `runtime/packages/icu/` 內的 `.prefs`。QR 開啟 `icu://download?url=...`。 |
 | ATAK DPK／ZIP | 從 `runtime/packages/atak/` 選檔，建立當下複製快照。QR 使用 `tak://com.atakmap.app/import?url=...` 交給 ATAK 下載及匯入；仍須由使用者確認。直接用瀏覽器下載則須自行在 ATAK 匯入。 |
 
+每次建立 DPK／ZIP 分享時，都會使用不同的下載檔名，副檔名維持 `.dpk`／`.zip`；來源檔名、快照內容與憑證辨識名稱不變。這可避開裝置端同名下載檔的覆寫路徑。若要更新 ATAK 設定或憑證，先[重建 DPK](../atak/connection.md#修正信任包而不重建-pki)或簽發新套件，再建立分享；重新分享舊 DPK 不會改變 Manifest `uid` 或檔案內容。已建立的舊分享仍沿用原本下載檔名。
+
 新增分享的來源選單依 `runtime/packages/icu/`、`runtime/packages/atak/` 分組；ICU 即時產生另列一組。舊測試目錄 `runtime/share-inbox/` 不再顯示，也無法作為新增分享來源；需要保留的 DPK／ZIP 可手動移至 `runtime/packages/atak/`。手動產生的 ICU 設定檔與 QR 放在 `runtime/packages/icu/`，其產生器見 [ICU QR Code](../mediamtx/icu-qrcode.md)。分享頁產生的快照存於 Docker `share-files` volume，統計存於 `share-state` volume，兩者都可能含憑證或密碼。不要公開備份或使用 `docker compose down -v` 清除整套服務資料。
 
 每筆分享至少設定停止時間或下載上限，也可兩項都填；先達到的條件即停止後續下載。QR 顯示與 HEAD 不計次；公開端接受一次檔案 GET 就使用一次名額。管理頁顯示已使用次數與上限，可單筆停止或暫停全部分享。控制台開啟期間每 2 秒同步總開關、分享清單、下載次數、有效連結和來源檔案；切回分頁時立即同步。頁首顯示最後同步時間，連線失敗時顯示重試狀態。同步不清除正在填寫的停止條件或有效的來源選擇。總開關位於頁面上方；全部暫停時會顯示大型暫停符號與紅色狀態區塊。已結束的紀錄以灰底顯示，不再提供停止按鈕。分享網址是隨機高熵 token；停止分享或到期後，檔案快照仍留在 volume，需另外執行資料保留清理。

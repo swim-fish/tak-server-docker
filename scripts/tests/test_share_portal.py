@@ -262,14 +262,49 @@ class SharePortalTests(unittest.TestCase):
         self.assertEqual((qr.scheme, qr.netloc, qr.path),
                          ("tak", "com.atakmap.app", "/import"))
         download_url = parse_qs(qr.query)["url"][0]
-        self.assertTrue(download_url.endswith(f"/d/{row['token']}/example.dpk"))
+        self.assertTrue(download_url.endswith(f"/d/{row['token']}/{row['delivery_filename']}"))
+        self.assertNotEqual(row["delivery_filename"], row["filename"])
         self.assertEqual(client.head(urlparse(download_url).path).status_code, 200)
+        self.assertEqual(client.head(f"/d/{row['token']}/example.dpk").status_code, 404)
         self.assertEqual(client.get(f"/d/{row['token']}/wrong.dpk").status_code, 404)
         self.assertEqual(portal.get_share(row["token"])["accepted"], 0)
         response = client.get(urlparse(download_url).path, buffered=True)
         self.assertEqual(response.data, (portal.PACKAGE_DIR / "example.dpk").read_bytes())
+        self.assertIn(row["delivery_filename"], response.headers["Content-Disposition"])
         self.assertEqual(client.get(urlparse(download_url).path).status_code, 410)
         self.assertEqual(portal.get_share(row["token"])["completed"], 1)
+
+    def test_reissued_share_uses_new_download_filename_and_keeps_source_identity(self) -> None:
+        first = self.share(ttl_minutes=10, max_downloads=2)
+        second = self.share(ttl_minutes=10, max_downloads=2)
+        self.assertEqual(first["filename"], second["filename"])
+        self.assertNotEqual(first["delivery_filename"], second["delivery_filename"])
+        self.assertEqual(
+            (portal.FILE_DIR / first["stored_name"]).read_bytes(),
+            (portal.FILE_DIR / second["stored_name"]).read_bytes(),
+        )
+        self.assertEqual(portal.stop_file_shares("example.dpk"), 2)
+        self.assertIsNone(portal.reserve_download(first["token"]))
+        self.assertIsNone(portal.reserve_download(second["token"]))
+
+    def test_existing_share_without_delivery_filename_keeps_original_url(self) -> None:
+        row = self.share(ttl_minutes=10, max_downloads=1)
+        with portal.connection() as db:
+            db.execute("UPDATE shares SET delivery_filename=NULL WHERE id=?", (row["id"],))
+        legacy = portal.get_share(row["token"])
+        self.assertTrue(portal.file_url(legacy).endswith("/example.dpk"))
+        response = portal.app.test_client().get(f"/d/{row['token']}/example.dpk", buffered=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data, (portal.PACKAGE_DIR / "example.dpk").read_bytes())
+
+    def test_parallel_startup_migrates_existing_share_database(self) -> None:
+        with portal.connection() as db:
+            db.execute("ALTER TABLE shares DROP COLUMN delivery_filename")
+        with ThreadPoolExecutor(max_workers=2) as workers:
+            list(workers.map(lambda _index: portal.initialize(), range(2)))
+        with portal.connection() as db:
+            columns = {column[1] for column in db.execute("PRAGMA table_info(shares)")}
+        self.assertIn("delivery_filename", columns)
 
     def test_admin_auth_csrf_stop_and_pause(self) -> None:
         import share_admin_flask as admin

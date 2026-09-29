@@ -74,6 +74,7 @@ def initialize() -> None:
             max_downloads INTEGER, accepted INTEGER NOT NULL DEFAULT 0,
             completed INTEGER NOT NULL DEFAULT 0, status TEXT NOT NULL DEFAULT 'active'
         )""")
+        db.execute("BEGIN IMMEDIATE")
         existing = {column[1] for column in db.execute("PRAGMA table_info(shares)")}
         if "media_owner" not in existing:
             db.execute("ALTER TABLE shares ADD COLUMN media_owner TEXT")
@@ -83,12 +84,15 @@ def initialize() -> None:
             db.execute("ALTER TABLE shares ADD COLUMN display_name TEXT")
         if "batch_id" not in existing:
             db.execute("ALTER TABLE shares ADD COLUMN batch_id TEXT")
+        if "delivery_filename" not in existing:
+            db.execute("ALTER TABLE shares ADD COLUMN delivery_filename TEXT")
         db.execute("""CREATE TABLE IF NOT EXISTS downloads (
             id TEXT PRIMARY KEY, share_id TEXT NOT NULL, started_at INTEGER NOT NULL,
             finished_at INTEGER, outcome TEXT NOT NULL, bytes_sent INTEGER NOT NULL DEFAULT 0
         )""")
         db.execute("CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
         db.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('paused', '0')")
+        db.commit()
 
 
 def is_paused(db: sqlite3.Connection) -> bool:
@@ -284,16 +288,19 @@ def create_share(kind: str, source: str, ttl_minutes: int | None,
             shutil.copyfileobj(src, dst, length=1024 * 1024)
         if display_name is None:
             display_name = bootstrap_package_label(filename, target)
+    delivery_filename = (f"{Path(filename).stem}-{share_id[:12]}{Path(filename).suffix}"
+                         if kind == "file" else None)
     try:
         now = int(time.time())
         with connection() as db:
             db.execute("BEGIN IMMEDIATE")
             db.execute("""INSERT INTO shares
-                (id,token,kind,filename,stored_name,created_at,expires_at,max_downloads,media_owner,media_path,display_name,batch_id)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (id,token,kind,filename,stored_name,created_at,expires_at,max_downloads,media_owner,media_path,display_name,batch_id,delivery_filename)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (share_id, secrets.token_urlsafe(24), kind, filename, stored_name,
                  now, now + ttl_minutes * 60 if ttl_minutes is not None else None,
-                 max_downloads, media_owner, media_path, display_name, batch_id))
+                 max_downloads, media_owner, media_path, display_name, batch_id,
+                 delivery_filename))
             db.commit()
     except Exception:
         target.unlink(missing_ok=True)
@@ -337,7 +344,7 @@ def set_paused(paused: bool) -> None:
 def file_url(row: sqlite3.Row) -> str:
     base = f"{PUBLIC_BASE}/d/{row['token']}"
     if row["kind"] == "file":
-        return f"{base}/{quote(row['filename'])}"
+        return f"{base}/{quote(row['delivery_filename'] or row['filename'])}"
     return base
 
 
@@ -518,12 +525,13 @@ def download_response(row: sqlite3.Row, token: str) -> Response:
         return Response("Not found", 404)
     size = path.stat().st_size
     content_type = "application/xml; charset=utf-8" if row["kind"] == "icu" else "application/octet-stream"
+    filename = row["delivery_filename"] or row["filename"]
     fallback = "".join(
         char if (char.isascii() and char.isalnum()) or char in "._-" else "_"
-        for char in row["filename"])
+        for char in filename)
     headers = {
         "Content-Length": str(size),
-        "Content-Disposition": f"attachment; filename=\"{fallback}\"; filename*=UTF-8''" + quote(row["filename"]),
+        "Content-Disposition": f"attachment; filename=\"{fallback}\"; filename*=UTF-8''" + quote(filename),
     }
     if request.method == "HEAD":
         return Response(status=200, content_type=content_type, headers=headers)
@@ -572,6 +580,6 @@ def named_download(token: str, filename: str) -> Response:
     if error is not None:
         return error
     assert row is not None
-    if row["kind"] != "file" or filename != row["filename"]:
+    if row["kind"] != "file" or filename != (row["delivery_filename"] or row["filename"]):
         return Response("Not found", 404)
     return download_response(row, token)
