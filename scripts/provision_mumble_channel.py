@@ -9,7 +9,6 @@ import ssl
 import struct
 import time
 from pathlib import Path
-from local_network import bind_ip
 
 
 PROJECT = Path(__file__).resolve().parents[1]
@@ -135,21 +134,30 @@ def main() -> int:
         nargs="*",
         help="Channels to create; defaults to Primary and Alternate",
     )
-    parser.add_argument("--connect-host", default=bind_ip())
+    parser.add_argument("--connect-host")
     parser.add_argument("--server-name", default="takbox.local")
     parser.add_argument("--port", type=int, default=40000)
+    parser.add_argument("--root-ca", type=Path, default=ROOT_CA)
+    parser.add_argument("--system-ca", action="store_true")
+    parser.add_argument("--password-file", type=Path, default=SUPERUSER_PASSWORD)
     args = parser.parse_args()
+
+    if args.connect_host is None:
+        from local_network import bind_ip
+        args.connect_host = bind_ip()
 
     requested_channels = args.channels or ["Primary", "Alternate"]
     requested_channels = list(dict.fromkeys(name.strip() for name in requested_channels))
     if not all(requested_channels):
         raise SystemExit("Channel names must not be empty")
 
-    if not ROOT_CA.is_file() or not SUPERUSER_PASSWORD.is_file():
+    if (not args.system_ca and not args.root_ca.is_file()) or not args.password_file.is_file():
         raise SystemExit("Missing Mumble CA or SuperUser secret")
 
-    password = SUPERUSER_PASSWORD.read_text(encoding="utf-8").strip()
-    context = ssl.create_default_context(cafile=str(ROOT_CA))
+    password = args.password_file.read_text(encoding="utf-8").strip()
+    context = ssl.create_default_context(
+        cafile=None if args.system_ca else str(args.root_ca)
+    )
     context.minimum_version = ssl.TLSVersion.TLSv1_2
 
     with socket.create_connection((args.connect_host, args.port), timeout=5) as raw:

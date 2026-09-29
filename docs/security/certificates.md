@@ -32,6 +32,8 @@ TAK DPK 設定是指定連線的憑證設定，詳見[ATAK 連線](../atak/conne
 
 IP 要使用 `IP:` 類型，不能以 `DNS:192.168.137.1` 取代。通訊埠 `40000` 填在 Vx Port，不放入 SAN。固定 DNS 名稱可在 IP 改變後沿用憑證；直接以 IP 連線時，IP 改變就要重新簽發含新 IP SAN 的憑證，並更新 Vx Address。
 
+截至 2026-09-29，本機部署的 Mumble 葉憑證同時包含 `DNS:takbox.local` 與 `IP:192.168.88.2`，可對應這兩種入口。前表的 `192.168.137.1` 是 2026-09-22 單一類型 SAN 實測時使用的位址；目前綁定 IP 的服務憑證更新方式見[SAN 更新流程](service-san-renewal.md)。
+
 以上實測保留同一 CA、私鑰與 `CN=takbox.local`。APK 的信任流程有 Android、TAK 及自訂 fallback 分支；自訂分支接受符合 host 的 DNS 或 IP SAN，也有 CN fallback。本次正向測試證明兩種 SAN 配置可用，沒有證明各分支對不相符 SAN 都會拒絕；部署仍應使用相符 SAN，不依賴 CN fallback。完整範圍見[單一類型 SAN 實測](../validation/2026-09-22-mumble-san.md)。
 
 以下圖示以 DNS 入口為例，表示部署時應符合的信任與位址條件，不逐一表示 APK 的內部分支。
@@ -50,7 +52,7 @@ flowchart TB
     ICA -.-> CAP12
     CAP12 --> ATAK["ATAK / Vx<br/>匯入 CA 信任鏈"]
 
-    MDNS["mDNS responder<br/>takbox.local → 192.168.137.1"] --> ADDRESS["Vx Address<br/>takbox.local:40000"]
+    MDNS["mDNS responder<br/>takbox.local → 192.168.88.2"] --> ADDRESS["Vx Address<br/>takbox.local:40000"]
     ATAK --> ADDRESS
     ADDRESS -->|"TLS 連線"| MUMBLE
 

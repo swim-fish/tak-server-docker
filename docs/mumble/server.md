@@ -1,6 +1,6 @@
 # Mumble Server 與頻道
 
-Mumble 使用獨立伺服器憑證，由 TAK 中繼 CA 簽發。本專案教學與目前服務的 SAN 只有 `DNS:takbox.local`，用戶端入口為 `takbox.local:40000`，TCP 與 UDP 都對應到容器 64738。固定名稱讓主機 IP 改變時仍可沿用憑證；名稱解析、Compose 綁定與防火牆須同步調整。完整版本、通訊埠見[參考表](../reference/versions-and-ports.md)。
+Mumble 使用獨立伺服器憑證，由 TAK 中繼 CA 簽發。截至 2026-09-29，本機服務憑證的 SAN 同時包含 `DNS:takbox.local` 與 `IP:192.168.88.2`；用戶端可使用與 SAN 相符的位址連線至通訊埠 `40000`，TCP 與 UDP 都對應到容器的 `64738`。使用固定名稱時，主機 IP 改變後仍可沿用 DNS SAN；若直接以 IP 連線，則須更新憑證的 IP SAN。名稱解析、Compose 綁定與防火牆也須同步調整。完整版本、通訊埠見[參考表](../reference/versions-and-ports.md)，服務憑證更新流程見[SAN 更新](../security/service-san-renewal.md)。
 
 ## 啟動與檢查
 
@@ -18,9 +18,9 @@ docker compose logs --tail 80 mumble
 
 ### 使用 IP-only 憑證
 
-Vx Address 可改用 `192.168.137.1`、Port `40000`，Mumble 葉憑證只需含相符的 `IP:192.168.137.1` SAN；DNS-only 與 IP-only 都已有[實測紀錄](../validation/2026-09-22-mumble-san.md)。bootstrap 至少要填 `--host`（或 `--dns`）或 `--ip`；只填 `--ip` 即產生 IP-only，兩者都填則產生 DNS＋IP。既有憑證輪替不要使用 `--force`。
+Vx Address 可改用目前的 `192.168.88.2`、Port `40000`，Mumble 葉憑證只需含相符的 `IP:192.168.88.2` SAN；DNS-only 與 IP-only 都已有[實測紀錄](../validation/2026-09-22-mumble-san.md)。bootstrap 至少要填 `--host`（或 `--dns`）或 `--ip`；只填 `--ip` 即產生 IP-only，兩者都填則產生 DNS＋IP。既有憑證輪替不要使用 `--force`。
 
-選用 IP-only 時，健康檢查也應明確驗證 IP。可建立本機 `runtime/compose.mumble-ip.yaml`：
+另行簽發 IP-only 憑證時，健康檢查也應明確驗證 IP。可建立本機 `runtime/compose.mumble-ip.yaml`：
 
 ```yaml
 services:
@@ -32,7 +32,7 @@ services:
           printf '\n' |
           openssl s_client -connect 127.0.0.1:64738
           -CAfile /certs/root-ca.pem
-          -verify_ip 192.168.137.1
+          -verify_ip 192.168.88.2
           -verify_return_error >/dev/null 2>&1
 ```
 
@@ -40,7 +40,7 @@ services:
 docker compose -f compose.yaml -f runtime/compose.mumble-ip.yaml up -d --no-deps --force-recreate mumble
 ```
 
-`127.0.0.1:64738` 是容器內的探測位置，`-verify_ip` 則是憑證應包含的用戶端入口 IP。後續重新建立此服務時沿用同一 override。頻道工具使用 `--server-name 192.168.137.1`，使用者管理腳本使用 `-ServerName 192.168.137.1`，讓管理連線也依 IP SAN 驗證。切回 DNS 模式前，先換回含相符 DNS SAN 的憑證及 Vx Address，再採用原本 Compose 健康檢查。
+`127.0.0.1:64738` 是容器內的探測位置，`-verify_ip` 則是憑證應包含的用戶端入口 IP。後續重新建立此服務時沿用同一 override。頻道工具使用 `--server-name 192.168.88.2`，使用者管理腳本使用 `-ServerName 192.168.88.2`，讓管理連線也依 IP SAN 驗證。切回 DNS 模式前，先換回含相符 DNS SAN 的憑證及 Vx Address，再採用原本 Compose 健康檢查。
 
 ## 建立 Voice 頻道
 
@@ -48,11 +48,30 @@ docker compose -f compose.yaml -f runtime/compose.mumble-ip.yaml up -d --no-deps
 python ./scripts/provision_mumble_channel.py
 ```
 
-腳本使用 SuperUser，驗證 CA 與 `takbox.local` 後，初次建立持久化的 `Primary`（主要）、`Alternate`（次要）。目前四頻道 Vx DPK 另使用 `Medical`、`Emergency`；建立或核對全部頻道：
+腳本使用 `runtime/secrets/mumble_superuser_password` 中的 SuperUser 密碼，並以 `runtime/pki/public/root-ca.crt.pem` 驗證伺服器憑證及預設名稱 `takbox.local`。未指定 `--connect-host` 時，TCP 連線位址取自 `.env` 的 `TAK_BIND_IP`；預設通訊埠為 `40000`。初次執行會建立持久化的 `Primary`（主要）、`Alternate`（次要）。目前四頻道 Vx DPK 另使用 `Medical`、`Emergency`；建立或核對全部頻道：
 
 ```powershell
 python ./scripts/provision_mumble_channel.py Primary Alternate Medical Emergency --server-name takbox.local --port 40000
 ```
+
+連至其他 Mumble 主機或使用不同憑證、密碼檔時，可分別指定下列選項：
+
+| 選項 | 用途 |
+| --- | --- |
+| `--connect-host` | TCP 連線目標；指定後不讀取 `.env` 的 `TAK_BIND_IP`。 |
+| `--server-name` | TLS 憑證名稱驗證值；使用 DNS 名稱或憑證內的 IP SAN。此值不會改變 TCP 連線目標。 |
+| `--port` | TCP 連線通訊埠；預設 `40000`。 |
+| `--root-ca` | 自訂受信任 CA PEM 檔案；未指定時使用專案的 Root CA。 |
+| `--system-ca` | 改用作業系統信任庫；指定時忽略 `--root-ca`，目標 CA 必須已受系統信任。 |
+| `--password-file` | 自訂 SuperUser 密碼檔；預設使用 `runtime/secrets/mumble_superuser_password`。 |
+
+例如，直接透過目前的 IP SAN 驗證 Mumble 憑證，並明確指定連線位址：
+
+```powershell
+python ./scripts/provision_mumble_channel.py Primary Alternate Medical Emergency --connect-host 192.168.88.2 --server-name 192.168.88.2
+```
+
+`--connect-host` 與 `--server-name` 可不同：前者負責連線，後者負責驗證憑證。若另一個環境有獨立 CA 與 SuperUser 密碼檔，可再指定 `--root-ca <CA PEM 路徑>` 與 `--password-file <密碼檔路徑>`；只有該 CA 已加入作業系統信任庫時，才使用 `--system-ca`。
 
 成功時應列出每個頻道的 ID。頻道已存在時回報既有 ID，不重複建立。DPK 必須使用本台伺服器的實際 ID，不能把本次的 `2`–`5` 當成所有部署的固定值。建立失敗時先檢查 TLS、SuperUser secret 與伺服器紀錄，再重跑；不要清空 volume。
 
