@@ -10,6 +10,8 @@ import hmac
 import json
 import os
 import re
+import subprocess
+import threading
 import time
 import uuid
 from pathlib import Path
@@ -48,6 +50,8 @@ if not TEMPLATE_DIR.is_dir():
 if not STATIC_DIR.is_dir():
     STATIC_DIR = APP_DIR.parent / "docker/share-portal/static"
 app = Flask(__name__, template_folder=str(TEMPLATE_DIR), static_folder=str(STATIC_DIR))
+THUMBNAIL_CACHE: dict[tuple[str, str], tuple[float, bytes]] = {}
+THUMBNAIL_LOCK = threading.Lock()
 
 
 @app.context_processor
@@ -792,7 +796,8 @@ def media_management() -> str:
     try:
         registry = media.load()
         paths = [{**item, "public_url": "http://takbox.local:8889/" + quote(item["name"], safe="/") + "/",
-                  "preview_url": "/media/preview/" + quote(item["name"], safe="/") + "/"}
+                  "preview_url": "/media/preview/" + quote(item["name"], safe="/") + "/",
+                  "thumbnail_url": "/media/thumbnail/" + quote(item["name"], safe="/")}
                  for item in media.active_paths()]
         viewer = media.viewer_status()
     except (RuntimeError, OSError, ValueError) as exc:
@@ -811,6 +816,74 @@ def media_management() -> str:
 def media_live_status() -> Response:
     try:
         return jsonify(media.viewer_status())
+    except (RuntimeError, OSError, ValueError) as exc:
+        return jsonify({"error": str(exc)}), 503
+
+
+@app.get("/media/thumbnail/<path:path>")
+def media_thumbnail(path: str) -> Response:
+    """Capture one RTSP frame and return a JPEG; no viewer session stays open."""
+    try:
+        current = next((item for item in media.active_paths() if item["name"] == path), None)
+    except (RuntimeError, OSError, ValueError):
+        return Response("Stream status unavailable", 503)
+    if current is None:
+        return Response("Stream is not online", 404)
+    key = (path, str(current.get("readyTime", "")))
+    now = time.monotonic()
+    with THUMBNAIL_LOCK:
+        cached = THUMBNAIL_CACHE.get(key)
+        if cached and now - cached[0] < 300:
+            return Response(cached[1], content_type="image/jpeg")
+    try:
+        password = media.READ_SECRET.read_text(encoding="ascii").strip()
+    except OSError:
+        return Response("Snapshot credentials unavailable", 503)
+    source = "rtsp://atak-viewer:" + quote(password, safe="") + "@mediamtx:8554/" + quote(path, safe="/")
+    try:
+        captured = subprocess.run(
+            ["ffmpeg", "-hide_banner", "-nostdin", "-loglevel", "error", "-rtsp_transport", "tcp",
+             "-i", source, "-frames:v", "1", "-vf", "scale=480:-2", "-q:v", "6",
+             "-f", "image2pipe", "-vcodec", "mjpeg", "pipe:1"],
+            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, timeout=30, check=False)
+    except (OSError, subprocess.TimeoutExpired):
+        return Response("Snapshot unavailable", 502)
+    image = captured.stdout
+    if captured.returncode or not image.startswith(b"\xff\xd8") or len(image) > 2_000_000:
+        return Response("Snapshot unavailable", 502)
+    with THUMBNAIL_LOCK:
+        THUMBNAIL_CACHE[key] = (now, image)
+        if len(THUMBNAIL_CACHE) > 24:
+            oldest = min(THUMBNAIL_CACHE, key=lambda item: THUMBNAIL_CACHE[item][0])
+            del THUMBNAIL_CACHE[oldest]
+    return Response(image, content_type="image/jpeg")
+
+
+def media_wall_catalog(registry: dict, paths: list[dict]) -> list[dict[str, str]]:
+    """List configured and live paths without exposing publisher credentials."""
+    names = {path for item in registry["publishers"].values() if item["enabled"]
+             for path in item["paths"] if path.startswith("live/") and not path.startswith("~")}
+    names.update(item["name"] for item in paths if item.get("ready") and item["name"].startswith("live/"))
+    return [{"path": name, "label": name, "url": "/media/preview/" + quote(name, safe="/") + "/"}
+            for name in sorted(names, key=str.casefold)]
+
+
+@app.get("/media/wall")
+def media_wall_page() -> str:
+    try:
+        streams = media_wall_catalog(media.load(), media.active_paths())
+        error = None
+    except (RuntimeError, OSError, ValueError) as exc:
+        streams, error = [], str(exc)
+    return render_template("media_wall.html", view="wall", streams=streams, error=error)
+
+
+@app.get("/media/wall/status")
+def media_wall_status() -> Response:
+    try:
+        paths = media.active_paths()
+        return jsonify({"available": media_wall_catalog(media.load(), paths),
+                        "active": [item["name"] for item in paths if item.get("ready")]})
     except (RuntimeError, OSError, ValueError) as exc:
         return jsonify({"error": str(exc)}), 503
 

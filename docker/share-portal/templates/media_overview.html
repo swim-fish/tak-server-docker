@@ -23,7 +23,8 @@
     {% for path in paths %}
     <article class="media-stream-card">
       <div class="media-stream-thumb">
-        <iframe data-thumbnail-url="{{ path.preview_url }}?controls=false&amp;muted=true&amp;autoplay=true" title="{{ path.name }} 小圖預覽" tabindex="-1" aria-hidden="true" loading="lazy" referrerpolicy="no-referrer" allow="autoplay"></iframe>
+        <img data-thumbnail-image src="{{ path.thumbnail_url }}" alt="{{ path.name }} 的靜態截圖" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+        <span class="media-stream-thumb-fallback" role="status">正在擷取截圖…</span>
         <button class="media-stream-preview-trigger" type="button" data-preview-url="{{ path.preview_url }}" aria-label="放大預覽 {{ path.name }}"><span>放大預覽</span></button>
       </div>
       <div class="media-stream-details">
