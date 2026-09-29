@@ -1,5 +1,7 @@
 # MediaMTX 管理與 WebRTC 預覽
 
+ICU、無人機、ATAK 與瀏覽器的影像處理流程和加密狀態，見[本機影像處理與流向](video-flow.md)。
+
 Windows 本機控制台把 MediaMTX 管理分為「ICU」(`http://127.0.0.1:10066/media`)、「其他」(`http://127.0.0.1:10066/media/other`)、「監視器模式」(`http://127.0.0.1:10066/media/wall`) 與「觀看工作階段」(`http://127.0.0.1:10066/media/sessions`) 四個子頁。ICU 與其他頁共用線上 `live/` 串流、即時預覽及公開觀看開關；ICU 身分以卡片呈現，一般設備身分以表格呈現。頁面使用控制台既有的 Basic 驗證；MediaMTX Control API 只在 Compose 網路內開放。
 
 ![ICU 小隊卡片](../images/console-media-icu-cards.png)

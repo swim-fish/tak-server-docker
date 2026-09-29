@@ -2,6 +2,8 @@
 
 本服務以 [MediaMTX v1.21.1](https://github.com/bluenviron/mediamtx/releases/tag/v1.21.1) 接收影像。Compose 同時啟用 RTSP `8554/TCP`、RTSPS `8322/TCP`，以及對應的 RTP／RTCP `8000-8001/UDP`、SRTP／SRTCP `8004-8005/UDP`。發布路徑限於 `test` 與 `live/` 開頭；MediaMTX 管理 API 只在 Compose 網路內使用。另有獨立的 WebRTC viewer 與控制台預覽服務，見[MediaMTX 管理](management.md)。設定來源是[範本](../../config/mediamtx/mediamtx.yml.template)，實際含帳密設定保存在忽略版控的 `runtime/mediamtx/mediamtx.yml`。
 
+來源到播放端的完整處理流程與逐段 TLS 說明見[本機影像處理與流向](video-flow.md)。
+
 ## 簽發憑證與啟動
 
 先完成[TAK PKI bootstrap](../getting-started.md#2-產生憑證與-tak-連線包)。現有部署**不要**用 `bootstrap_local.py --force` 取得 MediaMTX 憑證；執行獨立簽發腳本即可：

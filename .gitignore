@@ -35,3 +35,6 @@ __pycache__/
 *.pcapng
 *.trx
 *.junit.xml
+
+# Generated Word reports remain local until explicitly approved for tracking.
+docs/reports/*.docx

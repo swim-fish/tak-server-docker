@@ -85,6 +85,8 @@
 
 ## 任務七　檢視影像與控制觀看
 
+先看下方流向圖，再依播放端選擇連線：ICU 以 RTSPS（`Use SSL?` 勾選）發布；無人機／一般設備可用 RTSPS，受控區域網路內也可用無 TLS 的 RTSP。ATAK 的已驗證路徑是直接向 MediaMTX 以 RTSP／TCP 讀取；瀏覽器則由獨立 viewer／preview 容器按需讀取後提供 WebRTC。逐段協定、加密與實測限制見[本機影像處理與流向](../../mediamtx/video-flow.md)。
+
 1. 在「MediaMTX 管理」選線上串流，按「即時預覽」；看完按「關閉預覽」。
 2. 熱點裝置使用 `http://takbox.local:8889/live/<path>/` 觀看，末尾斜線需保留。
 3. 以「公開 WebRTC 觀看」開關控制新觀看與現有公開工作階段；此開關不停止 ICU 推流。切到「觀看工作階段」子頁，核對公開觀看的數量、路徑、來源位址與連線狀態；管理頁即時預覽不列入。此頁每 5 秒更新，可搜尋或按「立即更新」。
@@ -96,9 +98,9 @@
 
 圖 13：管理頁顯示公開觀看開關、工作階段數與串流清單。
 
-![MediaMTX 推流與觀看流向](../../images/console-task-07b-viewing-flow.png)
+![ICU、無人機、MediaMTX、ATAK、WebRTC 與縮圖的影像流向](../../images/console-task-07b-viewing-flow.png)
 
-圖 14：推流與觀看分屬不同路徑；控制台預覽僅供 Windows 本機使用。
+圖 14：來源推流、MediaMTX 接收、ATAK 直接讀取、瀏覽器 WebRTC 與單影格縮圖分屬不同處理路徑。`Use SSL?` 代表 ICU 的 RTSPS／TLS；WebRTC 的 HTTP 信令與加密媒體也分開標示。
 
 ![MediaMTX 公開觀看工作階段頁](../../images/console-media-viewer-sessions.png)
 
