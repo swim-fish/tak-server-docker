@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="zh-Hant-TW" data-bs-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>監視器模式 · MediaMTX 管理</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap/bootstrap.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='console.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='media_wall.css') }}">
+  <script src="{{ url_for('static', filename='console_ui.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='media_wall.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='bootstrap/bootstrap.bundle.min.js') }}" defer></script>
+</head>
+<body class="portal-page media-wall-page">
+<main class="media-layout">
+  <header class="page-header">
+    {{ console_nav }}
+    {{ console_breadcrumb([('MediaMTX 管理', '/media'), ('監視器模式', none)]) }}
+    <h1>MediaMTX 管理</h1>
+    {% include 'media_nav.html' %}
+  </header>
+  {% if error %}<div class="alert alert-danger" role="alert">無法讀取 MediaMTX：{{ error }}</div>{% endif %}
+  <section class="card media-wall-panel" aria-labelledby="media-wall-title">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+      <div><h2 id="media-wall-title" class="mb-1">監視器模式</h2><p class="muted mb-0">使用本機管理預覽播放 takbox.local 串流。</p></div>
+      <span class="badge text-bg-info status-badge" id="wallCount">0 路上線</span>
+    </div>
+    <div class="media-wall-toolbar d-flex flex-wrap align-items-end gap-2 mb-2" role="group" aria-label="監視器模式控制">
+      <label>畫面數<select class="form-select" id="layout" aria-label="畫面數">
+        {% for count in (1, 2, 4, 6, 8, 12, 16) %}<option value="{{ count }}" {{ 'selected' if count == 4 else '' }}>{{ count }} 畫面</option>{% endfor %}
+      </select></label>
+      <label class="media-wall-picker">串流<select class="form-select" id="streamPicker" aria-label="選擇串流"></select></label>
+      <button class="btn btn-primary" id="addStream" type="button">加入畫面</button>
+      <button class="btn btn-outline-secondary" id="clearWall" type="button">清空</button>
+      <button class="btn btn-outline-info" id="fullScreen" type="button">全螢幕</button>
+    </div>
+    <p class="muted small mb-2" id="message" role="status" aria-live="polite"></p>
+    <div class="media-wall-grid" id="wall" aria-label="即時影像監看牆"></div>
+    <p class="muted small mt-2 mb-0">拖曳標題或使用箭頭調整順序；暫停、關閉單格會中斷該格的 WebRTC 連線。此頁不受公開觀看開關影響。</p>
+  </section>
+</main>
+<script id="wallConfig" type="application/json">{{ streams|tojson }}</script>
+</body>
+</html>

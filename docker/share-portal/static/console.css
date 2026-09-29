@@ -160,7 +160,9 @@ body.portal-detail { max-width: 1100px; }
 .media-stream-grid > p { margin: 0; }
 .media-stream-card { display: grid; grid-template-columns: minmax(100px, 34%) minmax(0, 1fr); align-items: center; gap: .75rem; min-width: 0; padding: .65rem; background: #13212a; border: 1px solid var(--portal-line); border-radius: .35rem; }
 .media-stream-thumb { position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; background: #0c151c; border-radius: .25rem; }
-.media-stream-thumb iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; pointer-events: none; }
+.media-stream-thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.media-stream-thumb-fallback { position: absolute; inset: 0; display: grid; place-items: center; padding: .4rem; color: var(--portal-muted); font-size: .75rem; text-align: center; }
+.media-stream-thumb-fallback[hidden] { display: none; }
 .media-stream-preview-trigger { position: absolute; inset: 0; display: flex; align-items: flex-end; justify-content: center; width: 100%; padding: 0; color: #fff; background: transparent; border: 0; cursor: pointer; }
 .media-stream-preview-trigger span { width: 100%; padding: .15rem .35rem; background: #000b; font-size: .78rem; font-weight: 700; text-align: center; }
 .media-stream-preview-trigger:hover span, .media-stream-preview-trigger:focus-visible span { background: #000e; }
