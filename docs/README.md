@@ -18,6 +18,8 @@
 | 核對憑證信任鏈與中繼 CA 替換的證據邊界 | [憑證信任設計報告](reports/tak-certificate-trust-design-report.md) |
 | 準備與驗證中繼 CA 輪替 | [CA 輪替測試計畫](plans/ca-rotation.md) |
 | 管理 TAK 服務、管理員與裝置使用者 | [TAK Server 維運](tak-server/operations.md) |
+| 規劃 TAK Server、FedHub 與 ATAK 的連線、通訊埠及互信設定 | [Federation Hub 串接](tak-server/federation-hub.md) |
+| 管理跨網域 Data Sync Mission、Data Feed、VBM 與斷線補送 | [Mission 與 Data Feed federation](tak-server/mission-data-feed-federation.md) |
 | 用控制台管理用戶端憑證、群組、DPK 與撤銷 | [用戶端憑證控制台](tak-server/certificate-console.md) |
 | 依畫面操作簽發、交付、群組與撤銷 | [憑證控制台使用手冊](tak-server/certificate-operator-guide.md) |
 | 依任務操作整套 TAK 控制台 | [任務操作手冊](tak-server/console-task-manual.md) |
