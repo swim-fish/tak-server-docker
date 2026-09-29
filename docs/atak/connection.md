@@ -24,6 +24,12 @@ bootstrap 產物為 `runtime/packages/atak/atak-local-test.dpk`，內容：
 
 成功代表 TAK 憑證連線可用，不代表 Vx 任務已建立。若失敗，先檢查名稱解析、憑證有效期及信任鏈，再看[疑難排解](../troubleshooting.md)。
 
+更新 DPK 內的 TAK 連線、CA 或裝置憑證資料時，須重新產生套件並建立新的短效分享。本專案的 DPK 產生器每次打包都會建立新的 Manifest `uid`，使套件取得新的 SHA-256；分享頁也會為每筆新分享提供不同的下載檔名，避免再次使用同名下載檔。重新分享**同一份舊 DPK**不會更新其中的設定或憑證。匯入後仍須在 ATAK 確認套件已解壓縮、連線設定已變更且實際連線成功。
+
+相同 Manifest `uid` 並非已確認的通用「略過匯入」條件：ATAK-CIV 5.5.1.10 原始碼的套件解壓縮流程沒有先依 `uid` 拒絕；網路接收流程另會以顯示名稱及 SHA-256 判斷完全相同的套件，套件清單則會按 `uid` 合併顯示。先前同名 QR 下載曾停在檔案覆寫階段，改用新檔名與新 `uid` 後成功，但當時也刪除了裝置上的舊檔，無法單獨判定原因。詳見[實機紀錄](../validation/2026-09-24-ca-rotation-device-baseline.md#bravo-重匯入紀錄)。
+
+若紀錄顯示套件已解壓縮，但 `servers.pref` 沒有套用，還須檢查 ATAK 的 `pref_import_pref_action` 是否設為 `PROMPT` 或 `DENY`，以及裝置端是否完成提示；更換 Manifest `uid` 本身無法繞過偏好設定匯入政策。
+
 2026-09-23 實機 QR 匯入已確認 `takbox.local:8089:ssl` 連線成功。此 DPK 含裝置私鑰與匯入密碼；本次 HTTP QR 僅在使用者明確授權的本機熱點、短效及限次條件下測試，完成後已停止分享。Vx-only DPK 使用相同 ATAK QR 匯入時未建立 Mission，須另走[TAK Server Download](vx-missions.md#從-tak-server-下載任務)。
 
 ## 設定是個別伺服器還是全域
@@ -48,6 +54,6 @@ bootstrap 產物為 `runtime/packages/atak/atak-local-test.dpk`，內容：
 python ./scripts/rebuild_atak_data_package.py --host takbox.local --client-name atak-client
 ```
 
-此工具重建信任憑證鏈資料庫與 DPK，沿用既有用戶端憑證；`--client-name` 不會簽發新身分。重新交付並匯入後再確認 TAK 連線。若是憑證到期、撤銷、私鑰遺失或 SAN 不符，重打包不能修復，應先處理 PKI。
+此工具重建信任憑證鏈資料庫與 DPK，沿用既有用戶端憑證，並為重建後的套件產生新的 Manifest `uid`；`--client-name` 不會簽發新身分。重新交付時建立新的短效分享，並在 ATAK 確認套件匯入與 TAK 連線。若是憑證到期、撤銷、私鑰遺失或 SAN 不符，重打包不能修復，應先處理 PKI。
 
 Manifest 的實際 `contentType` 使用 `ATAK Preferences` 及 `P12 Certificate`；不要把說明文字或無空白別名當作格式值。來源：[bootstrap](../../scripts/bootstrap_local.py)、[重打包工具](../../scripts/rebuild_atak_data_package.py)、[實測紀錄](../validation/2026-09-21-tak-server-dpk.md)。
