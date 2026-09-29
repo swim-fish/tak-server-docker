@@ -220,6 +220,13 @@ def with_all_read(groups: list[str]) -> list[str]:
     return sorted(set(groups) | {squad_groups.ALL_GROUP})
 
 
+def package_download_prefix(*group_lists: list[str] | None) -> str:
+    """Use a squad prefix only when the package has one mapped TAK group."""
+    groups = set().union(*(group_list or [] for group_list in group_lists))
+    matching = [squad for squad, group in squad_groups.load().items() if group in groups]
+    return matching[0].capitalize() if len(matching) == 1 else "TAK"
+
+
 @app.get("/settings/groups")
 def squad_group_settings() -> str:
     try:
@@ -569,7 +576,10 @@ def run_certificate_batch(job_id: str, receipt: dict) -> dict:
         try:
             share_id = portal.create_share("file", f"atak:{entry['package']}",
                                            receipt["values"]["ttl"], receipt["values"]["limit"],
-                                           display_name=f"{entry['request']['cn']}-{entry['serial']}")
+                                           display_name=f"{entry['request']['cn']}-{entry['serial']}",
+                                           download_prefix=package_download_prefix(
+                                               entry["request"].get("in_groups"),
+                                               entry["request"].get("out_groups")))
             receipt["results"].append({"serial": entry["serial"], "label": entry["request"]["name"],
                                        "share_id": share_id})
             save_operation(job_id, receipt)
@@ -718,7 +728,9 @@ def provision_execute() -> str | Response:
         if values["kind"] == "tak":
             for record in values["records"]:
                 share_id = portal.create_share("file", f"atak:{record['package']}", values["ttl"], values["limit"],
-                                               display_name=f"{record['cn']}-{record['serial']}")
+                                               display_name=f"{record['cn']}-{record['serial']}",
+                                               download_prefix=package_download_prefix(
+                                                   record.get("in_groups"), record.get("out_groups")))
                 receipt["results"].append({"label": record["name"], "share_id": share_id})
                 save_operation(operation_id, receipt)
         elif values["kind"] == "icu":
@@ -1326,7 +1338,9 @@ def certificate_share() -> Response:
         if record["registered"] is False:
             raise ValueError("TAK registration must be verified before sharing")
         portal.create_share("file", f"atak:{record['package']}", 20, 3,
-                            display_name=f"{record['cn']}-{record['serial']}")
+                            display_name=f"{record['cn']}-{record['serial']}",
+                            download_prefix=package_download_prefix(
+                                record.get("in_groups"), record.get("out_groups")))
     except (RuntimeError, OSError, ValueError) as exc:
         return Response(str(exc), 409)
     return redirect(url_for("certificates", result="shared"), code=303)
