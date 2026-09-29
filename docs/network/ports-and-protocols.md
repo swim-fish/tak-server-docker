@@ -51,4 +51,4 @@ Get-NetTCPConnection -State Listen | Where-Object LocalPort -in 8089,8443,40000,
 Get-NetUDPEndpoint | Where-Object LocalPort -in 40000,8000,8001,8004,8005,8189,8190,5353
 ```
 
-這些命令檢查主機映射及監聽狀態；連線是否可用仍須從實際裝置確認。`8446` Federation、RTMP 與 SRT 目前未啟用，也沒有將任何服務驗收為網際網路可用。完整規則與重新開機步驟見[Windows 防火牆](firewall.md)，版本及容器來源見[版本參考](../reference/versions-and-ports.md)。
+這些命令檢查主機映射及監聽狀態；連線是否可用仍須從實際裝置確認。`8446` 是 TAK Server 的 WebTAK/OAuth HTTPS 入口，目前未發布；Federation Hub 與 TAK federation listener 也尚未部署或發布，所需通訊埠與連線方向見[Federation Hub 串接](../tak-server/federation-hub.md)。RTMP 與 SRT 目前未啟用，也沒有將任何服務驗收為網際網路可用。完整規則與重新開機步驟見[Windows 防火牆](firewall.md)，版本及容器來源見[版本參考](../reference/versions-and-ports.md)。
