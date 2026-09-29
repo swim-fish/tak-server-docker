@@ -17,12 +17,13 @@ ROOT = Path(__file__).resolve().parents[1]
 WORKERS = {
     "certificate": ("tak_certificate_host", ROOT / "runtime/tak-cert-control"),
     "mumble": ("mumble_control_host", ROOT / "runtime/share-control"),
+    "service": ("service_control_host", ROOT / "runtime/service-control"),
 }
 
 
 def main(name: str) -> None:
     if name not in WORKERS:
-        raise SystemExit("Expected certificate or mumble")
+        raise SystemExit("Expected certificate, mumble, or service")
     module_name, directory = WORKERS[name]
     directory.mkdir(parents=True, exist_ok=True)
     with (directory / "worker.log").open("a", encoding="utf-8", buffering=1) as log:

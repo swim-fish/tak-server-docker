@@ -9,10 +9,12 @@
 | 現場快速交付 TAK、Vx、ICU 與無人機設定，或停用身分 | [現場人員 Quick Start](tak-server/frontline-quick-start.md) |
 | 從官方 ZIP 建立服務並連上 ATAK／Vx | [首次建置腳本](scripts/first-time-setup.md)、[逐步流程](getting-started.md) |
 | 理解目前有哪些服務、哪些項目已驗證 | [架構與驗證狀態](architecture.md) |
+| Inspect layered health and service controls | [Service health and lifecycle](services/health-and-lifecycle.md) |
 | 設定、測試或移除 Windows 名稱解析 | [mDNS](network/mdns.md) |
 | 啟用熱點與防火牆、處理重新開機後的連線 | [防火牆](network/firewall.md) |
 | 查目前的 TCP／UDP 通訊埠、對外範圍與防火牆規則 | [通訊埠與連線方向](network/ports-and-protocols.md) |
 | 理解憑證鏈、SAN、TAK 信任憑證鏈資料庫與更新 CRL | [憑證與撤銷](security/certificates.md) |
+| 主機 IP 變更後重新簽發服務憑證 SAN | [服務憑證 SAN 更新](security/service-san-renewal.md) |
 | 核對憑證信任鏈與中繼 CA 替換的證據邊界 | [憑證信任設計報告](reports/tak-certificate-trust-design-report.md) |
 | 準備與驗證中繼 CA 輪替 | [CA 輪替測試計畫](plans/ca-rotation.md) |
 | 管理 TAK 服務、管理員與裝置使用者 | [TAK Server 維運](tak-server/operations.md) |

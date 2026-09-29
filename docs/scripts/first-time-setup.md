@@ -36,7 +36,7 @@ python -m pip install -r .\scripts\requirements-tak-certificate-host.txt
 3. 執行 `bootstrap_local.py`，建立 Root／中繼 CA、CRL、TAK／ATAK／Mumble 憑證、密碼、`runtime/tak/` 與初始 DPK。
 4. 執行 `provision_mediamtx.py`，建立 MediaMTX 憑證、帳密、觀看與管理設定，再用 `docker compose config --quiet` 檢查 Compose 輸入。
 5. 安裝並啟動 mDNS；依 Windows UAC 提示建立 TAK、MediaMTX 與 Mumble 熱點防火牆規則。**Mumble 會開啟可互動的前景視窗，使用期間須保持開啟；按 Ctrl+C 會清除該工作階段規則。**
-6. 執行 `docker compose up -d --build`，授予 TAK 管理憑證權限、重啟 TAK 並等待健康檢查，建立 Mumble 的 `Primary`、`Alternate`、`Medical`、`Emergency` 頻道，安裝並啟動兩個 Windows 管理程式。
+6. 執行 `docker compose up -d --build`，授予 TAK 管理憑證權限、重啟 TAK 並等待健康檢查，建立 Mumble 的 `Primary`、`Alternate`、`Medical`、`Emergency` 頻道，安裝並啟動 Windows 管理 worker。
 
 `-SkipNetworkSetup` 只供熱點名稱解析與防火牆已由其他方式設定時使用；它略過 mDNS 和防火牆變更，但仍要求熱點 IP 已存在。使用此選項後，Android 是否可連線須自行驗證。
 
