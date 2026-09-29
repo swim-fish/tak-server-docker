@@ -1,12 +1,17 @@
 # 現行架構與驗證狀態
 
-本頁描述 2026-09-24 專案已實作的本機部署。主要來源是 [Compose](../compose.yaml)、[bootstrap](../scripts/bootstrap_local.py) 與[驗證紀錄](validation/README.md)。
+本頁描述目前專案已實作的本機部署。主要來源是 [Compose](../compose.yaml)、[bootstrap](../scripts/bootstrap_local.py) 與[驗證紀錄](validation/README.md)。影像的逐段協定、TLS 狀態與處理流程見[本機影像處理與流向](mediamtx/video-flow.md)。
 
 ```mermaid
 flowchart LR
     A["Android ATAK"] -->|"CoT TLS"| T["TAK Server"]
     V["ATAK Vx"] -->|"TLS 控制；語音使用 UDP 或 TCP tunnel"| M["Mumble"]
-    I["TAK ICU"] -->|"RTSPS／RTSP 影像"| X["MediaMTX"]
+    I["TAK ICU"] -->|"RTSPS 8322／TLS 影像"| X["MediaMTX"]
+    R["無人機／其他設備"] -->|"RTSPS 8322／TLS；或 RTSP 8554／無 TLS"| X
+    X -->|"RTSP 8554／無 TLS；直接讀取"| A
+    X -->|"Compose 內 RTSP 8554"| W["WebRTC viewer／preview"]
+    W -->|"HTTP 信令＋加密 WebRTC 媒體"| B["瀏覽器"]
+    T -.->|"Video Alias 中繼資料；非影像"| A
     A -->|"短效 DPK／ZIP 下載"| P["分享入口"]
     I -->|"QR 下載 ICU 設定"| P
     A -.-> N["Windows mDNS"]

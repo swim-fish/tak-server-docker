@@ -23,6 +23,7 @@
 | 依任務操作整套 TAK 控制台 | [任務操作手冊](tak-server/console-task-manual.md) |
 | 啟動 Mumble、建立頻道或更換密碼 | [Mumble Server](mumble/server.md) |
 | 啟動 RTSP／RTSPS 影像服務、設定 TAK ICU | [MediaMTX](mediamtx/server.md) |
+| 查看 ICU、無人機、ATAK 與 WebRTC 的影像流向和加密狀態 | [本機影像處理與流向](mediamtx/video-flow.md) |
 | 用 QR Code 佈建 TAK ICU 影像發布設定 | [ICU QR Code](mediamtx/icu-qrcode.md) |
 | 查看即時影像、公開 WebRTC 開關及管理小隊／設備發布身分 | [MediaMTX 管理](mediamtx/management.md) |
 | 分享 ICU 設定或 ATAK DPK／ZIP，管理 Mumble | [分享與管理頁](sharing/portal.md) |
