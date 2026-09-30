@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2100" height="1400" viewBox="0 0 2100 1400" role="img">
+<title>MediaMTX | authInternalUsers</title>
+<rect width="100%" height="100%" fill="white"/>
+<text x="60" y="38" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="46" font-weight="700" fill="#17324a" dominant-baseline="text-before-edge">MediaMTX | authInternalUsers</text>
+<text x="60" y="103" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="26" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Current repository policy: identity + action + source IP + path, independently on each node</text>
+<rect x="60" y="200" width="580" height="145" rx="20" fill="#f5f9fc" stroke="#1673ad" stroke-width="3"/>
+<text x="84" y="220" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="32" font-weight="700" fill="#1673ad" dominant-baseline="text-before-edge">icu-&lt;squad&gt;</text>
+<text x="84" y="270" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="26" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">publish: registered member paths</text>
+<text x="84" y="306" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="26" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">named squad: VIDEO_1 path regex</text>
+<rect x="60" y="380" width="580" height="145" rx="20" fill="#f5f9fc" stroke="#1673ad" stroke-width="3"/>
+<text x="84" y="400" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="32" font-weight="700" fill="#1673ad" dominant-baseline="text-before-edge">device-&lt;generated-id&gt;</text>
+<text x="84" y="450" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="26" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">publish: one exact device path</text>
+<text x="84" y="486" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="26" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">independent generated credential</text>
+<rect x="60" y="560" width="580" height="145" rx="20" fill="#f5f9fc" stroke="#1673ad" stroke-width="3"/>
+<text x="84" y="580" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="32" font-weight="700" fill="#1673ad" dominant-baseline="text-before-edge">atak-publisher</text>
+<text x="84" y="630" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="26" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">publish: live/* + test</text>
+<text x="84" y="666" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="26" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">retained legacy shared credential</text>
+<rect x="60" y="740" width="580" height="145" rx="20" fill="#f5f9fc" stroke="#1673ad" stroke-width="3"/>
+<text x="84" y="760" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="32" font-weight="700" fill="#1673ad" dominant-baseline="text-before-edge">atak-viewer</text>
+<text x="84" y="810" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="26" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">read: live/* + test</text>
+<text x="84" y="846" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="26" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">ATAK, downstream nodes, thumbnails</text>
+<rect x="60" y="920" width="580" height="145" rx="20" fill="#f5f9fc" stroke="#1673ad" stroke-width="3"/>
+<text x="84" y="940" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="32" font-weight="700" fill="#1673ad" dominant-baseline="text-before-edge">tak-console</text>
+<text x="84" y="990" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="26" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">api: management operations</text>
+<text x="84" y="1026" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="26" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">no publish or read permission</text>
+<rect x="755" y="340" width="570" height="590" rx="20" fill="#f5f9fc" stroke="#168069" stroke-width="3"/>
+<text x="779" y="360" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="32" font-weight="700" fill="#168069" dominant-baseline="text-before-edge">mediamtx authorization</text>
+<text x="779" y="410" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="24" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">authMethod: internal</text>
+<text x="779" y="446" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="24" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">1. Validate username / password</text>
+<text x="779" y="482" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="24" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">2. Match the requested action</text>
+<text x="779" y="518" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="24" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">3. Check ips (currently [])</text>
+<text x="779" y="554" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="24" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">4. Match exact or regex path</text>
+<text x="779" y="590" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="24" font-weight="400" fill="#486079" dominant-baseline="text-before-edge"></text>
+<text x="779" y="626" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="24" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Disabled dynamic users are omitted.</text>
+<text x="779" y="662" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="24" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Active sessions are kicked separately.</text>
+<text x="779" y="698" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="24" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Host firewall is a separate boundary.</text>
+<polyline points="640,272 695,272 695,420 755,420" fill="none" stroke="#1673ad" stroke-width="5" stroke-linejoin="round"/>
+<polygon points="755.0,420.0 735.0,429.0 735.0,411.0" fill="#1673ad"/>
+<polyline points="640,452 695,452 695,490 755,490" fill="none" stroke="#1673ad" stroke-width="5" stroke-linejoin="round"/>
+<polygon points="755.0,490.0 735.0,499.0 735.0,481.0" fill="#1673ad"/>
+<polyline points="640,632 695,632 695,600 755,600" fill="none" stroke="#1673ad" stroke-width="5" stroke-linejoin="round"/>
+<polygon points="755.0,600.0 735.0,609.0 735.0,591.0" fill="#1673ad"/>
+<polyline points="640,812 695,812 695,790 755,790" fill="none" stroke="#1673ad" stroke-width="5" stroke-linejoin="round"/>
+<polygon points="755.0,790.0 735.0,799.0 735.0,781.0" fill="#1673ad"/>
+<polyline points="640,992 695,992 695,870 755,870" fill="none" stroke="#1673ad" stroke-width="5" stroke-linejoin="round"/>
+<polygon points="755.0,870.0 735.0,879.0 735.0,861.0" fill="#1673ad"/>
+<rect x="1460" y="235" width="580" height="195" rx="20" fill="#f5f9fc" stroke="#168069" stroke-width="3"/>
+<text x="1484" y="255" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="32" font-weight="700" fill="#168069" dominant-baseline="text-before-edge">publish</text>
+<text x="1484" y="305" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="24" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Create a stream on an allowed path.</text>
+<text x="1484" y="341" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="24" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Squad regex or exact device grant.</text>
+<text x="1484" y="377" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="24" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Legacy shared publisher stays broad.</text>
+<rect x="1460" y="600" width="580" height="195" rx="20" fill="#f5f9fc" stroke="#1673ad" stroke-width="3"/>
+<text x="1484" y="620" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="32" font-weight="700" fill="#1673ad" dominant-baseline="text-before-edge">read</text>
+<text x="1484" y="670" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="24" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Read a published stream.</text>
+<text x="1484" y="706" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="24" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">atak-viewer covers live/* + test.</text>
+<text x="1484" y="742" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="24" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">No per-team media read isolation.</text>
+<rect x="1460" y="960" width="580" height="160" rx="20" fill="#f5f9fc" stroke="#a96416" stroke-width="3"/>
+<text x="1484" y="980" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="32" font-weight="700" fill="#a96416" dominant-baseline="text-before-edge">api</text>
+<text x="1484" y="1030" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="24" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Internal management endpoint :9997.</text>
+<text x="1484" y="1066" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="24" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Grant does not authorize video reads.</text>
+<polyline points="1325,420 1390,420 1390,332 1460,332" fill="none" stroke="#168069" stroke-width="5" stroke-linejoin="round"/>
+<polygon points="1460.0,332.0 1440.0,341.0 1440.0,323.0" fill="#168069"/>
+<polyline points="1325,697 1460,697" fill="none" stroke="#1673ad" stroke-width="5" stroke-linejoin="round"/>
+<polygon points="1460.0,697.0 1440.0,706.0 1440.0,688.0" fill="#1673ad"/>
+<polyline points="1325,870 1390,870 1390,1040 1460,1040" fill="none" stroke="#a96416" stroke-width="5" stroke-linejoin="round"/>
+<polygon points="1460.0,1040.0 1440.0,1049.0 1440.0,1031.0" fill="#a96416"/>
+<text x="60" y="1127" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="26" font-weight="700" fill="#17324a" dominant-baseline="text-before-edge">DOWNSTREAM NODES LOAD THEIR OWN AUTHORIZATION LISTS</text>
+<rect x="60" y="1190" width="965" height="155" rx="20" fill="#f5f9fc" stroke="#7151a5" stroke-width="3"/>
+<text x="84" y="1210" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="32" font-weight="700" fill="#7151a5" dominant-baseline="text-before-edge">media-viewer / viewer-public.yml</text>
+<text x="84" y="1260" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="24" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">any: read live/* (anonymous) | tak-console: api</text>
+<text x="84" y="1296" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="24" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Upstream pull uses atak-viewer; LAN gateway supplies the public switch.</text>
+<rect x="1075" y="1190" width="965" height="155" rx="20" fill="#f5f9fc" stroke="#7151a5" stroke-width="3"/>
+<text x="1099" y="1210" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="32" font-weight="700" fill="#7151a5" dominant-baseline="text-before-edge">media-preview / viewer-preview.yml</text>
+<text x="1099" y="1260" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="24" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">admin: read live/* | API disabled</text>
+<text x="1099" y="1296" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="24" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Upstream pull uses atak-viewer; share-admin relays admin credentials.</text>
+<text x="60" y="1362" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="23" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Source: mediamtx.yml.template / provision_mediamtx.py / media_registry.py</text>
+</svg>

@@ -1,0 +1,17 @@
+flowchart TB
+  SOURCE["TAK ICU / drone / encoder"] -->|"RTSPS :8322 or RTSP :8554<br/>publish credential"| CORE
+  CORE -->|"RTSP :8554<br/>atak-viewer"| ATAK["ATAK Video playback"]
+  TAK["TAK Server<br/>Also on tak-edge"] -.->|"Video Alias metadata + visibility groups"| ATAK
+  subgraph EDGE["Compose tak-edge network"]
+    CORE["mediamtx<br/>mediamtx.yml<br/>Ingress + direct read + API"]
+    CORE -->|"On-demand RTSP/TCP :8554<br/>atak-viewer / same path"| VIEW["media-viewer<br/>viewer-public.yml<br/>any read / ICE :8189 / API :9997"]
+    CORE -->|"On-demand RTSP/TCP :8554<br/>atak-viewer / same path"| PREVIEW["media-preview<br/>viewer-preview.yml<br/>admin read / ICE :8190 / no API"]
+    GATE["media-viewer-gateway<br/>viewer_state.json switch"] -.->|"HTTP/WHEP :8889"| VIEW
+    ADMIN["share-admin<br/>admin login + preview relay"] -.->|"HTTP/WHEP :8889<br/>inject admin credential"| PREVIEW
+    ADMIN -.->|"tak-console / API :9997"| CORE
+    ADMIN -.->|"tak-console / API :9997<br/>list or kick sessions"| VIEW
+  end
+  WEB["LAN browser"] -.->|"Host HTTP :8889"| GATE
+  VIEW -->|"Direct WebRTC media / ICE :8189"| WEB
+  LOCAL["Local console browser"] -.->|"Loopback console host port"| ADMIN
+  PREVIEW -->|"Direct WebRTC media / ICE :8190"| LOCAL
