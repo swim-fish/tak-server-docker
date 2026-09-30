@@ -39,6 +39,8 @@ Get-Content ./runtime/secrets/mediamtx_publish_password
 
 若要透過 ICU 專屬 QR Code 佈建這些欄位，請見[ICU QR Code 格式與驗證](icu-qrcode.md)。
 
+**ATAK 5.7.0.15 相容性限制：**ICU 7.5.1 啟用 `Use SSL?` 後，人物 CoT 的 Video 連結使用 `rtsps`。2026-09-30 雲端實測中，ICU 發布成功，實際連結以原帳密通過公開 TLS 驗證並取得 `DESCRIBE 200 OK`；ATAK 仍將 `rtsps` 解析為 `raw`，在人物 Video 顯示 `Failed to Connect`。增加觀看權限不會改變此版本的協定解析。完整觀察見[SSL 與 ATAK RTSPS 實測](../validation/2026-09-30-icu-ssl-atak-rtsps.md)。取消 ICU SSL 的替代方案尚未在此次測試驗證。
+
 本機 TAK ICU 7.5.1 的 `Use SSL?` 設定會選擇 RTSPS。2026-09-23 實機以舊共用帳密成功送出 `live/VIDEO_1`，再由獨立讀取帳號經 RTSPS 讀取；2026-09-24 另以 Alpha 小隊 QR 成功發布 `live/alpha/1/VIDEO_1` 並在 Chrome 觀看。這不證明 ICU 內部是否嚴格檢查了憑證鏈。下表保留早期手動測試值；新裝置建議由控制台取得小隊 QR：
 
 | ICU 欄位 | RTSPS 測試值 | RTSP 回退測試值 |
