@@ -1,5 +1,7 @@
 # 2026-09-30 ICU 啟用 SSL 後，ATAK 人物 Video 無法觀看
 
+同日後續已完成[非 SSL RTSP 限定 IP 無帳密觀看](2026-09-30-icu-rtsp-ip-reader.md)，使用者確認 ATAK 可觀看。下文保留先前 SSL 測試當時的觀察與未驗證範圍；RTSPS 的相容性結論未因此改變。
+
 ## 結論與適用版本
 
 TAK ICU 7.5.1 勾選 `Use SSL?` 後，以 RTSPS 發布影像，並在人物 CoT 的 `event/detail/__video/@url` 帶入 `rtsps://` 連結。**本次實測的 ATAK CIV 5.7.0.15 不支援直接播放這個 RTSPS 來源**：點選人物轉盤上的 Video 後顯示 `Failed to Connect`，紀錄顯示網址被解析為 `raw`，隨即發生播放器例外。
