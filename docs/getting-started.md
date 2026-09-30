@@ -132,6 +132,8 @@ python ./scripts/provision_mumble_channel.py
 
 需要 ICU 影像時，依[MediaMTX 的 TAK ICU 設定](mediamtx/server.md#tak-icu-設定與實測範圍)填入 `takbox.local:8322`、`live/`、發布帳密並勾選 `Use SSL?`。伺服器紀錄應出現 `is publishing to path 'live/...'`；觀看端另用讀取帳號。
 
+ATAK CIV 5.7.0.15 無法直接播放這個 SSL 設定產生的 `rtsps` 人物 Video 連結，會將協定解析為 `raw` 並顯示 `Failed to Connect`。ICU 發布、伺服器讀取授權與 ATAK 播放需分別確認；見[2026-09-30 實機紀錄](validation/2026-09-30-icu-ssl-atak-rtsps.md)。
+
 ## 7. 判斷是否完成
 
 | 檢查 | 應觀察到的結果 |

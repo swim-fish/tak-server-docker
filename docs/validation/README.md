@@ -28,6 +28,7 @@
 | Mumble 單一類型 SAN | DNS-only／IP-only 搭配相符 Vx Address，P1／A1 均成功；不包含不相符 SAN 拒絕測試 | [SAN 實測](2026-09-22-mumble-san.md) |
 | MediaMTX／TAK ICU | RTSP、RTSPS TCP 與 Compose 內 UDP 串流通過；ICU 7.5.1 經 RTSPS＋帳密實際發布，獨立讀取成功；跨 bridge UDP 待驗 | [2026-09-23](2026-09-23-mediamtx.md) |
 | ATAK 觀看 ICU 影像 | ATAK 5.7.0.15 的自動 RTSPS 通告無法直接播放；手動 RTSP 加讀取帳密及 Reliable／TCP 後，實機顯示 1280×720 影像 | [2026-09-25](2026-09-25-atak-icu-viewer.md) |
+| ICU SSL 與 ATAK 人物 Video | ICU SSL 自動通告的 `rtsps` 在 ATAK 5.7.0.15 被解析成 `raw`，顯示 `Failed to Connect`；雲端串流已上線，實際連結的公開 RTSPS `DESCRIBE` 回應 `200 OK` | [2026-09-30](2026-09-30-icu-ssl-atak-rtsps.md) |
 | 一般設備發布網址與收流 | 控制台建立獨立身分；FFmpeg 模擬無人機經熱點入口以 RTSP／RTSPS TCP 發布，獨立讀取端各解碼 30 個影格；WebRTC 預覽顯示影像，停用後舊網址遭拒。實體無人機與外網未驗收 | [2026-09-25](2026-09-25-drone-synthetic-stream.md) |
 | ICU 同隊共用 QR 與路徑隔離 | 同一 Alpha QR 匯入後，Android 手動改為 `live/alpha/2/` 並成功發布；Alpha 帳密對 Bravo 與非 ICU 路徑遭拒 | [2026-09-25](2026-09-25-icu-squad-path-scope.md) |
 | TAK ICU QR Code | 依 ICU 7.5.1 APK 與原生 `local.prefs` 確認格式；`takbox.local` 含密碼 QR 已由第二台熱點裝置掃碼套用，ICU 無提示發布 RTSPS，獨立讀取端取得影像 | [2026-09-23](2026-09-23-icu-qrcode.md) |

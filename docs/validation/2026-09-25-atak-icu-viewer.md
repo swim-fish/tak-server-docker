@@ -1,5 +1,7 @@
 # ATAK 觀看 TAK ICU 影像實測（2026-09-25）
 
+後續結果：[2026-09-30 雲端實測](2026-09-30-icu-ssl-atak-rtsps.md)已直接讀回 ICU 人物 CoT 的 `__video/@url`，確認為含帳密的 RTSPS 來源；同版 ATAK 再次出現 `raw` 解析與播放例外。公開端點使用原帳密的 `DESCRIBE` 回應 `200 OK`。下文保留 2026-09-25 的本機測試範圍，當日未擷取原始 CoT 的限制不適用於後續測試。
+
 ## 測試對象
 
 - 發布端：TAK ICU 7.5.1，以 RTSPS 發布 `live/alpha/1/VIDEO_1`。MediaMTX 將內容拆為 H.264 與 KLV 兩條軌道。

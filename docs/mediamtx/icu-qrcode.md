@@ -44,6 +44,8 @@ icu://download?url=http%3A%2F%2Ftakbox.local%3A10065%2Fd%2FTOKEN
 
 上方 XML 是舊共用帳號的格式範例。控制台引導式佈建產生的小隊 QR 使用該小隊帳號，例如 `icu-alpha`，並在 `videoServerPath` 寫入選定的初始路徑。MediaMTX 依帳號限制小隊前綴；同隊裝置匯入同一張仍可下載的 QR 後，可在 ICU 手動把 `live/alpha/1/` 改成 `live/alpha/2/`，不用更換帳密或再掃 QR。ICU 會把 `VIDEO_1` 附在路徑後方；控制台應看到 `live/alpha/2/VIDEO_1`。其他小隊路徑會被拒。QR 的時間／下載次數仍照分享設定計算；同時發布的裝置不得使用同一完整路徑。[實機與伺服器驗證](../validation/2026-09-25-icu-squad-path-scope.md)。
 
+啟用 `videoServerSSL=true`（ICU 的 `Use SSL?`）會使用 RTSPS 發布，並使人物 Video 自動連結採用 `rtsps`。ATAK CIV 5.7.0.15 在 2026-09-30 實測將此協定解析成 `raw`，顯示 `Failed to Connect`，即使雲端串流上線且同一組帳密已有讀取權限仍然失敗。QR 匯入與發布成功不代表人物 Video 可播放；詳見[此次 SSL 相容性紀錄](../validation/2026-09-30-icu-ssl-atak-rtsps.md)。
+
 ## 室內定位與影像設定
 
 依照裝置上 ICU 7.5.1 APK 的 `broadcast_prefs`、`video_prefs`、`display_prefs` 資源，以及 ICU 自行匯出的 `local.prefs`，下表設定可用相同的 XML `entry` 格式寫入。新產生的 ICU QR（包含引導式佈建、小隊重新分享與手動產生器）預設套用右欄值；**已建立的分享是當時設定檔的快照，需重新產生 QR 才會套用**。

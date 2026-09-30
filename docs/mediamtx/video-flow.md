@@ -44,4 +44,6 @@ RTSPS 使用 MediaMTX 專用伺服器憑證；發布／讀取帳密負責授權�
 
 MediaMTX 也映射 RTSP 的 RTP／RTCP `8000-8001/UDP`，以及 RTSPS 的 SRTP／SRTCP `8004-8005/UDP`；表格列出的本機成功案例主要使用 TCP。Docker Desktop 跨網路的 UDP 媒體路徑尚不能視為實機驗收通過。
 
-實測範圍與限制見[ICU 與 ATAK 觀看紀錄](../validation/2026-09-25-atak-icu-viewer.md)、[模擬無人機紀錄](../validation/2026-09-25-drone-synthetic-stream.md)及[監視器模式紀錄](../validation/2026-09-29-media-wall.md)。
+2026-09-30 雲端另確認：ICU SSL 發布的實際人物 CoT 連結使用 `rtsps`，ATAK 5.7.0.15 將其解析成 `raw` 並顯示 `Failed to Connect`；同一連結使用原帳密的公開 RTSPS `DESCRIBE` 已回應 `200 OK`。詳見[SSL 相容性實測](../validation/2026-09-30-icu-ssl-atak-rtsps.md)。
+
+本機實測範圍與限制見[ICU 與 ATAK 觀看紀錄](../validation/2026-09-25-atak-icu-viewer.md)、[模擬無人機紀錄](../validation/2026-09-25-drone-synthetic-stream.md)及[監視器模式紀錄](../validation/2026-09-29-media-wall.md)。

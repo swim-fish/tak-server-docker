@@ -21,6 +21,7 @@
 | 換密碼後仍能登入 | 註冊身分可能略過共用密碼檢查 | [註冊管理](mumble/users.md) |
 | 取消註冊後使用者又出現 | 是否重新通過驗證並自行註冊 | 取消註冊不是永久封鎖 |
 | 頻道已連線但沒有聲音 | 麥克風權限、VS1／VS2、PTT 指派、UDP 與另一用戶端 | 按[音訊驗收](validation/README.md#待完成的實機驗收)另測 |
+| ICU 啟用 SSL 後，ATAK 人物 Video 顯示 `Failed to Connect` | 自動網址是否為 `rtsps`；ATAK 5.7.0.15 是否記錄 `using raw for: rtsps`、`protocol=raw` 與 `createFromFileNative` 例外 | [2026-09-30 實測](validation/2026-09-30-icu-ssl-atak-rtsps.md)：雲端原帳密 `DESCRIBE` 已回應 `200 OK`，此版本須另用相容的觀看來源；取消 ICU SSL 尚未驗證 |
 
 ## 最小診斷命令
 
