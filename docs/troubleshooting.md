@@ -15,6 +15,7 @@
 | TAK 健康檢查失敗 | 資料庫、管理憑證權限、CRL 有效期、紀錄 | [TAK 維運](tak-server/operations.md) |
 | Mumble 每 30 秒本機 TLS 連上又關閉 | 來源是否 `127.0.0.1`、是否吻合 healthcheck | [健康檢查說明](mumble/server.md#啟動與檢查) |
 | Vx 無法加入頻道 | Channel 是否空白、ID 是否存在、ACL 是否允許 | [頻道建立](mumble/server.md#建立-primary-與-alternate) |
+| Vx 行動網路顯示 `Auto - Unavailable` | Mumble 是否已登入；是否有多個 Cellular 介面項目且無可用 Wi-Fi | [介面篩選問題與 Wi-Fi 比較測試](validation/2026-09-30-vx-cellular-interface-selection.md) |
 | Vx DPK 匯入後無 Mission | 是否走 Local SD 而非 Server Download | [正確下載流程](atak/vx-missions.md#從-tak-server-下載任務) |
 | Vx 沒有密碼提示 | 是否已有密碼快取或註冊身分 | [密碼行為](atak/vx-missions.md#輸入密碼) |
 | 換密碼後仍能登入 | 註冊身分可能略過共用密碼檢查 | [註冊管理](mumble/users.md) |

@@ -13,6 +13,7 @@
 | Mumble TLS／頻道 | 服務與頻道可用；早期 40000 測試不可單獨證明 Vx 任務端點已更新 | [2026-09-21](2026-09-21-mumble-server.md) |
 | Vx Local SD | 清除設定及重新安裝後仍未建立任務，撤回早期成功判斷 | [2026-09-22](2026-09-22-tak-vx-dpk.md#清除既有設定後重測) |
 | Vx Server Download | Vx-only 任務、首次密碼提示、登入及加入頻道成功 | [下載實測](2026-09-22-tak-vx-dpk.md#tak-server-下載實測成功) |
+| Vx 行動網路介面判斷 | Vx 2.1.0 在兩個 Cellular 項目且無 Wi-Fi 時移除全部 Cellular，造成 `Auto - Unavailable`；Wi-Fi 比較測試恢復介面與 PTT 狀態，雙向音訊未測試 | [2026-09-30](2026-09-30-vx-cellular-interface-selection.md) |
 | Vx 雙頻道 | 早期紀錄只證明兩條 session；使用者後續確認手機的雙頻道語音可用，尚未保存 UDP 與雙向按鍵紀錄 | [早期雙頻道結果](2026-09-22-tak-vx-dpk.md#雙頻道實測結果) |
 | TAK／Vx／ICU 分離佈建 | TAK 憑證 QR 成功；Vx QR 一般匯入不建立 Mission，改由 TAK Server Download 建立四頻道並逐一加入；ICU QR 發布 RTSPS 成功 | [2026-09-23](2026-09-23-qr-tak-vx-icu.md) |
 | 全新憑證 QR 與撤銷 | 清除 ATAK 資料後重新匯入、Vx 四頻道、ICU RTSPS、CRL 撤銷及實機重連；發現 ATAK Data Packages 需要 8443 可達 | [2026-09-24](2026-09-24-qr-e2e-revocation.md) |
