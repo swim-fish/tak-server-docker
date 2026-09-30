@@ -1,0 +1,15 @@
+flowchart LR
+  S["icu-squad<br/>Exact member paths + named-squad VIDEO_1 regex"] -->|publish| AUTH
+  D["device-id<br/>One exact registered path"] -->|publish| AUTH
+  P["atak-publisher<br/>Legacy live/* + test grant"] -->|publish| AUTH
+  R["atak-viewer<br/>ATAK + downstream nodes + thumbnails"] -->|read| AUTH
+  C["tak-console<br/>Console API credential"] -->|api| AUTH
+  AUTH["mediamtx / authMethod: internal<br/>authInternalUsers<br/>Check identity, action, ips, path"] --> PUB["publish<br/>Registered or regex-matched path"]
+  AUTH --> READ["read<br/>live/* + test<br/>Shared reader; no per-team read isolation"]
+  AUTH --> API["api<br/>Internal :9997<br/>No publish/read permission"]
+  subgraph VIEWER["Separate downstream authorization lists"]
+    V["media-viewer<br/>any: read live/*<br/>tak-console: api"]
+    Q["media-preview<br/>admin: read live/*<br/>API disabled"]
+  end
+  R -.->|upstream identity| V
+  R -.->|upstream identity| Q
