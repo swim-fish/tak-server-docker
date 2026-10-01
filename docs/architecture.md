@@ -19,6 +19,16 @@ flowchart LR
     T --> D["PostgreSQL／PostGIS"]
 ```
 
+## 雲端 NetBird 路由與網路架構
+
+另行部署的雲端環境採兩台 VM：管理 VM 整合 NetBird、Gateway、管理頁、影音與語音；主要 TAK VM 保留原有登入及防火牆規則。這個部署與上方本機 Compose 架構分別維護，本專案的 Compose 不會自動安裝 NetBird 或套用雲端政策。
+
+![雲端 NetBird 網路架構](network/diagrams/network-architecture.png)
+
+[SVG 架構圖](network/diagrams/network-architecture.svg) · [Mermaid 原始碼](network/diagrams/network-architecture.mmd) · [路由、DNS 與權限對照](network/netbird-routing.md)
+
+TAK 使用經 Gateway SNAT 的單一主機 `/32` 路由；管理及影音則直接連到 Gateway 的 NetBird 位址，保留來源 peer 辨識。純 RTSP 觀看可在 peer 與串流路徑授權後免帳密，所有發布仍需帳密；RTSPS、RTMP、RTMPS 與 WebRTC 觀看保留服務驗證。小隊影音隔離已啟用；語音使用獨立授權群組，小隊語音 ACL 尚待完成。既有公開 TAK 入口及 Mumble 的舊公開綁定仍保留。
+
 ## 服務責任
 
 | 元件 | 責任 | 現行部署 |

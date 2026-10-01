@@ -1,0 +1,10 @@
+flowchart LR
+    D["Enrolled device<br/>alpha / bravo / charlie / admin"] -->|"Encrypted NetBird peer tunnel"| G["Gateway peer<br/>Management VM"]
+    G -->|"TAK-Primary host route /32<br/>FORWARD + masquerade / SNAT"| T["Primary TAK Server<br/>Existing client certificate identity"]
+    G -->|"Peer INPUT policy<br/>Original NetBird source address"| L["Local admin / media / voice services"]
+    Z["Exact private DNS<br/>TAK to its VPC address<br/>Media / Admin / Voice to Gateway"] -.->|"Group-scoped answers"| D
+    D -.->|"Existing public TAK entry retained<br/>Outside the VPN route"| T
+    classDef vpn fill:#eaf5fb,stroke:#1673ad,color:#17324a;
+    classDef backend fill:#eaf8f3,stroke:#168069,color:#17324a;
+    class D,G,Z vpn;
+    class T,L backend;
