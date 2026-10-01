@@ -6,6 +6,7 @@
 
 | 項目 | 結果與界線 | 紀錄 |
 | --- | --- | --- |
+| NetBird TAK／影音／語音 | 同隊 ICU／ATAK RTSP 觀看通過；語音小隊政策與 Vx VPN 介面已修正，Vx 已確認連線，另回報行動網路可連 Mumble；雙向 PTT／音訊品質待驗 | [2026-10-01](2026-10-01-netbird-tak-media-voice.md) |
 | Windows mDNS | 主機與 Android 名稱解析曾通過；仍需在每個部署網段確認 | [2026-09-21](2026-09-21-windows-mdns.md) |
 | TAK 與 DPK | 裝置憑證連線、群組與 CRL 撤銷測試 | [2026-09-21](2026-09-21-tak-server-dpk.md) |
 | TAK 8443／8089 CRL | 歷史測試曾同時設定兩個 `crlFile`；目前 8443 未設 connector 欄位，但全域第一筆 CRL 仍進入預設 connector，且單張葉憑證撤銷後 8443 新連線遭拒 | [歷史測試](2026-09-23-tak-crl-8443.md)／[前後對照](2026-09-24-qr-e2e-revocation.md)／[程式路徑](2026-09-26-tak-crlfile-source-analysis.md) |
@@ -19,7 +20,7 @@
 | 全新憑證 QR 與撤銷 | 清除 ATAK 資料後重新匯入、Vx 四頻道、ICU RTSPS、CRL 撤銷及實機重連；發現 ATAK Data Packages 需要 8443 可達 | [2026-09-24](2026-09-24-qr-e2e-revocation.md) |
 | 中繼 CA 輪替前置驗證 | Root DB 缺少中繼 CA 紀錄；隔離副本補登／撤銷與 OpenSSL 鏈驗證通過，本機快照完成；尚未切換服務 | [2026-09-24](2026-09-24-ca-rotation-preflight.md) |
 | CA 輪替前實機與群組基線 | 兩張短效憑證分組簽發並在兩台 Android 連線；同網段標記互見尚需排除本機傳播；群組移除與還原通過 | [2026-09-24](2026-09-24-ca-rotation-device-baseline.md) |
-| 中繼 CA 切換與 Root CRL | 新鏈的 A 裝置 ATAK、Vx、8443 套件查詢通過；發布 Root CRL 後仍須移除舊 CA 直接信任錨，8089 才拒絕舊 Alpha TLS 握手 | [2026-09-25](2026-09-25-ca-rotation-cutover.md) |
+| 中繼 CA 切換與 Root CRL | 新鏈的 A 裝置 ATAK、Vx、8443 套件查詢通過；發布 Root CRL 後仍須移除舊 CA 直接信任錨，8089 才拒絕舊 Alpha TLS 交握 | [2026-09-25](2026-09-25-ca-rotation-cutover.md) |
 | 20 分鐘裝置憑證到期 | 到期後 8089 新連線遭拒，既有連線仍可收發；使用者確認 ATAK 直到下次重新連線才無法使用 | [2026-09-26](2026-09-26-certificate-expiry-20m.md) |
 | CA 輪替後 8443 舊憑證重測 | 原設定拒絕舊 Alpha；受控測試在第一筆 CRL 載入四份合併檔後，只替換 Root CRL，使舊 Alpha 從 HTTP 200 變成 TLS 遭拒。原設定已還原，不宣稱其已載入 Root CRL | [2026-09-26](2026-09-26-ca-rotation-8443-retest.md) |
 | `.env` Wi-Fi 位址與 CA 控制台替換 | Wi-Fi 綁定、Android mDNS／TCP、控制台 CA 替換及 Root CRL 通過；批次 API 就緒逾時後人工復原，Android 新 DPK 驗收另記；防火牆 UAC 首次取消 | [2026-09-25](2026-09-25-wifi-env-ca-console.md) |
@@ -29,8 +30,8 @@
 | MediaMTX／TAK ICU | RTSP、RTSPS TCP 與 Compose 內 UDP 串流通過；ICU 7.5.1 經 RTSPS＋帳密實際發布，獨立讀取成功；跨 bridge UDP 待驗 | [2026-09-23](2026-09-23-mediamtx.md) |
 | ATAK 觀看 ICU 影像 | ATAK 5.7.0.15 的自動 RTSPS 通告無法直接播放；手動 RTSP 加讀取帳密及 Reliable／TCP 後，實機顯示 1280×720 影像 | [2026-09-25](2026-09-25-atak-icu-viewer.md) |
 | ICU SSL 與 ATAK 人物 Video | ICU SSL 自動通告的 `rtsps` 在 ATAK 5.7.0.15 被解析成 `raw`，顯示 `Failed to Connect`；雲端串流已上線，實際連結的公開 RTSPS `DESCRIBE` 回應 `200 OK` | [2026-09-30](2026-09-30-icu-ssl-atak-rtsps.md) |
-| ICU 非 SSL RTSP 限定 IP 觀看 | 雲端 Alpha-10 使用原帳密發布；僅指定 IPv4 可不帶帳密讀取同一路徑。兩軌 RTSP TCP 測試通過，使用者確認 ATAK 人物 Video 可觀看 | [2026-09-30](2026-09-30-icu-rtsp-ip-reader.md) |
-| 一般設備發布網址與收流 | 控制台建立獨立身分；FFmpeg 模擬無人機經熱點入口以 RTSP／RTSPS TCP 發布，獨立讀取端各解碼 30 個影格；WebRTC 預覽顯示影像，停用後舊網址遭拒。實體無人機與外網未驗收 | [2026-09-25](2026-09-25-drone-synthetic-stream.md) |
+| ICU 非 SSL RTSP 限定 IP 觀看 | 雲端指定測試裝置使用原帳密發布；僅指定 IPv4 可不帶帳密讀取同一路徑。兩軌 RTSP TCP 測試通過，使用者確認 ATAK 人物 Video 可觀看 | [2026-09-30](2026-09-30-icu-rtsp-ip-reader.md) |
+| 一般裝置發布網址與收流 | 控制台建立獨立身分；FFmpeg 模擬無人機經熱點入口以 RTSP／RTSPS TCP 發布，獨立讀取端各解碼 30 個影格；WebRTC 預覽顯示影像，停用後舊網址遭拒。實體無人機與外網未驗收 | [2026-09-25](2026-09-25-drone-synthetic-stream.md) |
 | ICU 同隊共用 QR 與路徑隔離 | 同一 Alpha QR 匯入後，Android 手動改為 `live/alpha/2/` 並成功發布；Alpha 帳密對 Bravo 與非 ICU 路徑遭拒 | [2026-09-25](2026-09-25-icu-squad-path-scope.md) |
 | TAK ICU QR Code | 依 ICU 7.5.1 APK 與原生 `local.prefs` 確認格式；`takbox.local` 含密碼 QR 已由第二台熱點裝置掃碼套用，ICU 無提示發布 RTSPS，獨立讀取端取得影像 | [2026-09-23](2026-09-23-icu-qrcode.md) |
 | 分享與 Mumble 管理頁 | Compose 健康、限時／限次與單次下載、Flask 管理頁與 Mumble 唯讀清單通過；真實使用者刪除與密碼輪替未執行 | [2026-09-23](2026-09-23-share-portal.md) |

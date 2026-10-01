@@ -1,5 +1,7 @@
 # 不輪替 CA 的服務憑證 SAN 更新
 
+公開版本已將實際部署位址改為保留的文件範例位址；範例不是目前可用的端點。
+
 當主機綁定 IP 變更，且 TAK Server、Mumble 與 MediaMTX 需要接受直接以 IP 建立的 TLS 連線時，使用 `scripts/renew_service_san.py`。此腳本分別簽發三張葉憑證，SAN 同時包含 `DNS:takbox.local` 與目前 `TAK_BIND_IP` 對應的 `IP:` 項目。簽發時沿用各服務的私鑰，以及目前的簽發 CA；不更換 CA、用戶端憑證、密碼、信任憑證鏈資料庫或 ATAK Data Package。舊服務憑證仍記錄於 CA 資料庫且維持有效，可供部署回復。
 
 執行前，確認目前的 CA 輪替工作已結束、Docker Desktop 可用，並在專案根目錄執行指令。請妥善保護未納入版控的 `runtime/pki/service-san-renewals/` 目錄：其中暫存的 TAK PKCS#12 與 JKS 檔案含有服務私鑰。

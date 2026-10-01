@@ -2,6 +2,8 @@
 
 本頁依 2026-09-26 的 `compose.yaml`、MediaMTX 設定及 Windows 防火牆腳本整理目前使用的通訊埠。實際的主機位址與允許網段由 `.env` 的 `TAK_BIND_IP`、`TAK_ALLOWED_SUBNET` 決定；換網路時應同步調整。表中「區域網路」表示 Docker 綁定該 Windows 位址，**不代表已向網際網路開放**。防火牆仍須依來源網段另外設定。
 
+下列表格是本機 Windows／Compose 的綁定與映射。雲端 NetBird 的服務名稱、TCP／UDP 通訊埠與權限以 [NetBird 路由表](netbird-routing.md#service-access-matrix)為準；例如 Mumble 使用 `40000/TCP+UDP`，影音 listener 綁在 Gateway NetBird 位址。
+
 ## 裝置連入 Windows 主機
 
 | 主機通訊埠 | 協定 | 服務與用途 | Compose 容器端 | 範圍與注意事項 |

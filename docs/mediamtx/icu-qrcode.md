@@ -2,6 +2,8 @@
 
 此格式根據測試裝置上 `com.atakmap.takcam` 7.5.1 APK 的 `AndroidManifest.xml`、`ICUCamera` 與 `ICUPrefs` 程式，以及 ICU 自行匯出的 `local.prefs` 核對。裝置隨附的《ATAK TAK ICU User Guide》說明手動設定，但沒有列出這個 QR 佈建格式。下列格式的實機驗證狀態見[驗證紀錄](../validation/2026-09-23-icu-qrcode.md)。
 
+使用 NetBird 時，匯入管理者交付的裝置專用 ICU QR，先連線 VPN 再發布。已驗證的 ATAK 人物 Video 流程使用 `8554`、`Use SSL?` 關閉與原發布帳密；保留核准的完整路徑。下方共用小隊路徑範例屬於早期本機部署，不適用雲端精確路徑授權。詳見 [NetBird ICU／ATAK 流程](../network/netbird-user-guide.md#3-publish-icu-and-view-in-atak)。
+
 ## 入口與檔案格式
 
 ICU 接受 Android `ACTION_VIEW` 的 `icu:` scheme。APK 中 `ICUCamera` 只在 URI host 為 `download` 時讀取 `url` 查詢參數，以 HTTP(S) GET 下載成 ICU 專屬資料夾的 `initial.prefs`，再解析為 ICU 自己的偏好設定。因此 QR Code 應編碼**整行 URI**，而不是直接把 XML 文字放在 QR Code：
@@ -42,7 +44,7 @@ icu://download?url=http%3A%2F%2Ftakbox.local%3A10065%2Fd%2FTOKEN
 
 `videoServerPassword` 由 `runtime/secrets/mediamtx_publish_password` 讀入，圖中只是佔位文字；實際產出的 XML 含密碼，且不應加入 Git 或公開散布。QR 本身只含下載網址，不直接含密碼，但持有 QR 且能連到下載端點的裝置也能取得密碼。這些值是**發布**設定；觀看端仍須用 MediaMTX 的 `atak-viewer` 帳號與實際串流路徑。ICU 載入器將 XML 的 `entry` 寫入 ICU App 的 default `SharedPreferences`，不會寫入 ATAK App 的設定。
 
-上方 XML 是舊共用帳號的格式範例。控制台引導式佈建產生的小隊 QR 使用該小隊帳號，例如 `icu-alpha`，並在 `videoServerPath` 寫入選定的初始路徑。MediaMTX 依帳號限制小隊前綴；同隊裝置匯入同一張仍可下載的 QR 後，可在 ICU 手動把 `live/alpha/1/` 改成 `live/alpha/2/`，不用更換帳密或再掃 QR。ICU 會把 `VIDEO_1` 附在路徑後方；控制台應看到 `live/alpha/2/VIDEO_1`。其他小隊路徑會被拒。QR 的時間／下載次數仍照分享設定計算；同時發布的裝置不得使用同一完整路徑。[實機與伺服器驗證](../validation/2026-09-25-icu-squad-path-scope.md)。
+上方 XML 是舊共用帳號的格式範例。控制台引導式佈建產生的小隊 QR 使用該小隊帳號，例如 `icu-alpha`，並在 `videoServerPath` 寫入選定的初始路徑。MediaMTX 依帳號限制小隊字首；同隊裝置匯入同一張仍可下載的 QR 後，可在 ICU 手動把 `live/alpha/1/` 改成 `live/alpha/2/`，不用更換帳密或再掃 QR。ICU 會把 `VIDEO_1` 附在路徑後方；控制台應看到 `live/alpha/2/VIDEO_1`。其他小隊路徑會被拒。QR 的時間／下載次數仍照分享設定計算；同時發布的裝置不得使用同一完整路徑。[實機與伺服器驗證](../validation/2026-09-25-icu-squad-path-scope.md)。
 
 啟用 `videoServerSSL=true`（ICU 的 `Use SSL?`）會使用 RTSPS 發布，並使人物 Video 自動連結採用 `rtsps`。ATAK CIV 5.7.0.15 在 2026-09-30 實測將此協定解析成 `raw`，顯示 `Failed to Connect`，即使雲端串流上線且同一組帳密已有讀取權限仍然失敗。QR 匯入與發布成功不代表人物 Video 可播放；詳見[此次 SSL 相容性紀錄](../validation/2026-09-30-icu-ssl-atak-rtsps.md)。
 

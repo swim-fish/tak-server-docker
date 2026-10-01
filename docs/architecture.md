@@ -7,7 +7,7 @@ flowchart LR
     A["Android ATAK"] -->|"CoT TLS"| T["TAK Server"]
     V["ATAK Vx"] -->|"TLS 控制；語音使用 UDP 或 TCP tunnel"| M["Mumble"]
     I["TAK ICU"] -->|"RTSPS 8322／TLS 影像"| X["MediaMTX"]
-    R["無人機／其他設備"] -->|"RTSPS 8322／TLS；或 RTSP 8554／無 TLS"| X
+    R["無人機／其他裝置"] -->|"RTSPS 8322／TLS；或 RTSP 8554／無 TLS"| X
     X -->|"RTSP 8554／無 TLS；直接讀取"| A
     X -->|"Compose 內 RTSP 8554"| W["WebRTC viewer／preview"]
     W -->|"HTTP 信令＋加密 WebRTC 媒體"| B["瀏覽器"]
@@ -27,7 +27,9 @@ flowchart LR
 
 [SVG 架構圖](network/diagrams/network-architecture.svg) · [Mermaid 原始碼](network/diagrams/network-architecture.mmd) · [路由、DNS 與權限對照](network/netbird-routing.md)
 
-TAK 使用經 Gateway SNAT 的單一主機 `/32` 路由；管理及影音則直接連到 Gateway 的 NetBird 位址，保留來源 peer 辨識。純 RTSP 觀看可在 peer 與串流路徑授權後免帳密，所有發布仍需帳密；RTSPS、RTMP、RTMPS 與 WebRTC 觀看保留服務驗證。小隊影音隔離已啟用；語音使用獨立授權群組，小隊語音 ACL 尚待完成。既有公開 TAK 入口及 Mumble 的舊公開綁定仍保留。
+TAK 使用經 Gateway SNAT 的單一主機 `/32` 路由；管理及影音則直接連到 Gateway 的 NetBird 位址，保留來源 peer 辨識。純 RTSP 觀看可在 peer 與串流路徑授權後免帳密，所有發布仍需帳密；RTSPS、RTMP、RTMPS 與 WebRTC 觀看保留服務驗證。小隊影音隔離已啟用；小隊已獲 TCP／UDP 40000 語音入口權限，Mumble 登入與頻道 ACL 仍獨立驗證，小隊語音 ACL 尚待完成。既有公開 TAK 入口及 Mumble 的舊公開綁定仍保留。
+
+使用 NetBird 後的裝置操作見 [使用流程](network/netbird-user-guide.md)。同隊 ATAK RTSP 觀看、Vx 連線及使用者回報的行動網路 Mumble 連線見 [2026-10-01 紀錄](validation/2026-10-01-netbird-tak-media-voice.md)；完整雙向音訊驗收另列待辦。
 
 ## 服務責任
 
@@ -40,7 +42,7 @@ TAK 使用經 Gateway SNAT 的單一主機 `/32` 路由；管理及影音則直�
 | `media-viewer`、`media-viewer-gateway` | 受控熱點上的匿名 WebRTC 觀看及總開關 | MediaMTX viewer 留在 Compose 網路；gateway 對熱點提供 `8889/TCP` |
 | `media-preview` | 供控制台登入後使用的 WebRTC 即時預覽 | 僅在 Compose 網路內，由 `share-admin` 同來源轉送 |
 | `share-public` | Flask 短效檔案下載與 QR 頁 | `sharing` profile，僅綁定熱點 IP；本機 `.env` 映射 TCP 10065 |
-| `share-admin` | Flask 分享、引導佈建、MediaMTX、Mumble 與用戶端憑證管理頁 | 預設 Compose 服務，自動重啟；本機 `.env` 映射 Windows `127.0.0.1:10066` |
+| `share-admin` | Flask 分享、引導佈建、MediaMTX、Mumble 與用戶端憑證管理頁 | 預設 Compose 服務，自動重新啟動；本機 `.env` 映射 Windows `127.0.0.1:10066` |
 | Windows Mumble 管理程式 | 使用 Mumble 原生協定管理 session 與註冊身分，重建 Mumble | 登入後排程工作；Flask 容器不持有 Docker socket |
 | `mumble-db-helper` | 透過 `mumble-data` volume 唯讀列出註冊及製作 SQLite 一致性備份 | 按需啟動的 Compose 維護容器，沒有網路 |
 | Windows TAK 憑證管理程式 | 操作中繼 CA、TAK API、共用驗證檔、DPK 與 CRL | 登入後排程工作；CA 私鑰與 Docker socket 不掛進 Flask 容器 |
@@ -54,7 +56,7 @@ TAK 等待資料庫健康後啟動。Windows 防火牆限制 LAN 存取；Docker
 
 Vx 檢查 Mumble 憑證的信任鏈及 SAN。mDNS 負責名稱解析；伺服器憑證通過檢查後，再進行 Mumble 使用者驗證。TAK client certificate 與 Mumble 註冊身分分開管理，見[憑證](security/certificates.md)與[Mumble 使用者](mumble/users.md)。
 
-TAK 用戶端群組的日常讀寫使用 5.8 管理 API；新憑證的指紋綁定寫入 bind mount 的 `UserAuthenticationFile.xml`，重啟 TAK 後由 API 讀回。`UserManager.jar` 只保留在首次初始化及人工修復流程。CRL 發布仍需重啟 TAK；Mumble 的 session／註冊管理走原生協定，資料庫清單與備份走共用 volume。控制台不執行 `docker compose exec`。
+TAK 用戶端群組的日常讀寫使用 5.8 管理 API；新憑證的指紋綁定寫入 bind mount 的 `UserAuthenticationFile.xml`，重新啟動 TAK 後由 API 讀回。`UserManager.jar` 只保留在首次初始化及人工修復流程。CRL 發布仍需重新啟動 TAK；Mumble 的 session／註冊管理走原生協定，資料庫清單與備份走共用 volume。控制台不執行 `docker compose exec`。
 
 ## 已完成與待驗項目
 

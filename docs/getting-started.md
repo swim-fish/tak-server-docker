@@ -4,6 +4,8 @@
 
 希望由一支腳本完成首次建置與 Compose 啟動，可使用[首次建置腳本](scripts/first-time-setup.md)。以下保留逐步手動流程，方便檢查每項產物。
 
+本頁為本機 Windows／Compose 建置流程。使用已部署的雲端 NetBird 入口時，請改依 [NetBird 使用流程](network/netbird-user-guide.md)設定 TAK、ICU、ATAK Video 與語音；不需要把雲端端點改成 `takbox.local`。
+
 ## 開始前
 
 需要 Windows、Docker Desktop 的 Linux containers、Python 3.14、OpenSSL，以及包含 `keytool` 的 JDK 17。mDNS 安裝腳本目前固定使用 `C:/Python314/python.exe`，請先將 Python 3.14 安裝在該位置；只有 PATH 內的 Python 不足以滿足此腳本。第一次建置需下載基礎映像與套件。先在專案根目錄確認：

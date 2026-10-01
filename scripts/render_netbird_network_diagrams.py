@@ -31,7 +31,7 @@ ARCHITECTURE = """flowchart TB
         X["MediaMTX private listeners<br/>RTSP 8554 / RTSPS 8322<br/>RTMP 1935 / RTMPS 1936<br/>RTP 8000 / RTCP 8001 / WebRTC 8189 UDP"]
         W["MediaMTX HTTP backends<br/>WebRTC 8889 / API 9997: loopback"]
         Q["Media authorization 8768 - loopback<br/>NetBird group + action + exact active path<br/>Admin isolation toggle / reader rechecks"]
-        V["Mumble container<br/>Host TCP+UDP 40000 to container 64738<br/>Voice group / login / channel ACL"]
+        V["Mumble container<br/>Host TCP+UDP 40000 to container 64738<br/>Team ingress / login / channel ACL"]
     end
     subgraph PRIMARY["Primary TAK VM - e2-medium"]
         T["TAK Server<br/>TCP 8089 / 8443<br/>8446 is a policy entry; availability not established"]
@@ -50,7 +50,7 @@ ARCHITECTURE = """flowchart TB
     Q -.->|"Read-only directory API"| C
     H -.->|"Peer ingress authorization"| Q
     A -.->|"Admin isolation setting"| Q
-    G -->|"Voice policy for separately assigned voice peers"| V
+    G -->|"Team voice TCP/UDP policy"| V
     G -->|"TAK-Primary /32<br/>Masquerade / SNAT to VPC source"| T
     T --> DB
     T -.->|"CoT / Video metadata, not video bytes"| U
@@ -88,7 +88,7 @@ def routing(canvas, regular, bold):
         'Media: NetBird peer group + operation + exact path',
         'RTSP read: no password for approved peers and paths',
         'Publish / protected read: credentials remain required',
-        'Voice: separate voice assignment + Mumble channel ACL'], canvas.GREEN, 22)
+        'Voice: team ingress policy + Mumble identity / channel ACL'], canvas.GREEN, 22)
     c.label((465, 280), ['NetBird tunnel'], canvas.BLUE)
     c.label((1140, 252), ['Host route /32', 'SNAT -> VPC'], canvas.GREEN)
     c.label((1245, 515), ['Peer INPUT', 'No route SNAT'], canvas.GREEN)
@@ -96,7 +96,7 @@ def routing(canvas, regular, bold):
     c.label((840, 146), ['Existing public TAK entry retained'], '#687788')
     c.text((50, 945), 'Solid: VPN data path | Dashed: DNS or preserved public entry | Return traffic follows each connection', 23)
     c.text((50, 992), 'Only one TAK host route is advertised. No full-VPC subnet route and no Internet exit node.', 24, canvas.MUTED)
-    c.text((50, 1037), 'TCP 8446 is allowed by policy; the previous service probe was unreachable. Voice onboarding is separate.', 23, canvas.MUTED)
+    c.text((50, 1037), 'TCP 8446 is allowed by policy; the previous service probe was unreachable. Team voice channel ACL rollout remains pending.', 23, canvas.MUTED)
     c.save('netbird-routing')
 
 
@@ -119,7 +119,7 @@ def architecture(canvas, regular, bold):
     c.card((780, 240, 630, 200), 'NetBird control / relay', [
         'Existing Nginx public bootstrap endpoint', 'Management + dashboard: loopback 18080 / 18081', 'Policy and signaling; relay fallback when needed'], canvas.PURPLE, 23)
     c.card((60, 640, 465, 290), 'Enrolled service devices', [
-        'ATAK / ICU / browser / admin', 'alpha / bravo / charlie / admin', 'Peer-to-peer data is preferred', 'Relay fallback is network-dependent', 'Voice peers are separately assigned'], canvas.BLUE, 22)
+        'ATAK / ICU / browser / admin', 'alpha / bravo / charlie / admin', 'Peer-to-peer data is preferred', 'Relay fallback is network-dependent', 'Team peers have voice ingress policy'], canvas.BLUE, 22)
     c.card((780, 640, 630, 330), 'Gateway peer', [
         'INPUT: access to services on this VM', 'FORWARD: TAK-Primary single-host route', 'TAK forwarding uses masquerade / SNAT', 'Local services retain the peer source', 'No default route / full-VPC route', 'Primary TAK login / firewall stay unchanged'], canvas.GREEN, 23)
     c.card((1700, 505, 540, 190), 'Protected HTTPS sites', [
@@ -129,7 +129,7 @@ def architecture(canvas, regular, bold):
     c.card((780, 1050, 630, 185), 'Media authorization | loopback 8768', [
         'Read-only NetBird group lookup; exact path/action grants', 'Admin isolation control; active reader rechecks', 'Own team + assigned shared streams while isolation is on'], canvas.PURPLE, 21)
     c.card((1700, 1170, 540, 195), 'Mumble', [
-        'Host TCP+UDP 40000 -> container 64738', 'Voice group, login, and channel ACLs', 'Team voice ACL rollout remains pending'], canvas.GREEN, 23)
+        'Host TCP+UDP 40000 -> container 64738', 'Team ingress, login, and channel ACLs', 'Team voice ACL rollout remains pending'], canvas.GREEN, 23)
     c.card((1700, 1480, 540, 180), 'Primary TAK VM | e2-medium', [
         'VPC TAK 8089 / 8443 + PostgreSQL/PostGIS', 'CoT / Video metadata; video does not transit TAK', 'Existing TAK client certificate authentication'], canvas.GREEN, 21)
     c.card((60, 1240, 465, 230), 'Package downloads', [
@@ -141,7 +141,7 @@ def architecture(canvas, regular, bold):
     c.label((800, 1468), ['TAK-Primary /32', 'SNAT -> VPC'], canvas.GREEN)
     c.label((310, 1060), ['Direct HTTPS'], canvas.BLUE)
     c.text((60, 1550), 'Solid: data path | Dashed: control / authorization', 25)
-    c.text((60, 1610), 'Service-group rules do not assign Mumble voice rights automatically.', 24, canvas.MUTED)
+    c.text((60, 1610), 'Team ingress permits transport; Mumble login and channel ACLs still apply.', 24, canvas.MUTED)
     c.text((60, 1672), 'The existing public TAK endpoint remains reachable under its original rules. Private media does not use that public entry.', 24, canvas.MUTED)
     c.save('network-architecture')
 

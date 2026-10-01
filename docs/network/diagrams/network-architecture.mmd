@@ -10,7 +10,7 @@ flowchart TB
         X["MediaMTX private listeners<br/>RTSP 8554 / RTSPS 8322<br/>RTMP 1935 / RTMPS 1936<br/>RTP 8000 / RTCP 8001 / WebRTC 8189 UDP"]
         W["MediaMTX HTTP backends<br/>WebRTC 8889 / API 9997: loopback"]
         Q["Media authorization 8768 - loopback<br/>NetBird group + action + exact active path<br/>Admin isolation toggle / reader rechecks"]
-        V["Mumble container<br/>Host TCP+UDP 40000 to container 64738<br/>Voice group / login / channel ACL"]
+        V["Mumble container<br/>Host TCP+UDP 40000 to container 64738<br/>Team ingress / login / channel ACL"]
     end
     subgraph PRIMARY["Primary TAK VM - e2-medium"]
         T["TAK Server<br/>TCP 8089 / 8443<br/>8446 is a policy entry; availability not established"]
@@ -29,7 +29,7 @@ flowchart TB
     Q -.->|"Read-only directory API"| C
     H -.->|"Peer ingress authorization"| Q
     A -.->|"Admin isolation setting"| Q
-    G -->|"Voice policy for separately assigned voice peers"| V
+    G -->|"Team voice TCP/UDP policy"| V
     G -->|"TAK-Primary /32<br/>Masquerade / SNAT to VPC source"| T
     T --> DB
     T -.->|"CoT / Video metadata, not video bytes"| U

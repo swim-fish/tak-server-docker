@@ -1,5 +1,7 @@
 # Vx 行動網路介面判斷問題
 
+**後續更新（2026-10-01）：**使用者在 NetBird 流程中選取 VPN 介面後確認 Vx 連線，後續也回報行動網路可連上 Mumble。請先確認 Vx 的 `Network` 使用有效 VPN 介面，步驟與裁切圖見 [NetBird 介面選擇](../atak/vx-missions.md#透過-netbird-選擇-vpn-介面)。以下保留原日期的 Cellular 篩選觀察；本次未修改 APK、重跑全部重現情境或驗收雙向音訊。新結果見 [NetBird 實測](2026-10-01-netbird-tak-media-voice.md)。
+
 2026-09-30 實測與 APK bytecode 分析確認：Vx 2.1.0 在只有行動網路、存在兩個 Cellular 介面項目時，會將兩者全部移出可用清單。Mumble 已登入，Vx 卻顯示 `Auto - Unavailable`，並將 PTT 設為錯誤狀態。
 
 本次行動網路已成功連到 Mumble 的 `40000` 通訊埠，且有加密 UDP ping 往返。這份結果不能推廣成所有 4G／5G 都無法使用 Vx，也不能把登入或 ping 成功當作雙向語音驗收。接上可上網的 Wi-Fi 後，介面顯示與 PTT 錯誤狀態已恢復；雙向音訊仍未測試。

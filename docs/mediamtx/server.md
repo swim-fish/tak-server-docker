@@ -4,6 +4,8 @@
 
 來源到播放端的完整處理流程與逐段 TLS 說明見[本機影像處理與流向](video-flow.md)。
 
+雲端 NetBird 部署的操作與權限另見 [NetBird 影音流程](../network/netbird-user-guide.md#3-publish-icu-and-view-in-atak)：所有發布仍需帳密，純 RTSP 觀看可在 peer／路徑授權後免帳密；RTSPS、RTMP、RTMPS 與 WebRTC 觀看保留驗證。下列 Compose 與早期本機實測不等同雲端設定。
+
 ## 簽發憑證與啟動
 
 先完成[TAK PKI bootstrap](../getting-started.md#2-產生憑證與-tak-連線包)。現有部署**不要**用 `bootstrap_local.py --force` 取得 MediaMTX 憑證；執行獨立簽發腳本即可：
@@ -27,7 +29,7 @@ MediaMTX 使用 TAK Root → 中繼簽發 CA 簽出的**獨立葉憑證及私鑰
 
 ## 發布及讀取權限
 
-現行發布身分依 ICU 小隊或一般設備分配獨立帳密及完整路徑權限，由[管理頁](management.md)建立與輪替。舊的 `atak-publisher` 共用帳號暫時保留給既有裝置；`atak-viewer` 是 MediaMTX 上游讀取帳號。兩者密碼分別在 `runtime/secrets/mediamtx_publish_password` 和 `runtime/secrets/mediamtx_read_password`，初次執行簽發腳本時產生。只有手動維護舊 ICU 設定時才在本機終端機讀取共用發布密碼，**不要把輸出貼到聊天、截圖或版控**：
+現行發布身分依 ICU 小隊或一般裝置分配獨立帳密及完整路徑權限，由[管理頁](management.md)建立與輪替。舊的 `atak-publisher` 共用帳號暫時保留給既有裝置；`atak-viewer` 是 MediaMTX 上游讀取帳號。兩者密碼分別在 `runtime/secrets/mediamtx_publish_password` 和 `runtime/secrets/mediamtx_read_password`，初次執行簽發腳本時產生。只有手動維護舊 ICU 設定時才在本機終端機讀取共用發布密碼，**不要把輸出貼到聊天、截圖或版控**：
 
 ```powershell
 Get-Content ./runtime/secrets/mediamtx_publish_password
@@ -39,7 +41,7 @@ Get-Content ./runtime/secrets/mediamtx_publish_password
 
 若要透過 ICU 專屬 QR Code 佈建這些欄位，請見[ICU QR Code 格式與驗證](icu-qrcode.md)。
 
-**ATAK 5.7.0.15 相容性限制：**ICU 7.5.1 啟用 `Use SSL?` 後，人物 CoT 的 Video 連結使用 `rtsps`。2026-09-30 雲端實測中，ICU 發布成功，實際連結以原帳密通過公開 TLS 驗證並取得 `DESCRIBE 200 OK`；ATAK 仍將 `rtsps` 解析為 `raw`，在人物 Video 顯示 `Failed to Connect`。增加觀看權限不會改變此版本的協定解析。完整觀察見[SSL 與 ATAK RTSPS 實測](../validation/2026-09-30-icu-ssl-atak-rtsps.md)。取消 ICU SSL 的替代方案尚未在此次測試驗證。
+**ATAK 5.7.0.15 相容性限制：**ICU 7.5.1 啟用 `Use SSL?` 後，人物 CoT 的 Video 連結使用 `rtsps`。2026-09-30 雲端實測中，ICU 發布成功，實際連結以原帳密通過公開 TLS 驗證並取得 `DESCRIBE 200 OK`；ATAK 仍將 `rtsps` 解析為 `raw`，在人物 Video 顯示 `Failed to Connect`。增加觀看權限不會改變此版本的協定解析。完整觀察見[SSL 與 ATAK RTSPS 實測](../validation/2026-09-30-icu-ssl-atak-rtsps.md)。該日期未驗證取消 SSL 的替代方案；後續 NetBird 流程已確認 ICU 純 RTSP 發布及同隊 ATAK 人物 Video 可觀看，見 [2026-10-01 紀錄](../validation/2026-10-01-netbird-tak-media-voice.md)。
 
 本機 TAK ICU 7.5.1 的 `Use SSL?` 設定會選擇 RTSPS。2026-09-23 實機以舊共用帳密成功送出 `live/VIDEO_1`，再由獨立讀取帳號經 RTSPS 讀取；2026-09-24 另以 Alpha 小隊 QR 成功發布 `live/alpha/1/VIDEO_1` 並在 Chrome 觀看。這不證明 ICU 內部是否嚴格檢查了憑證鏈。下表保留早期手動測試值；新裝置建議由控制台取得小隊 QR：
 
@@ -54,7 +56,7 @@ Get-Content ./runtime/secrets/mediamtx_publish_password
 
 `Server IP` 只填名稱，不加 `rtsps://` 或通訊埠；`Stream Path` 只填 `live/`，ICU 會自行接上串流識別名稱。路徑必須符合 `live/<名稱>`；`test` 僅供 FFmpeg 驗證。若使用 IP 連 RTSPS，憑證 SAN 必須有相符 `IP:` 項目，不能只靠 DNS SAN。
 
-目前這台 ICU 的純 RTSP（`8554`、不勾選 SSL）雖能建立 `live/VIDEO_1` session，卻在約 10 秒後因媒體逾時失敗。故上表右欄是診斷用設定，**不是已驗證可用的 ICU 回退路徑**。本機使用 RTSPS over TCP；若未來透過 VPN 使用 RTSP，須重新確認 ICU 的媒體傳輸及 Docker／Linux 網路路徑，不能只改連線位址。
+早期本機測試中，ICU 的純 RTSP（`8554`、不勾選 SSL）雖能建立 `live/VIDEO_1` session，卻在約 10 秒後因媒體逾時失敗。故上表右欄是診斷用設定，**不是該次本機測試已驗證的 ICU 回退路徑**。本機使用 RTSPS over TCP。後續雲端 NetBird RTSP 已通過上述驗證；移到其他部署時，仍須確認 ICU 的媒體傳輸及 Docker／Linux 網路路徑。
 
 啟動後看 `docker compose logs -f mediamtx`：`is publishing to path 'live/...'` 才表示已送達伺服器。其他播放器使用 `atak-viewer` 讀取帳號與**實際發布路徑**。2026-09-25 實測發現，ATAK CIV 5.7.0.15 無法直接播放 ICU 自動通告的 RTSPS 來源；手動建立 `rtsp://takbox.local:8554/live/alpha/1/VIDEO_1` 影像來源，填入 `atak-viewer` 的獨立讀取密碼並勾選 **Reliable P2P Connection (consumes more resources)** 後，實機成功顯示 1280×720 影像。未勾選時，H.264 與 KLV 的 RTSP SETUP 傳輸方式不一致，MediaMTX 會關閉連線。純 RTSP 觀看沒有 TLS，只在受控區域網路或 VPN 使用；步驟與 log 見[ATAK 觀看實測](../validation/2026-09-25-atak-icu-viewer.md)。
 

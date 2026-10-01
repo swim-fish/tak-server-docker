@@ -51,7 +51,7 @@
 <text x="564" y="676" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="22" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Media: NetBird peer group + operation + exact path</text>
 <text x="564" y="712" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="22" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">RTSP read: no password for approved peers and paths</text>
 <text x="564" y="748" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="22" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Publish / protected read: credentials remain required</text>
-<text x="564" y="784" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="22" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Voice: separate voice assignment + Mumble channel ACL</text>
+<text x="564" y="784" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="22" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Voice: team ingress policy + Mumble identity / channel ACL</text>
 <rect x="454" y="273" width="179" height="45" fill="white"/>
 <text x="465" y="280" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="24" font-weight="400" fill="#1673ad" dominant-baseline="text-before-edge">NetBird tunnel</text>
 <rect x="1129" y="245" width="177" height="76" fill="white"/>
@@ -66,5 +66,5 @@
 <text x="840" y="146" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="24" font-weight="400" fill="#687788" dominant-baseline="text-before-edge">Existing public TAK entry retained</text>
 <text x="50" y="945" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="23" font-weight="400" fill="#17324a" dominant-baseline="text-before-edge">Solid: VPN data path | Dashed: DNS or preserved public entry | Return traffic follows each connection</text>
 <text x="50" y="992" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="24" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Only one TAK host route is advertised. No full-VPC subnet route and no Internet exit node.</text>
-<text x="50" y="1037" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="23" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">TCP 8446 is allowed by policy; the previous service probe was unreachable. Voice onboarding is separate.</text>
+<text x="50" y="1037" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="23" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">TCP 8446 is allowed by policy; the previous service probe was unreachable. Team voice channel ACL rollout remains pending.</text>
 </svg>
