@@ -11,6 +11,7 @@
 | 理解目前有哪些服務、哪些項目已驗證 | [架構與驗證狀態](architecture.md) |
 | 透過 NetBird 使用 TAK、ICU、ATAK Video 與 Mumble／Vx | [NetBird 使用流程](network/netbird-user-guide.md)、[2026-10-01 驗證](validation/2026-10-01-netbird-tak-media-voice.md) |
 | 檢視雲端 NetBird 路由、DNS、Gateway 與小隊影音權限 | [NetBird 路由與網路架構](network/netbird-routing.md) |
+| 規劃 NetBird 與特定來源 IP 直接存取 TAK／MediaMTX／Mumble 的雙入口 | [雙軌 Network Topology Diagram](network/netbird-dual-path-topology.md) |
 | Inspect layered health and service controls | [Service health and lifecycle](services/health-and-lifecycle.md) |
 | 設定、測試或移除 Windows 名稱解析 | [mDNS](network/mdns.md) |
 | 啟用熱點與防火牆、處理重新開機後的連線 | [防火牆](network/firewall.md) |

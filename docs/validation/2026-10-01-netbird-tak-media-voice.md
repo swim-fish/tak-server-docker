@@ -9,6 +9,8 @@ Date: 2026-10-01 (Asia/Taipei). This record summarizes the separately deployed c
 | Routing/DNS configuration | One TAK host `/32` through Gateway masquerade/SNAT; exact private service DNS | No full-VPC/default Internet route; original public TAK rules retained |
 | TAK transport | Gateway/private TAK TCP `8089` and `8443` reached in the pilot | TCP reachability alone does not establish certificate/application acceptance; `8446` probe was unreachable |
 | ICU over NetBird | Actual publication accepted after Gateway/media correction | Publication and QR import are distinct checks |
+| Previous ICU path recheck | Device retained its previous path on RTSP `8554`; live API showed a ready H264/KLV stream, one NetBird publisher and increasing received bytes over five seconds | Publication still required NetBird; no reader was active, so this did not repeat ATAK playback acceptance |
+| Current media ingress boundary | Live MediaMTX configuration binds media listeners to NetBird; a public Management RTSP `8554` TCP probe did not connect | Confirms this endpoint and observation; does not establish the status of every historical endpoint/source |
 | Same-team ATAK Video | Operator confirmed person-marker RTSP playback without viewing credentials | Only an eligible peer and active permitted path; protected protocols retain read credentials |
 | RTSP/RTSPS server boundary | RTSP DESCRIBE/SETUP/PLAY and media receipt; anonymous RTSPS rejected, authenticated RTSPS accepted | Does not add RTSPS playback to the tested ATAK version |
 | Voice user/peer group | User auto-group and actual connected phone peer both matched the intended team | Correct membership alone did not grant the missing voice policy |
@@ -36,4 +38,4 @@ The cellular connection report supports this NetBird operating workflow. The [20
 
 Private runtime holds original diagnostic logs and full screenshots. Public images are direct crops of the Network tile or interface dialogs, with maps, GPS/callsigns, service identities and surrounding views removed. The cropped pixels were compared to the original rectangles, and output PNGs were checked for absence of EXIF/GPS/text metadata. These crops document UI selection, not a complete network trace or audio test.
 
-[User workflow](../network/netbird-user-guide.md) · [Current cloud architecture](../network/netbird-routing.md)
+[User workflow](../network/netbird-user-guide.md) · [Current cloud architecture](../network/netbird-routing.md) · [Planned dual-entry topology](../network/netbird-dual-path-topology.md)

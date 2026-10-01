@@ -146,6 +146,150 @@ def architecture(canvas, regular, bold):
     c.save('network-architecture')
 
 
+DUAL_PATH = """flowchart LR
+    U["Field / desktop clients<br/>ATAK / ICU / Vx / browser<br/>Wi-Fi or cellular"]
+    O(("NetBird overlay<br/>Direct peer tunnel / relay fallback"))
+    I(("Public Internet<br/>Direct access from approved source IPs"))
+    F["Source IP allowlist<br/>Specific approved IP/CIDR only<br/>Other sources denied<br/>Service authentication retained"]
+    subgraph MANAGEMENT["Management VM - e2-small"]
+        C["NetBird control / dashboard / relay<br/>Public HTTPS 443 / STUN UDP 3478<br/>Local account + MFA"]
+        G["Gateway peer<br/>INPUT service policy<br/>FORWARD TAK host policy"]
+        X["Same MediaMTX<br/>Planned: NetBird + restricted public media entry<br/>All publication requires credentials"]
+        H["Protected admin / media viewer<br/>Admin 8443 / viewer 443<br/>NetBird peer + service login"]
+        M["Same Mumble container<br/>Host TCP+UDP 40000 to 64738<br/>Service identity / channel ACL"]
+    end
+    subgraph PRIMARY["Primary TAK VM - e2-medium"]
+        T["Same TAK Server<br/>TCP 8089 / 8443<br/>Existing client certificate"]
+        DB["PostgreSQL / PostGIS<br/>Private database service"]
+    end
+    U -.->|"Public bootstrap before VPN login"| C
+    C -.->|"Enrollment / DNS / policies / signaling"| G
+    U -->|"VPN connected / eligible peer"| O
+    O -->|"Encrypted overlay"| G
+    G -->|"INPUT: original peer source<br/>Publish requires credentials<br/>RTSP read: approved peer/path, no password"| X
+    G -->|"Approved web peer + service login"| H
+    G -->|"INPUT: team TCP/UDP 40000<br/>Original peer source"| M
+    G -->|"FORWARD: single TAK host /32<br/>VPC route + masquerade / SNAT"| T
+    U -->|"Public service endpoint"| I
+    I --> F
+    F -->|"Planned public media entry<br/>Source allowlist + service authorization"| X
+    F -->|"Restricted public voice entry<br/>Source allowlist + service login"| M
+    F -->|"Restricted public TAK entry<br/>Source allowlist + client certificate<br/>No Gateway hop"| T
+    T --> DB
+    classDef vpn fill:#edf7fd,stroke:#1673ad,color:#17324a;
+    classDef legacy fill:#fff6eb,stroke:#a96416,color:#17324a;
+    classDef service fill:#eff9f5,stroke:#168069,color:#17324a;
+    classDef control fill:#f3effa,stroke:#7151a5,color:#17324a;
+    class U,O,G vpn;
+    class I,F legacy;
+    class X,H,M,T,DB service;
+    class C control;
+"""
+
+
+def network_cloud(c, box, title, lines, color):
+    """Draw the same cloud silhouette in PNG and SVG."""
+    from html import escape
+    x, y, w, h = box
+    commands = [
+        ((0.03, .53), (.03, .32), (.18, .26), (.26, .34)),
+        ((.26, .34), (.28, .05), (.56, .04), (.64, .27)),
+        ((.64, .27), (.84, .15), (.98, .34), (.92, .53)),
+        ((.92, .53), (1.03, .75), (.85, .94), (.70, .87)),
+        ((.70, .87), (.47, 1.04), (.28, .91), (.26, .86)),
+        ((.26, .86), (.03, .94), (-.02, .71), (.03, .53)),
+    ]
+    points = []
+    path = f'M {x+w*.03} {y+h*.53}'
+    for start, a, b, end in commands:
+        path += f' C {x+w*a[0]} {y+h*a[1]} {x+w*b[0]} {y+h*b[1]} {x+w*end[0]} {y+h*end[1]}'
+        for i in range(25):
+            t = i / 24
+            px = (1-t)**3*start[0]+3*(1-t)**2*t*a[0]+3*(1-t)*t*t*b[0]+t**3*end[0]
+            py = (1-t)**3*start[1]+3*(1-t)**2*t*a[1]+3*(1-t)*t*t*b[1]+t**3*end[1]
+            points.append((x+w*px, y+h*py))
+    fill = '#edf7fd' if color == '#1673ad' else '#fff6eb'
+    c.draw.polygon(points, fill=fill)
+    c.draw.line(points+[points[0]], fill=color, width=3)
+    c.svg.append(f'<path d="{escape(path)} Z" fill="{fill}" stroke="{color}" stroke-width="3"/>')
+    c.text((x+68, y+75), title, 30, color, True)
+    for i, line in enumerate(lines):
+        c.text((x+68, y+117+i*31), line, 22, color)
+
+
+def dual_path_topology(canvas, regular, bold):
+    c = canvas.Canvas((2500, 1980), 'Planned topology | NetBird + source-restricted public access',
+        'Two independent paths to the same TAK, MediaMTX and Mumble services | 2026-10-01', regular, bold)
+    c.panel((1150, 190, 1290, 1160), '#168069', '#f8fcfa')
+    c.text((1180, 207), 'Management VM | e2-small', 29, canvas.GREEN, True)
+    c.panel((1150, 1450, 1290, 300), '#168069', '#f8fcfa')
+    c.text((1180, 1464), 'Primary TAK VM | e2-medium', 29, canvas.GREEN, True)
+    # Route lines are drawn before nodes to keep endpoint labels readable.
+    c.arrow([(420, 550), (570, 550)], canvas.BLUE)
+    c.arrow([(1060, 550), (1210, 550)], canvas.BLUE)
+    c.arrow([(1680, 525), (1790, 525)], canvas.BLUE)
+    c.arrow([(1680, 650), (1700, 650), (1700, 935), (1790, 935)], canvas.BLUE)
+    c.arrow([(1680, 730), (1740, 730), (1740, 1160), (1790, 1160)], canvas.BLUE)
+    c.arrow([(1620, 790), (1620, 900), (1175, 900), (1175, 1410), (1740, 1410), (1740, 1540), (1790, 1540)], canvas.BLUE)
+    c.arrow([(420, 850), (480, 850), (480, 1130), (570, 1130)], canvas.ORANGE)
+    c.arrow([(1060, 1130), (1210, 1130)], canvas.ORANGE)
+    c.arrow([(1680, 1040), (1725, 1040), (1725, 600), (1790, 600)], canvas.ORANGE)
+    c.arrow([(1680, 1135), (1760, 1135), (1760, 1240), (1790, 1240)], canvas.ORANGE)
+    c.arrow([(1445, 1200), (1445, 1380), (2460, 1380), (2460, 1665), (2410, 1665)], canvas.ORANGE)
+    c.arrow([(240, 540), (240, 290), (1210, 290)], canvas.PURPLE, True)
+    c.arrow([(1450, 400), (1450, 465)], canvas.PURPLE, True)
+    c.arrow([(1790, 1600), (1680, 1600)], canvas.GREEN)
+    c.card((60, 540, 360, 390), 'Client devices', [
+        'ATAK / ICU / Vx', 'Browser / admin', 'Wi-Fi or cellular', '',
+        'TAK certificate retained', 'DNS selects endpoint', 'Policies authorize access', 'Vx: select VPN interface'], canvas.BLUE, 21)
+    network_cloud(c, (570, 440, 490, 240), 'NetBird overlay', ['Encrypted peer tunnel', 'Direct / relay fallback'], canvas.BLUE)
+    network_cloud(c, (570, 1000, 490, 260), 'Public Internet', ['Approved source IPs only', 'Direct service access'], canvas.ORANGE)
+    c.card((1210, 250, 1200, 150), 'NetBird control / dashboard / relay', [
+        'Public login + MFA before VPN use | HTTPS 443 / STUN UDP 3478',
+        'Enrollment, exact private DNS, group policies and signaling'], canvas.PURPLE, 24)
+    c.card((1210, 465, 470, 325), 'Gateway peer', [
+        'NetBird interface on management', 'INPUT: media / admin / voice',
+        'FORWARD: TAK host /32 only', 'TAK route: masquerade / SNAT',
+        'No Internet exit / full-VPC route', 'INPUT retains original peer source'], canvas.BLUE, 22)
+    c.card((1790, 465, 620, 390), 'Same MediaMTX', [
+        'NetBird + restricted public media entry',
+        'RTSP 8554 / RTSPS 8322',
+        'RTMP 1935 / RTMPS 1936',
+        'RTP 8000 / RTCP 8001 / WebRTC 8189 UDP',
+        'HTTP 8889 / API 9997: loopback backends',
+        'Publish: credentials on every protocol',
+        'VPN RTSP read: approved peer/path, no password',
+        'Public: source allowlist + service authorization'], canvas.GREEN, 22)
+    c.card((1790, 885, 620, 190), 'Admin / media viewer', [
+        'Admin 8443: admin peer + service login',
+        'Viewer 443: approved peer + viewer login',
+        'NetBird ingress; no new public web grant'], canvas.GREEN, 22)
+    c.card((1790, 1105, 620, 220), 'Same Mumble Server', [
+        'Host TCP+UDP 40000 -> container 64738',
+        'VPN: team peer policy + service login',
+        'Public: approved source + service login',
+        'Channel ACLs are service permissions'], canvas.GREEN, 23)
+    c.card((1210, 980, 470, 220), 'Source IP allowlist', [
+        'Specific approved IP/CIDR only', 'Other sources denied',
+        'Service authentication retained', 'Direct TAK / media / voice entry'], canvas.ORANGE, 21)
+    c.card((1210, 1505, 470, 210), 'Database service', [
+        'PostgreSQL / PostGIS', 'Private database connection', 'No public DB path shown'], canvas.GREEN, 23)
+    c.card((1790, 1505, 620, 210), 'Same TAK Server', [
+        'TCP 8089 / 8443 | existing certificate',
+        'VPN source: Gateway VPC after SNAT',
+        'Public source: approved client IP / NAT'], canvas.GREEN, 23)
+    c.label((580, 250), ['Public bootstrap / control'], canvas.PURPLE)
+    c.label((595, 377), ['NETBIRD PATH'], canvas.BLUE)
+    c.label((595, 940), ['SOURCE-RESTRICTED PUBLIC PATH'], canvas.ORANGE)
+    c.label((750, 1340), ['TAK /32 via VPC', 'Gateway SNAT'], canvas.BLUE)
+    c.label((1870, 1350), ['Restricted public TAK entry', 'No NetBird Gateway hop'], canvas.ORANGE)
+    c.text((60, 1785), 'BLUE: NetBird data path   |   AMBER: source-restricted public access   |   PURPLE DASHED: control / bootstrap', 25, canvas.INK)
+    c.text((60, 1830), 'Both paths reach the same TAK, MediaMTX and Mumble services. DNS selects the endpoint; there is no automatic failover.', 25, canvas.MUTED)
+    c.text((60, 1875), 'Plan only: public MediaMTX access still requires listener, authorization and firewall configuration.', 25, canvas.MUTED)
+    c.text((60, 1920), 'CoT carries Video metadata; video bytes go directly to MediaMTX. Service authentication remains required.', 24, canvas.MUTED)
+    c.save('netbird-dual-path-topology')
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output-dir', type=Path, default=ROOT / 'docs/network/diagrams')
@@ -160,12 +304,13 @@ def main():
     bold = (args.font_dir / 'DejaVuSans-Bold.ttf') if args.font_dir else Path('C:/Windows/Fonts/segoeuib.ttf')
     if not regular.is_file() or not bold.is_file():
         parser.error('Provide --font-dir containing DejaVuSans.ttf and DejaVuSans-Bold.ttf')
-    for name, source in [('netbird-routing', ROUTING), ('network-architecture', ARCHITECTURE)]:
+    for name, source in [('netbird-routing', ROUTING), ('network-architecture', ARCHITECTURE), ('netbird-dual-path-topology', DUAL_PATH)]:
         (args.output_dir / (name + '.mmd')).write_text(source, encoding='utf-8')
     with contextlib.redirect_stdout(io.StringIO()):
         routing(canvas, regular, bold)
         architecture(canvas, regular, bold)
-    for name in ('netbird-routing', 'network-architecture'):
+        dual_path_topology(canvas, regular, bold)
+    for name in ('netbird-routing', 'network-architecture', 'netbird-dual-path-topology'):
         print(f'Wrote {args.output_dir / name} (.mmd, .svg, .png)')
 
 
