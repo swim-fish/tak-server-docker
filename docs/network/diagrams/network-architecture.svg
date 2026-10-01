@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2300" height="1740" viewBox="0 0 2300 1740" role="img">
+<title>Network architecture | NetBird-integrated cloud deployment</title>
+<rect width="100%" height="100%" fill="white"/>
+<text x="60" y="38" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="46" font-weight="700" fill="#17324a" dominant-baseline="text-before-edge">Network architecture | NetBird-integrated cloud deployment</text>
+<text x="60" y="103" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="26" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Observed configuration: two VMs; public bootstrap, private service entry, and an unchanged public TAK path</text>
+<rect x="720" y="180" width="1550" height="1230" rx="20" fill="#f8fcfa" stroke="#168069" stroke-width="3"/>
+<text x="750" y="192" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="27" font-weight="700" fill="#168069" dominant-baseline="text-before-edge">Management VM | e2-small | one shared availability boundary</text>
+<polyline points="525,310 780,310" fill="none" stroke="#7151a5" stroke-width="5" stroke-linejoin="round" stroke-dasharray="12 9"/>
+<polygon points="780.0,310.0 760.0,319.0 760.0,301.0" fill="#7151a5"/>
+<polyline points="525,785 780,785" fill="none" stroke="#1673ad" stroke-width="5" stroke-linejoin="round"/>
+<polygon points="780.0,785.0 760.0,794.0 760.0,776.0" fill="#1673ad"/>
+<polyline points="1095,440 1095,640" fill="none" stroke="#7151a5" stroke-width="5" stroke-linejoin="round" stroke-dasharray="12 9"/>
+<polygon points="1095.0,640.0 1086.0,620.0 1104.0,620.0" fill="#7151a5"/>
+<polyline points="1410,710 1525,710 1525,590 1700,590" fill="none" stroke="#168069" stroke-width="5" stroke-linejoin="round"/>
+<polygon points="1700.0,590.0 1680.0,599.0 1680.0,581.0" fill="#168069"/>
+<polyline points="1410,820 1590,820 1590,930 1700,930" fill="none" stroke="#168069" stroke-width="5" stroke-linejoin="round"/>
+<polygon points="1700.0,930.0 1680.0,939.0 1680.0,921.0" fill="#168069"/>
+<polyline points="1410,935 1525,935 1525,1265 1700,1265" fill="none" stroke="#168069" stroke-width="5" stroke-linejoin="round"/>
+<polygon points="1700.0,1265.0 1680.0,1274.0 1680.0,1256.0" fill="#168069"/>
+<polyline points="1700,1000 1455,1000 1455,1125 1410,1125" fill="none" stroke="#7151a5" stroke-width="5" stroke-linejoin="round" stroke-dasharray="12 9"/>
+<polygon points="1410.0,1125.0 1430.0,1116.0 1430.0,1134.0" fill="#7151a5"/>
+<polyline points="780,900 620,900 620,1450 1605,1450 1605,1570 1700,1570" fill="none" stroke="#168069" stroke-width="5" stroke-linejoin="round"/>
+<polygon points="1700.0,1570.0 1680.0,1579.0 1680.0,1561.0" fill="#168069"/>
+<polyline points="290,930 290,1240" fill="none" stroke="#1673ad" stroke-width="5" stroke-linejoin="round"/>
+<polygon points="290.0,1240.0 281.0,1220.0 299.0,1220.0" fill="#1673ad"/>
+<rect x="60" y="240" width="465" height="190" rx="20" fill="#f5f9fc" stroke="#7151a5" stroke-width="3"/>
+<text x="84" y="260" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="32" font-weight="700" fill="#7151a5" dominant-baseline="text-before-edge">Before VPN login</text>
+<text x="84" y="310" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="23" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Public control hostname</text>
+<text x="84" y="346" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="23" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Local accounts + MFA</text>
+<text x="84" y="382" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="23" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">HTTPS 443 / STUN UDP 3478</text>
+<rect x="780" y="240" width="630" height="200" rx="20" fill="#f5f9fc" stroke="#7151a5" stroke-width="3"/>
+<text x="804" y="260" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="32" font-weight="700" fill="#7151a5" dominant-baseline="text-before-edge">NetBird control / relay</text>
+<text x="804" y="310" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="23" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Existing Nginx public bootstrap endpoint</text>
+<text x="804" y="346" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="23" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Management + dashboard: loopback 18080 / 18081</text>
+<text x="804" y="382" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="23" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Policy and signaling; relay fallback when needed</text>
+<rect x="60" y="640" width="465" height="290" rx="20" fill="#f5f9fc" stroke="#1673ad" stroke-width="3"/>
+<text x="84" y="660" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="32" font-weight="700" fill="#1673ad" dominant-baseline="text-before-edge">Enrolled service devices</text>
+<text x="84" y="710" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="22" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">ATAK / ICU / browser / admin</text>
+<text x="84" y="746" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="22" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">alpha / bravo / charlie / admin</text>
+<text x="84" y="782" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="22" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Peer-to-peer data is preferred</text>
+<text x="84" y="818" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="22" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Relay fallback is network-dependent</text>
+<text x="84" y="854" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="22" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Voice peers are separately assigned</text>
+<rect x="780" y="640" width="630" height="330" rx="20" fill="#f5f9fc" stroke="#168069" stroke-width="3"/>
+<text x="804" y="660" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="32" font-weight="700" fill="#168069" dominant-baseline="text-before-edge">Gateway peer</text>
+<text x="804" y="710" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="23" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">INPUT: access to services on this VM</text>
+<text x="804" y="746" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="23" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">FORWARD: TAK-Primary single-host route</text>
+<text x="804" y="782" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="23" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">TAK forwarding uses masquerade / SNAT</text>
+<text x="804" y="818" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="23" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Local services retain the peer source</text>
+<text x="804" y="854" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="23" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">No default route / full-VPC route</text>
+<text x="804" y="890" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="23" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Primary TAK login / firewall stay unchanged</text>
+<rect x="1700" y="505" width="540" height="190" rx="20" fill="#f5f9fc" stroke="#168069" stroke-width="3"/>
+<text x="1724" y="525" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="32" font-weight="700" fill="#168069" dominant-baseline="text-before-edge">Protected HTTPS sites</text>
+<text x="1724" y="575" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="23" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Admin 8443: admin peer + Basic Auth</text>
+<text x="1724" y="611" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="23" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Media 443: approved peer + viewer login</text>
+<text x="1724" y="647" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="23" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Apps: loopback 8766 / 8767</text>
+<rect x="1700" y="810" width="540" height="300" rx="20" fill="#f5f9fc" stroke="#168069" stroke-width="3"/>
+<text x="1724" y="830" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="32" font-weight="700" fill="#168069" dominant-baseline="text-before-edge">MediaMTX</text>
+<text x="1724" y="880" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="21" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">NetBird-only RTSP / RTSPS / RTMP / RTMPS</text>
+<text x="1724" y="916" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="21" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">TCP 8554 / 8322 / 1935 / 1936</text>
+<text x="1724" y="952" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="21" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">UDP 8000 / 8001 / 8189</text>
+<text x="1724" y="988" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="21" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">RTSP read: approved peer, no password</text>
+<text x="1724" y="1024" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="21" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Publish + protected reads: credentials</text>
+<text x="1724" y="1060" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="21" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">HTTP WebRTC / API: loopback 8889 / 9997</text>
+<rect x="780" y="1050" width="630" height="185" rx="20" fill="#f5f9fc" stroke="#7151a5" stroke-width="3"/>
+<text x="804" y="1070" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="32" font-weight="700" fill="#7151a5" dominant-baseline="text-before-edge">Media authorization | loopback 8768</text>
+<text x="804" y="1120" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="21" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Read-only NetBird group lookup; exact path/action grants</text>
+<text x="804" y="1156" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="21" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Admin isolation control; active reader rechecks</text>
+<text x="804" y="1192" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="21" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Own team + assigned shared streams while isolation is on</text>
+<rect x="1700" y="1170" width="540" height="195" rx="20" fill="#f5f9fc" stroke="#168069" stroke-width="3"/>
+<text x="1724" y="1190" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="32" font-weight="700" fill="#168069" dominant-baseline="text-before-edge">Mumble</text>
+<text x="1724" y="1240" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="23" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Host TCP+UDP 40000 -&gt; container 64738</text>
+<text x="1724" y="1276" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="23" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Voice group, login, and channel ACLs</text>
+<text x="1724" y="1312" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="23" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Team voice ACL rollout remains pending</text>
+<rect x="1700" y="1480" width="540" height="180" rx="20" fill="#f5f9fc" stroke="#168069" stroke-width="3"/>
+<text x="1724" y="1500" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="32" font-weight="700" fill="#168069" dominant-baseline="text-before-edge">Primary TAK VM | e2-medium</text>
+<text x="1724" y="1550" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="21" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">VPC TAK 8089 / 8443 + PostgreSQL/PostGIS</text>
+<text x="1724" y="1586" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="21" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">CoT / Video metadata; video does not transit TAK</text>
+<text x="1724" y="1622" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="21" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Existing TAK client certificate authentication</text>
+<rect x="60" y="1240" width="465" height="230" rx="20" fill="#f5f9fc" stroke="#1673ad" stroke-width="3"/>
+<text x="84" y="1260" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="32" font-weight="700" fill="#1673ad" dominant-baseline="text-before-edge">Package downloads</text>
+<text x="84" y="1310" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="21" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">GCS / download service</text>
+<text x="84" y="1346" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="21" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Direct HTTPS outside the overlay</text>
+<text x="84" y="1382" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="21" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Signed URL expiry is independent</text>
+<text x="84" y="1418" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="21" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">No Gateway download route required</text>
+<rect x="539" y="263" width="195" height="45" fill="white"/>
+<text x="550" y="270" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="24" font-weight="400" fill="#7151a5" dominant-baseline="text-before-edge">Public bootstrap</text>
+<rect x="539" y="713" width="205" height="76" fill="white"/>
+<text x="550" y="720" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="24" font-weight="400" fill="#1673ad" dominant-baseline="text-before-edge">Encrypted tunnel</text>
+<text x="550" y="751" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="24" font-weight="400" fill="#1673ad" dominant-baseline="text-before-edge">direct or relay</text>
+<rect x="1107" y="513" width="203" height="45" fill="white"/>
+<text x="1118" y="520" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="24" font-weight="400" fill="#7151a5" dominant-baseline="text-before-edge">Policy / signaling</text>
+<rect x="1454" y="1038" width="133" height="45" fill="white"/>
+<text x="1465" y="1045" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="24" font-weight="400" fill="#7151a5" dominant-baseline="text-before-edge">HTTP auth</text>
+<rect x="789" y="1461" width="196" height="76" fill="white"/>
+<text x="800" y="1468" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="24" font-weight="400" fill="#168069" dominant-baseline="text-before-edge">TAK-Primary /32</text>
+<text x="800" y="1499" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="24" font-weight="400" fill="#168069" dominant-baseline="text-before-edge">SNAT -&gt; VPC</text>
+<rect x="299" y="1053" width="161" height="45" fill="white"/>
+<text x="310" y="1060" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="24" font-weight="400" fill="#1673ad" dominant-baseline="text-before-edge">Direct HTTPS</text>
+<text x="60" y="1550" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="25" font-weight="400" fill="#17324a" dominant-baseline="text-before-edge">Solid: data path | Dashed: control / authorization</text>
+<text x="60" y="1610" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="24" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Service-group rules do not assign Mumble voice rights automatically.</text>
+<text x="60" y="1672" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="24" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">The existing public TAK endpoint remains reachable under its original rules. Private media does not use that public entry.</text>
+</svg>

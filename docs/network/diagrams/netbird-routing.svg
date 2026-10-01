@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1120" viewBox="0 0 1800 1120" role="img">
+<title>NetBird | Current routing</title>
+<rect width="100%" height="100%" fill="white"/>
+<text x="60" y="38" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="46" font-weight="700" fill="#17324a" dominant-baseline="text-before-edge">NetBird | Current routing</text>
+<text x="60" y="103" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="26" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Host routing to TAK and direct peer access to co-hosted services are separate policies</text>
+<polyline points="440,325 670,325" fill="none" stroke="#1673ad" stroke-width="5" stroke-linejoin="round"/>
+<polygon points="670.0,325.0 650.0,334.0 650.0,316.0" fill="#1673ad"/>
+<polyline points="1115,325 1370,325" fill="none" stroke="#168069" stroke-width="5" stroke-linejoin="round"/>
+<polygon points="1370.0,325.0 1350.0,334.0 1350.0,316.0" fill="#168069"/>
+<polyline points="1115,405 1230,405 1230,745 1370,745" fill="none" stroke="#168069" stroke-width="5" stroke-linejoin="round"/>
+<polygon points="1370.0,745.0 1350.0,754.0 1350.0,736.0" fill="#168069"/>
+<polyline points="245,550 245,445" fill="none" stroke="#7151a5" stroke-width="5" stroke-linejoin="round" stroke-dasharray="12 9"/>
+<polygon points="245.0,445.0 254.0,465.0 236.0,465.0" fill="#7151a5"/>
+<polyline points="245,215 245,178 1555,178 1555,205" fill="none" stroke="#687788" stroke-width="5" stroke-linejoin="round" stroke-dasharray="12 9"/>
+<polygon points="1555.0,205.0 1546.0,185.0 1564.0,185.0" fill="#687788"/>
+<rect x="50" y="215" width="390" height="230" rx="20" fill="#f5f9fc" stroke="#1673ad" stroke-width="3"/>
+<text x="74" y="235" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="32" font-weight="700" fill="#1673ad" dominant-baseline="text-before-edge">Enrolled device</text>
+<text x="74" y="285" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="22" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">alpha / bravo / charlie / admin</text>
+<text x="74" y="321" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="22" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Existing TAK client certificate</text>
+<text x="74" y="357" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="22" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Assigned media / voice roles</text>
+<rect x="670" y="215" width="445" height="250" rx="20" fill="#f5f9fc" stroke="#1673ad" stroke-width="3"/>
+<text x="694" y="235" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="32" font-weight="700" fill="#1673ad" dominant-baseline="text-before-edge">Gateway peer</text>
+<text x="694" y="285" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="22" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Management VM / NetBird client</text>
+<text x="694" y="321" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="22" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">FORWARD: selected TAK host route</text>
+<text x="694" y="357" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="22" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">INPUT: local service access</text>
+<text x="694" y="393" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="22" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">SNAT only on the TAK route</text>
+<rect x="1370" y="205" width="380" height="265" rx="20" fill="#f5f9fc" stroke="#168069" stroke-width="3"/>
+<text x="1394" y="225" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="32" font-weight="700" fill="#168069" dominant-baseline="text-before-edge">Primary TAK Server</text>
+<text x="1394" y="275" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="22" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">VPC private host /32</text>
+<text x="1394" y="311" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="22" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">TCP 8089 / 8443</text>
+<text x="1394" y="347" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="22" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">No NetBird agent required</text>
+<text x="1394" y="383" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="22" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Sees Gateway VPC source</text>
+<text x="1394" y="419" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="22" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Authenticates TAK certificate</text>
+<rect x="1370" y="615" width="380" height="270" rx="20" fill="#f5f9fc" stroke="#168069" stroke-width="3"/>
+<text x="1394" y="635" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="32" font-weight="700" fill="#168069" dominant-baseline="text-before-edge">Local services</text>
+<text x="1394" y="685" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="21" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Admin / media / Mumble</text>
+<text x="1394" y="721" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="21" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Direct Gateway NetBird address</text>
+<text x="1394" y="757" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="21" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Original peer source is visible</text>
+<text x="1394" y="793" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="21" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Peer group + service auth</text>
+<text x="1394" y="829" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="21" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Media isolation is enabled</text>
+<rect x="50" y="550" width="390" height="270" rx="20" fill="#f5f9fc" stroke="#7151a5" stroke-width="3"/>
+<text x="74" y="570" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="32" font-weight="700" fill="#7151a5" dominant-baseline="text-before-edge">Private DNS</text>
+<text x="74" y="620" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="20" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">TAK -&gt; private TAK address</text>
+<text x="74" y="656" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="20" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Media / Admin / Voice -&gt; Gateway</text>
+<text x="74" y="692" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="20" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Admin answers: admin peers only</text>
+<text x="74" y="728" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="20" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Public NetBird control unchanged</text>
+<text x="74" y="764" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="20" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">No parent-domain override</text>
+<rect x="540" y="570" width="660" height="310" rx="20" fill="#f5f9fc" stroke="#168069" stroke-width="3"/>
+<text x="564" y="590" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="32" font-weight="700" fill="#168069" dominant-baseline="text-before-edge">Identity at each boundary</text>
+<text x="564" y="640" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="22" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">TAK: existing certificate identity + Gateway VPC source</text>
+<text x="564" y="676" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="22" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Media: NetBird peer group + operation + exact path</text>
+<text x="564" y="712" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="22" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">RTSP read: no password for approved peers and paths</text>
+<text x="564" y="748" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="22" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Publish / protected read: credentials remain required</text>
+<text x="564" y="784" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="22" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Voice: separate voice assignment + Mumble channel ACL</text>
+<rect x="454" y="273" width="179" height="45" fill="white"/>
+<text x="465" y="280" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="24" font-weight="400" fill="#1673ad" dominant-baseline="text-before-edge">NetBird tunnel</text>
+<rect x="1129" y="245" width="177" height="76" fill="white"/>
+<text x="1140" y="252" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="24" font-weight="400" fill="#168069" dominant-baseline="text-before-edge">Host route /32</text>
+<text x="1140" y="283" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="24" font-weight="400" fill="#168069" dominant-baseline="text-before-edge">SNAT -&gt; VPC</text>
+<rect x="1234" y="508" width="184" height="76" fill="white"/>
+<text x="1245" y="515" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="24" font-weight="400" fill="#168069" dominant-baseline="text-before-edge">Peer INPUT</text>
+<text x="1245" y="546" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="24" font-weight="400" fill="#168069" dominant-baseline="text-before-edge">No route SNAT</text>
+<rect x="261" y="475" width="149" height="45" fill="white"/>
+<text x="272" y="482" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="24" font-weight="400" fill="#7151a5" dominant-baseline="text-before-edge">Private DNS</text>
+<rect x="829" y="139" width="381" height="45" fill="white"/>
+<text x="840" y="146" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="24" font-weight="400" fill="#687788" dominant-baseline="text-before-edge">Existing public TAK entry retained</text>
+<text x="50" y="945" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="23" font-weight="400" fill="#17324a" dominant-baseline="text-before-edge">Solid: VPN data path | Dashed: DNS or preserved public entry | Return traffic follows each connection</text>
+<text x="50" y="992" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="24" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Only one TAK host route is advertised. No full-VPC subnet route and no Internet exit node.</text>
+<text x="50" y="1037" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="23" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">TCP 8446 is allowed by policy; the previous service probe was unreachable. Voice onboarding is separate.</text>
+</svg>

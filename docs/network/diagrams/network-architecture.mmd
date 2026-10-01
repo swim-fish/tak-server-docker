@@ -1,0 +1,43 @@
+flowchart TB
+    U["Enrolled devices<br/>ATAK / ICU / browser / admin"]
+    PKG["Private package storage / download service<br/>Direct HTTPS download; no VPN route required"]
+    subgraph MGMT["Management VM - e2-small - shared availability boundary"]
+        N["Public Nginx / NetBird bootstrap<br/>HTTPS 443 / STUN UDP 3478"]
+        C["NetBird management / dashboard / relay<br/>HTTP backends: loopback 18080 / 18081"]
+        G["NetBird Gateway peer<br/>INPUT service policy / FORWARD host policy"]
+        H["Protected Nginx vhosts<br/>Admin 8443: admin peer + Basic Auth<br/>Media 443: approved peer + viewer login"]
+        A["Admin 8766 / media viewer 8767<br/>Loopback only"]
+        X["MediaMTX private listeners<br/>RTSP 8554 / RTSPS 8322<br/>RTMP 1935 / RTMPS 1936<br/>RTP 8000 / RTCP 8001 / WebRTC 8189 UDP"]
+        W["MediaMTX HTTP backends<br/>WebRTC 8889 / API 9997: loopback"]
+        Q["Media authorization 8768 - loopback<br/>NetBird group + action + exact active path<br/>Admin isolation toggle / reader rechecks"]
+        V["Mumble container<br/>Host TCP+UDP 40000 to container 64738<br/>Voice group / login / channel ACL"]
+    end
+    subgraph PRIMARY["Primary TAK VM - e2-medium"]
+        T["TAK Server<br/>TCP 8089 / 8443<br/>8446 is a policy entry; availability not established"]
+        DB["PostgreSQL / PostGIS"]
+    end
+    U -.->|"Public login and MFA"| N
+    N -->|"Loopback proxy"| C
+    C -.->|"Registration / policies / signaling"| G
+    U -->|"Encrypted peer tunnel<br/>Direct preferred; relay fallback when needed"| G
+    G -->|"Local peer INPUT policy"| H
+    H -->|"Loopback HTTP"| A
+    A -->|"Authenticated WHEP proxy"| W
+    G -->|"Publish: credentials on every protocol<br/>Plain RTSP read: no password, authorized peer/path"| X
+    X --> W
+    X -.->|"HTTP auth callback"| Q
+    Q -.->|"Read-only directory API"| C
+    H -.->|"Peer ingress authorization"| Q
+    A -.->|"Admin isolation setting"| Q
+    G -->|"Voice policy for separately assigned voice peers"| V
+    G -->|"TAK-Primary /32<br/>Masquerade / SNAT to VPC source"| T
+    T --> DB
+    T -.->|"CoT / Video metadata, not video bytes"| U
+    U -.->|"Preserved public TAK entry"| T
+    U -->|"HTTPS outside the overlay"| PKG
+    classDef private fill:#eaf8f3,stroke:#168069,color:#17324a;
+    classDef control fill:#f2eef9,stroke:#7151a5,color:#17324a;
+    classDef client fill:#eaf5fb,stroke:#1673ad,color:#17324a;
+    class G,H,A,X,W,Q,V,T,DB private;
+    class N,C control;
+    class U,PKG client;
