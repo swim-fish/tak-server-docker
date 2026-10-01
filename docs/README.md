@@ -9,7 +9,8 @@
 | 現場快速交付 TAK、Vx、ICU 與無人機設定，或停用身分 | [現場人員 Quick Start](tak-server/frontline-quick-start.md) |
 | 從官方 ZIP 建立服務並連上 ATAK／Vx | [首次建置腳本](scripts/first-time-setup.md)、[逐步流程](getting-started.md) |
 | 理解目前有哪些服務、哪些項目已驗證 | [架構與驗證狀態](architecture.md) |
-| 查看雲端 NetBird 路由、DNS、Gateway 與小隊影音權限 | [NetBird 路由與網路架構](network/netbird-routing.md) |
+| 透過 NetBird 使用 TAK、ICU、ATAK Video 與 Mumble／Vx | [NetBird 使用流程](network/netbird-user-guide.md)、[2026-10-01 驗證](validation/2026-10-01-netbird-tak-media-voice.md) |
+| 檢視雲端 NetBird 路由、DNS、Gateway 與小隊影音權限 | [NetBird 路由與網路架構](network/netbird-routing.md) |
 | Inspect layered health and service controls | [Service health and lifecycle](services/health-and-lifecycle.md) |
 | 設定、測試或移除 Windows 名稱解析 | [mDNS](network/mdns.md) |
 | 啟用熱點與防火牆、處理重新開機後的連線 | [防火牆](network/firewall.md) |
@@ -26,10 +27,10 @@
 | 依任務操作整套 TAK 控制台 | [任務操作手冊](tak-server/console-task-manual.md) |
 | 啟動 Mumble、建立頻道或更換密碼 | [Mumble Server](mumble/server.md) |
 | 啟動 RTSP／RTSPS 影像服務、設定 TAK ICU | [MediaMTX](mediamtx/server.md) |
-| 查看 ICU、無人機、ATAK 與 WebRTC 的影像流向和加密狀態 | [本機影像處理與流向](mediamtx/video-flow.md) |
+| 檢視 ICU、無人機、ATAK 與 WebRTC 的影像流向和加密狀態 | [本機影像處理與流向](mediamtx/video-flow.md) |
 | Inspect `authInternalUsers` permissions and the three MediaMTX Compose nodes | [MediaMTX authorization and node diagrams](mediamtx/auth-and-compose-nodes.md) |
 | 用 QR Code 佈建 TAK ICU 影像發布設定 | [ICU QR Code](mediamtx/icu-qrcode.md) |
-| 查看即時影像、公開 WebRTC 開關及管理小隊／設備發布身分 | [MediaMTX 管理](mediamtx/management.md) |
+| 檢視即時影像、公開 WebRTC 開關及管理小隊／裝置發布身分 | [MediaMTX 管理](mediamtx/management.md) |
 | 分享 ICU 設定或 ATAK DPK／ZIP，管理 Mumble | [分享與管理頁](sharing/portal.md) |
 | 單筆／批次簽發 TAK 憑證、替換 Vx 任務套件 | [引導式佈建計畫與現況](plans/guided-provisioning.md) |
 | 查詢或取消 Mumble 註冊身分 | [Mumble 使用者](mumble/users.md) |

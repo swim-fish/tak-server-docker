@@ -1,12 +1,14 @@
 # Wi-Fi `.env` binding and CA console replacement
 
+Publication note: actual host/client addresses are replaced with reserved documentation addresses, not live endpoints.
+
 Date: 2026-09-25. This is a local test deployment. The Android operator controls ATAK and Vx screens.
 
 ## Wi-Fi address change
 
-The Windows Wi-Fi interface had `10.0.20.27/24`; the Android test device had `10.0.20.24/24`. The local ignored `.env` set `TAK_BIND_IP=10.0.20.27` and `TAK_ALLOWED_SUBNET=10.0.20.0/24`. `docker compose --profile sharing up -d --no-build` bound TAK, Mumble, MediaMTX, public viewer, and share download to that address. The management page remained on `127.0.0.1:10066`.
+The Windows Wi-Fi interface had `192.0.2.10/24`; the Android test device had `192.0.2.20/24`. The local ignored `.env` set `TAK_BIND_IP=192.0.2.10` and `TAK_ALLOWED_SUBNET=192.0.2.0/24`. `docker compose --profile sharing up -d --no-build` bound TAK, Mumble, MediaMTX, public viewer, and share download to that address. The management page remained on `127.0.0.1:10066`.
 
-The mDNS installer republished `takbox.local → 10.0.20.27`; its query found both the Mumble 40000 and TAK 8089 service records. Android resolved and pinged the name. From Android, TCP connection probes to 8089, 8443, 40000, 8322, 10065, and 8889 all succeeded. A read-only TAK administration API request succeeded. These probes establish network reachability, not ATAK or ICU application login.
+The mDNS installer republished `takbox.local → 192.0.2.10`; its query found both the Mumble 40000 and TAK 8089 service records. Android resolved and pinged the name. From Android, TCP connection probes to 8089, 8443, 40000, 8322, 10065, and 8889 all succeeded. A read-only TAK administration API request succeeded. These probes establish network reachability, not ATAK or ICU application login.
 
 The existing TAK and MediaMTX Windows firewall rules still referred to the previous hotspot at the first inspection. The TAK firewall script was changed to request UAC and read `.env`, but its first UAC request was canceled, so that attempt did not replace the old rules. The current Android TCP reachability result does not prove the new scoped firewall rules are installed. Re-run the TAK and MediaMTX firewall scripts and inspect their local/remote address filters before calling firewall migration complete.
 
@@ -22,7 +24,7 @@ Checks after recovery:
 - Offline OpenSSL validation of the archived Alpha certificate and full CRL chain returned `error 23: certificate revoked` at the former issuing CA.
 - The former Alpha certificate failed a fresh 8089 TLS test; the replacement certificate succeeded. The TAK-side TLS alert for the old certificate was generic (`internal error`), so the Root CRL and chain check establish the revocation reason.
 - The replacement Alpha certificate retained `team-alpha` In and Out group membership, and the TAK administration API returned that group. Its new expiration is 2028-09-24 17:45 Taiwan time.
-- TAK Server, database, Mumble, share services, and MediaMTX were running; TAK and Mumble health checks passed. The replacement TAK service certificate has `DNS:takbox.local` and `IP:10.0.20.27` SAN. Mumble and MediaMTX kept `DNS:takbox.local` SAN.
+- TAK Server, database, Mumble, share services, and MediaMTX were running; TAK and Mumble health checks passed. The replacement TAK service certificate has `DNS:takbox.local` and `IP:192.0.2.10` SAN. Mumble and MediaMTX kept `DNS:takbox.local` SAN.
 - The browser CA page reported one reissued certificate. The inventory's archived Alpha entry showed `簽發 CA 已撤銷`; the new Alpha entry appeared under `使用中`.
 
 ![CA replacement completed](../images/console-ca-rotation-complete.png)

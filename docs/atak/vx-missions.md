@@ -21,7 +21,7 @@
 
 建議分兩階段：TAK 憑證 DPK 可經 Local SD 或經實機驗證的 ATAK QR 匯入；Vx-only DPK 必須經 TAK Server 下載。已實測的一般 Local SD 匯入會解壓縮 Vx 檔案，但不觸發建立任務的 callback；重新安裝 ATAK、先載入 Vx 後也相同。
 
-控制台的 **引導式佈建 → Vx 任務** 現可從已驗證的本機 Vx 範本產生四頻道 Vx-only DPK，預覽 SHA-256、Mumble 位址與頻道，並將 TAK Server 上所有顯示名稱**完全等於** `ATAK Local Voice` 的舊套件先按 SHA-256 備份，再按確切 hash 刪除。新套件上傳後會讀回檢查唯一同名結果、`tool=public` 與 `missionpackage` 標籤。若刪除後失敗，結果頁提供從本機備份恢復的操作；不會刪除其他名稱的套件。TAK 的一般 metadata API 寫入 `tool` 時使用原始 `public` 字串；帶 JSON 引號的字串在本機 TAK 5.8 會回 HTTP 500。Vx 部署與後續 Android 驗證見[引導式佈建驗證](../validation/2026-09-24-guided-provisioning.md)。
+在控制台開啟 **引導式佈建 → Vx 任務**，可用已驗證的本機範本產生四頻道 Vx-only DPK，預覽 SHA-256、Mumble 位址與頻道，並將 TAK Server 上所有顯示名稱**完全等於** `ATAK Local Voice` 的舊套件先按 SHA-256 備份，再按確切 hash 刪除。新套件上傳後會讀回檢查唯一同名結果、`tool=public` 與 `missionpackage` 標籤。若刪除後失敗，結果頁提供從本機備份還原的操作；不會刪除其他名稱的套件。TAK 的一般 metadata API 寫入 `tool` 時使用原始 `public` 字串；帶 JSON 引號的字串在本機 TAK 5.8 會回 HTTP 500。Vx 部署與後續 Android 驗證見[引導式佈建驗證](../validation/2026-09-24-guided-provisioning.md)。
 
 2026-09-23 另以 ATAK `tak://com.atakmap.app/import?url=...` QR 下載現行四頻道 Vx-only DPK。裝置收到檔案並由 Import Manager 處理，但 TAK Voice 未新增 `vx-local`；該 QR 路徑仍不能當成下列 TAK Server Download 的替代。TAK 連線憑證 DPK 的 QR 匯入則已連線成功，兩種 DPK 必須分開判定。
 
@@ -40,13 +40,54 @@ ATAK 的 Data Packages 下載器會查詢 `https://takbox.local:8443/Marti/sync/
 
 Vx 在嘗試連線時可能顯示 **Enter Password for takbox.local**。此時使用 `runtime/secrets/mumble_server_password`；不可填 SuperUser 或 PKCS#12 密碼。
 
-![Vx Mumble 密碼對話框，密碼欄空白](../images/atak-vx-06-enter-mumble-password.jpg)
+![Vx Mumble 密碼對話方塊，密碼欄空白](../images/atak-vx-06-enter-mumble-password.jpg)
 
-圖為 2026-09-22 實機對話框裁切，只保留主機名稱與空白密碼欄。已儲存密碼時可能直接登入；已註冊身分通過驗證時，也可能不再檢查共用密碼。
+圖為 2026-09-22 實機對話方塊裁切，只保留主機名稱與空白密碼欄。已儲存密碼時可能直接登入；已註冊身分通過驗證時，也可能不再檢查共用密碼。
 
 Vx 的加密密碼快取以主機字串索引，不含通訊埠。刪除 Mission 不等於清除密碼；一般 `.pref` 也不能直接建立此加密快取。更換伺服器密碼後仍登入，先看[註冊身分](../mumble/users.md)，不要據此判定輪替失敗。
 
 實機曾在快速略過密碼提示後無法連線。ATAK **Settings → Tool Preferences → TAK Voice Preferences → DATA → Clear Database** 可清除 Voice 資料庫，但也會移除 `vx-local`，之後必須再從 TAK Server 的 Data Packages 下載。尚未驗證此操作是否清除加密密碼快取；不要把它視為只重設 Mumble 密碼的按鈕。
+
+## 透過 NetBird 選擇 VPN 介面
+
+使用雲端 NetBird 語音入口時，除了確認群組及 TCP／UDP `40000` 權限，也要確認 Vx 使用的網路介面：
+
+1. 先連線 NetBird，確認 VPN 已啟用。
+2. 在 TAK Voice／Vx 開啟要使用的語音位置與頻道。
+3. **長按狀態面板的 `Network` 區塊**。
+4. 在 `Available Network Interfaces` 選擇 **`tun1 (VPN)`**，再按 **`OK`**。
+5. 確認 `Network` 顯示 VPN 介面，必要時重新連線語音，核對登入及頻道狀態。若同時使用 VS1、VS2，分別確認其介面顯示。
+
+```mermaid
+flowchart LR
+    N["Vx 狀態面板<br/>Network"] -->|"長按"| D["Available Network Interfaces"]
+    D -->|"選擇 VPN 項目"| V["tun1 (VPN)<br/>本次裝置的介面名稱"]
+    V -->|"按 OK"| C["確認 Network 顯示 VPN<br/>重新檢查語音連線"]
+```
+
+### Network 按鈕與介面選單
+
+長按下圖的 `Network` 按鈕，開啟介面選單：
+
+![Vx Network 按鈕，顯示 tun1 VPN](../images/vx-netbird-network-button.png)
+
+變更前選取 `wlan0 (WIFI)`，VPN 項目仍未選取：
+
+![介面選單，Wi-Fi 已選取](../images/vx-netbird-network-wifi-selected.png)
+
+改選 `tun1 (VPN)`，再按 `OK`：
+
+![介面選單，VPN 已選取](../images/vx-netbird-network-vpn-selected.png)
+
+三張圖直接裁切自實機截圖，只保留按鈕或選單。地圖、GPS、呼號與服務身分資訊已排除，輸出 PNG 未保留原始 EXIF／GPS 或文字 metadata。
+
+`tun1` 是本次裝置顯示的名稱，其他裝置或 VPN 重連後可能不同；應選擇目前有效、標示 `(VPN)` 的項目。若選單沒有 VPN，先確認 NetBird 已連線，再重新開啟介面選單。NetBird App 已連線或 Wi-Fi 能上網，都不足以證明 Vx 已選到 VPN 介面。
+
+2026-10-01 的裝置截圖顯示：原先選取 `wlan0 (WIFI)`，後來改為 `tun1 (VPN)`，狀態面板也同步顯示 VPN。使用者確認 Vx 連線成功，伺服器另觀察到兩條連線維持十五秒且沒有新的自動封鎖。成功狀態發生在小隊語音政策修復、Mumble 重新啟動及裝置介面調整之後，不能將結果歸因於其中單一步驟；雙向音訊品質仍需另行驗收。原始截圖含部署與地圖資訊，只保留於本機受控資料夾。
+
+使用者後續回報：行動網路也可連上 Mumble。這項回報確認連線可用，未另留下該次行動網路的雙向 PTT、媒體封包或音訊品質紀錄。完整流程與實測界線見 [NetBird 使用流程](../network/netbird-user-guide.md#4-connect-mumble--atak-vx)及 [2026-10-01 紀錄](../validation/2026-10-01-netbird-tak-media-voice.md)。
+
+此 VPN 選擇流程與先前的 [Cellular 介面篩選問題](../validation/2026-09-30-vx-cellular-interface-selection.md) 分別記錄；本次未修改 Vx APK，也不代表 Cellular 篩選問題已修復。網路及群組政策見 [NetBird 路由與權限對照](../network/netbird-routing.md)。
 
 ## 多頻道與 PTT
 

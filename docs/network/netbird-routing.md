@@ -2,6 +2,8 @@
 
 Observed deployment model: 2026-10-01. This is a sanitized description of a separate two-VM cloud deployment. The local Compose implementation in this repository is documented in [architecture](../architecture.md) and [local video flow](../mediamtx/video-flow.md). This page does not imply that Compose installs NetBird or applies the cloud policies automatically.
 
+Operator workflow: [TAK, ICU, ATAK Video and voice with NetBird](netbird-user-guide.md). Dated acceptance: [2026-10-01 device observations](../validation/2026-10-01-netbird-tak-media-voice.md).
+
 ## Network architecture
 
 ![NetBird-integrated cloud architecture](diagrams/network-architecture.png)
@@ -54,7 +56,7 @@ Use exact-name overrides, not a parent-domain override. DNS recipients and traff
 | RTP / RTCP / WebRTC | Gateway NetBird `8000/8001/8189/UDP` | Media policy plus session authorization |
 | Media HTTP / API | Loopback `8889/9997` | Authenticated WebRTC proxy / internal maintenance |
 | Media authorization | Loopback `8768` | Trusted local callbacks, read-only NetBird directory lookup |
-| Mumble | Host `40000/TCP+UDP` to container `64738` | Separate voice assignment, service login and channel ACLs |
+| Mumble | Host `40000/TCP+UDP` to container `64738` | Team/voice ingress policy, service login and channel ACLs |
 
 NetBird control/dashboard HTTP backends bind to loopback `18080/18081`. Public bootstrap and protected media share Nginx port `443`, so port policies alone cannot distinguish those vhosts. Nginx and application checks protect the media site. MediaMTX media listeners bind to the Gateway NetBird address; internal APIs are not peer-facing. Mumble's legacy public binding remains, so voice is not yet wholly VPN-only.
 
@@ -65,14 +67,22 @@ NetBird control/dashboard HTTP backends bind to loopback `18080/18081`. Public b
 - **Media isolation is enabled:** own team plus explicitly assigned shared streams; approved admins have cross-team viewing. Turning isolation off permits cross-team viewing for eligible peers and known enabled paths, while publication and protected-protocol authentication remain unchanged.
 - **Plain RTSP reads require no password** when the NetBird peer and exact active path are authorized. **Every publication requires credentials**, including RTSP. RTSPS, RTMP, RTMPS, and WebRTC reads retain credentials or an authenticated browser grant.
 - The deployed MediaMTX build distinguishes RTSP and RTSPS at the listener before its HTTP authorization callback. Group, operation, and exact path checks therefore remain protocol-specific. Peer-directory lookup and reader rechecks use an approximately five-second interval; reader removal preserves publishers.
-- Team membership alone does not grant Mumble ingress. A separate voice group or existing pilot-admin policy is required. Full team-specific voice ACL rollout remains pending.
+- `TAK-Team-Voice-TCP` and `TAK-Team-Voice-UDP` now permit `alpha`, `bravo`, `charlie`, and `admin` to the Gateway on port `40000`. Legacy voice/pilot-admin policies remain. This authorizes network ingress; Mumble login and channel ACLs remain independent. Full team-specific voice ACL rollout remains pending.
 - Random-token paths, member/token inventory, and coordinated QR/URL/DPK rotation with old-link removal remain planned. Existing registered paths have not been migrated by this documentation update.
 
 ## Verification and remaining work
 
 The current configuration was checked through route/resource/router policies, exact DNS records, VM inventory, service state, and listener bindings. Actual same-team ICU publication and ATAK person-marker RTSP viewing without credentials were accepted on devices. Protocol checks also established RTSP media delivery and anonymous RTSPS denial with authenticated RTSPS success.
 
+The team voice ingress correction was verified by policy readback, preserved existing policies/memberships, and an actual Android TCP connection. Vx previously timed out because its team had no voice policy. After policy repair, TLS/application authentication and channel joins were observed, followed by a temporary Mumble auto-ban during rapid reconnects. Unauthenticated UDP status probing is disabled by `allowping=false`, so a missing status reply is not evidence of UDP failure. Device connection acceptance is recorded separately below.
+
 Cross-team phone denial, broader enrollment, mobile reconnection, team voice ACLs, and multi-viewer/relay load remain separate acceptance gates. The management VM size is an initial trial configuration, not a capacity guarantee. A point-in-time snapshot without ready streams does not invalidate the earlier playback acceptance.
+
+## Voice troubleshooting
+
+Check user `auto_groups`, propagated peer membership, both TCP and UDP port `40000` policies, scoped DNS, TLS/login, then channel ACLs. A correct DNS answer does not imply a matching traffic policy. Distinguish connection timeout from TLS reset: repeated attempts can trigger the server's temporary `Global ban`. Keep auto-ban protection enabled, avoid probe/reconnect loops, and allow the temporary ban to expire before a controlled retry. See [Mumble 1.5.915 auto-ban implementation](https://github.com/mumble-voip/mumble/blob/v1.5.915/src/murmur/Meta.cpp).
+
+A subsequent authorized Mumble-only restart retained the existing image and persistent configuration, with private configuration/SQLite backups. TLS hostname and certificate-chain validation passed after startup; temporary auto-ban state was cleared while auto-ban protection remained enabled. The user subsequently confirmed Vx connected successfully. A follow-up 15-second server observation found two established phone connections at both ends of the interval, successful authentication events, and no new global bans. The device screenshots also show Vx Network selection changing from `wlan0 (WIFI)` to `tun1 (VPN)` via a long-press on the Network tile; see [Vx operator steps](../atak/vx-missions.md#透過-netbird-選擇-vpn-介面). The successful result followed policy repair, restart, and interface selection; it does not isolate one change as sufficient. The operator subsequently reported successful Mumble connection over cellular/mobile data. Voice transport/login acceptance is recorded; that report has no independent cellular media capture or bidirectional audio-quality acceptance.
 
 ## Diagram maintenance
 

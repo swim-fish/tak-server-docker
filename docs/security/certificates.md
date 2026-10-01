@@ -1,5 +1,7 @@
 # 憑證、信任鏈與 CRL
 
+公開版本已將實際部署位址改為保留的文件範例位址；範例不是目前可用的端點。
+
 本機部署必須保留中繼簽發 CA。Root CA 簽中繼 CA，中繼 CA 簽發 TAK、Mumble、MediaMTX、管理員及裝置的獨立葉憑證。TAK／Mumble 憑證由 [bootstrap](../../scripts/bootstrap_local.py) 產生，MediaMTX 由[獨立簽發腳本](../../scripts/provision_mediamtx.py)產生；檔案用途見[runtime 參考](../reference/runtime-layout.md)。
 
 ## 簽發與匯入原則
@@ -32,7 +34,7 @@ TAK DPK 設定是指定連線的憑證設定，詳見[ATAK 連線](../atak/conne
 
 IP 要使用 `IP:` 類型，不能以 `DNS:192.168.137.1` 取代。通訊埠 `40000` 填在 Vx Port，不放入 SAN。固定 DNS 名稱可在 IP 改變後沿用憑證；直接以 IP 連線時，IP 改變就要重新簽發含新 IP SAN 的憑證，並更新 Vx Address。
 
-截至 2026-09-29，本機部署的 Mumble 葉憑證同時包含 `DNS:takbox.local` 與 `IP:192.168.88.2`，可對應這兩種入口。前表的 `192.168.137.1` 是 2026-09-22 單一類型 SAN 實測時使用的位址；目前綁定 IP 的服務憑證更新方式見[SAN 更新流程](service-san-renewal.md)。
+截至 2026-09-29，本機部署的 Mumble 葉憑證同時包含 `DNS:takbox.local` 與 `IP:192.0.2.2`，可對應這兩種入口。前表的 `192.168.137.1` 是 2026-09-22 單一類型 SAN 實測時使用的位址；綁定 IP 的服務憑證更新方式見[SAN 更新流程](service-san-renewal.md)。
 
 以上實測保留同一 CA、私鑰與 `CN=takbox.local`。APK 的信任流程有 Android、TAK 及自訂 fallback 分支；自訂分支接受符合 host 的 DNS 或 IP SAN，也有 CN fallback。本次正向測試證明兩種 SAN 配置可用，沒有證明各分支對不相符 SAN 都會拒絕；部署仍應使用相符 SAN，不依賴 CN fallback。完整範圍見[單一類型 SAN 實測](../validation/2026-09-22-mumble-san.md)。
 
@@ -52,7 +54,7 @@ flowchart TB
     ICA -.-> CAP12
     CAP12 --> ATAK["ATAK / Vx<br/>匯入 CA 信任鏈"]
 
-    MDNS["mDNS responder<br/>takbox.local → 192.168.88.2"] --> ADDRESS["Vx Address<br/>takbox.local:40000"]
+    MDNS["mDNS responder<br/>takbox.local → 192.0.2.2"] --> ADDRESS["Vx Address<br/>takbox.local:40000"]
     ATAK --> ADDRESS
     ADDRESS -->|"TLS 連線"| MUMBLE
 
@@ -82,9 +84,9 @@ flowchart TB
 
 ## 啟用撤銷檢查
 
-目前 `CoreConfig.xml` 的 `auth` 設定 `x509checkRevocation="true"`；`security/tls/crl` 分別列出作用中中繼 CA、舊中繼 CA 與 Root CA 的 CRL。**Root CRL 記錄中繼 CA 的撤銷；簽發中繼 CA 的 CRL 記錄它簽發的葉憑證撤銷。**兩層各有用途，不能只以其中一份代表整條鏈已完成停權驗證。TAK 5.8 發行版的[程式路徑核對](../validation/2026-09-26-tak-crlfile-source-analysis.md)顯示，8089 的共用 TLS trust manager 遍歷全域 CRL；唯一的 8443 預設 HTTP connector 則從 `security/tls/crl` 取得**第一筆** CRL 檔。雖然目前 `network/connector` 沒有 `crlFile`，同一張用戶端憑證在撤銷前可取得 8443 HTTP 200、撤銷後的新 TLS 請求遭拒，見[實機流程紀錄](../validation/2026-09-24-qr-e2e-revocation.md)。這不能證明 8443 已載入全域清單的其他 CRL，或舊中繼 CA 鏈已在 8443 完成停權驗收。
+目前 `CoreConfig.xml` 的 `auth` 設定 `x509checkRevocation="true"`；`security/tls/crl` 分別列出作用中中繼 CA、舊中繼 CA 與 Root CA 的 CRL。**Root CRL 記錄中繼 CA 的撤銷；各中繼 CA 的 CRL 記錄該 CA 簽發的葉憑證撤銷。**兩層各有用途，不能只以其中一份代表整條鏈已完成停權驗證。TAK 5.8 發行版的[程式路徑核對](../validation/2026-09-26-tak-crlfile-source-analysis.md)顯示，8089 的共用 TLS trust manager 走訪全域 CRL；唯一的 8443 預設 HTTP connector 則從 `security/tls/crl` 取得**第一筆** CRL 檔。雖然目前 `network/connector` 沒有 `crlFile`，同一張用戶端憑證在撤銷前可取得 8443 HTTP 200、撤銷後的新 TLS 請求遭拒，見[實機流程紀錄](../validation/2026-09-24-qr-e2e-revocation.md)。這不能證明 8443 已載入全域清單的其他 CRL，或舊中繼 CA 鏈已在 8443 完成停權驗收。
 
-撤銷**中繼 CA** 時還須讀回 TAK 信任憑證鏈資料庫（truststore）：若舊中繼 CA 被直接列為信任錨，驗證路徑可能在它結束而不往上檢查 Root CRL。2026-09-25 實測中，僅發布 Root CRL 後 8089 仍接受舊憑證 TLS 交握；從 `truststore-root.jks` 與 `fed-truststore.jks` 移除 `tak-issuing-old`、保留 Root 與新中繼 CA 並重啟 TAK 後，8089 才拒絕舊憑證的新連線。這是 CA 輪替的信任憑證鏈資料庫處理；**平常只撤銷單張裝置葉憑證，不應移除整個簽發中繼 CA**。[實測對照](../validation/2026-09-25-ca-rotation-cutover.md)記錄了前後結果。
+撤銷**中繼 CA** 時還須讀回 TAK 信任憑證鏈資料庫（truststore）：若舊中繼 CA 被直接列為信任錨，驗證路徑可能在它結束而不往上檢查 Root CRL。2026-09-25 實測中，僅發布 Root CRL 後 8089 仍接受舊憑證 TLS 交握；從 `truststore-root.jks` 與 `fed-truststore.jks` 移除 `tak-issuing-old`、保留 Root 與新中繼 CA 並重新啟動 TAK 後，8089 才拒絕舊憑證的新連線。這是 CA 輪替的信任憑證鏈資料庫處理；**平常只撤銷單張裝置葉憑證，不應移除整個簽發中繼 CA**。[實測對照](../validation/2026-09-25-ca-rotation-cutover.md)記錄了前後結果。
 
 ![發布 Root CRL 與移除舊 CA 直接信任錨的結果](../images/ca-rotation-trust-anchor-comparison.png)
 

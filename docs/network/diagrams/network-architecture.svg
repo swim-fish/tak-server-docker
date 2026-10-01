@@ -39,7 +39,7 @@
 <text x="84" y="746" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="22" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">alpha / bravo / charlie / admin</text>
 <text x="84" y="782" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="22" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Peer-to-peer data is preferred</text>
 <text x="84" y="818" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="22" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Relay fallback is network-dependent</text>
-<text x="84" y="854" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="22" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Voice peers are separately assigned</text>
+<text x="84" y="854" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="22" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Team peers have voice ingress policy</text>
 <rect x="780" y="640" width="630" height="330" rx="20" fill="#f5f9fc" stroke="#168069" stroke-width="3"/>
 <text x="804" y="660" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="32" font-weight="700" fill="#168069" dominant-baseline="text-before-edge">Gateway peer</text>
 <text x="804" y="710" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="23" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">INPUT: access to services on this VM</text>
@@ -69,7 +69,7 @@
 <rect x="1700" y="1170" width="540" height="195" rx="20" fill="#f5f9fc" stroke="#168069" stroke-width="3"/>
 <text x="1724" y="1190" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="32" font-weight="700" fill="#168069" dominant-baseline="text-before-edge">Mumble</text>
 <text x="1724" y="1240" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="23" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Host TCP+UDP 40000 -&gt; container 64738</text>
-<text x="1724" y="1276" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="23" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Voice group, login, and channel ACLs</text>
+<text x="1724" y="1276" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="23" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Team ingress, login, and channel ACLs</text>
 <text x="1724" y="1312" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="23" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Team voice ACL rollout remains pending</text>
 <rect x="1700" y="1480" width="540" height="180" rx="20" fill="#f5f9fc" stroke="#168069" stroke-width="3"/>
 <text x="1724" y="1500" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="32" font-weight="700" fill="#168069" dominant-baseline="text-before-edge">Primary TAK VM | e2-medium</text>
@@ -97,6 +97,6 @@
 <rect x="299" y="1053" width="161" height="45" fill="white"/>
 <text x="310" y="1060" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="24" font-weight="400" fill="#1673ad" dominant-baseline="text-before-edge">Direct HTTPS</text>
 <text x="60" y="1550" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="25" font-weight="400" fill="#17324a" dominant-baseline="text-before-edge">Solid: data path | Dashed: control / authorization</text>
-<text x="60" y="1610" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="24" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Service-group rules do not assign Mumble voice rights automatically.</text>
+<text x="60" y="1610" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="24" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">Team ingress permits transport; Mumble login and channel ACLs still apply.</text>
 <text x="60" y="1672" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="24" font-weight="400" fill="#486079" dominant-baseline="text-before-edge">The existing public TAK endpoint remains reachable under its original rules. Private media does not use that public entry.</text>
 </svg>
