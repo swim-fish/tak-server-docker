@@ -1,0 +1,38 @@
+flowchart LR
+    U["Field / desktop clients<br/>ATAK / ICU / Vx / browser<br/>Wi-Fi or cellular"]
+    O(("NetBird overlay<br/>Direct peer tunnel / relay fallback"))
+    I(("Public Internet<br/>Direct access from approved source IPs"))
+    F["Source IP allowlist<br/>Specific approved IP/CIDR only<br/>Other sources denied<br/>Service authentication retained"]
+    subgraph MANAGEMENT["Management VM - e2-small"]
+        C["NetBird control / dashboard / relay<br/>Public HTTPS 443 / STUN UDP 3478<br/>Local account + MFA"]
+        G["Gateway peer<br/>INPUT service policy<br/>FORWARD TAK host policy"]
+        X["Same MediaMTX<br/>Planned: NetBird + restricted public media entry<br/>All publication requires credentials"]
+        H["Protected admin / media viewer<br/>Admin 8443 / viewer 443<br/>NetBird peer + service login"]
+        M["Same Mumble container<br/>Host TCP+UDP 40000 to 64738<br/>Service identity / channel ACL"]
+    end
+    subgraph PRIMARY["Primary TAK VM - e2-medium"]
+        T["Same TAK Server<br/>TCP 8089 / 8443<br/>Existing client certificate"]
+        DB["PostgreSQL / PostGIS<br/>Private database service"]
+    end
+    U -.->|"Public bootstrap before VPN login"| C
+    C -.->|"Enrollment / DNS / policies / signaling"| G
+    U -->|"VPN connected / eligible peer"| O
+    O -->|"Encrypted overlay"| G
+    G -->|"INPUT: original peer source<br/>Publish requires credentials<br/>RTSP read: approved peer/path, no password"| X
+    G -->|"Approved web peer + service login"| H
+    G -->|"INPUT: team TCP/UDP 40000<br/>Original peer source"| M
+    G -->|"FORWARD: single TAK host /32<br/>VPC route + masquerade / SNAT"| T
+    U -->|"Public service endpoint"| I
+    I --> F
+    F -->|"Planned public media entry<br/>Source allowlist + service authorization"| X
+    F -->|"Restricted public voice entry<br/>Source allowlist + service login"| M
+    F -->|"Restricted public TAK entry<br/>Source allowlist + client certificate<br/>No Gateway hop"| T
+    T --> DB
+    classDef vpn fill:#edf7fd,stroke:#1673ad,color:#17324a;
+    classDef legacy fill:#fff6eb,stroke:#a96416,color:#17324a;
+    classDef service fill:#eff9f5,stroke:#168069,color:#17324a;
+    classDef control fill:#f3effa,stroke:#7151a5,color:#17324a;
+    class U,O,G vpn;
+    class I,F legacy;
+    class X,H,M,T,DB service;
+    class C control;

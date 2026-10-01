@@ -29,6 +29,8 @@ flowchart LR
 
 TAK 使用經 Gateway SNAT 的單一主機 `/32` 路由；管理及影音則直接連到 Gateway 的 NetBird 位址，保留來源 peer 辨識。純 RTSP 觀看可在 peer 與串流路徑授權後免帳密，所有發布仍需帳密；RTSPS、RTMP、RTMPS 與 WebRTC 觀看保留服務驗證。小隊影音隔離已啟用；小隊已獲 TCP／UDP 40000 語音入口權限，Mumble 登入與頻道 ACL 仍獨立驗證，小隊語音 ACL 尚待完成。既有公開 TAK 入口及 Mumble 的舊公開綁定仍保留。
 
+NetBird 與特定來源 IP 直接存取 TAK／MediaMTX／Mumble 的規劃見 [雙軌拓撲圖](network/netbird-dual-path-topology.md)；此圖尚未套用雲端設定，目前 MediaMTX 仍僅綁定 NetBird。
+
 使用 NetBird 後的裝置操作見 [使用流程](network/netbird-user-guide.md)。同隊 ATAK RTSP 觀看、Vx 連線及使用者回報的行動網路 Mumble 連線見 [2026-10-01 紀錄](validation/2026-10-01-netbird-tak-media-voice.md)；完整雙向音訊驗收另列待辦。
 
 ## 服務責任

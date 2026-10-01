@@ -14,6 +14,14 @@ One management VM hosts NetBird control, dashboard, relay/STUN, the Gateway peer
 
 The public NetBird endpoint must work before VPN login. Local accounts and MFA protect login. Enrolled devices use encrypted peer tunnels: direct connectivity is preferred, with relay fallback when needed. Enrollment alone does not establish whether a particular session is direct or relayed. TAK distributes CoT/Video metadata; video bytes flow directly between devices and MediaMTX.
 
+## Planned NetBird and source-restricted public paths
+
+![Planned NetBird and source-restricted public network topology](diagrams/netbird-dual-path-topology.png)
+
+[Dual-path explanation](netbird-dual-path-topology.md) · [SVG](diagrams/netbird-dual-path-topology.svg) · [Editable Mermaid](diagrams/netbird-dual-path-topology.mmd)
+
+Blue shows the NetBird path; amber proposes direct public access to the same TAK, MediaMTX and Mumble services from specific approved source IPs/CIDRs. Both paths retain service authorization; there is no automatic failover. This drawing is a plan, not a cloud configuration change. The observed MediaMTX deployment below remains bound to NetBird until its listener, authorization and firewall changes are applied.
+
 ## Current routing
 
 ![NetBird route boundaries](diagrams/netbird-routing.png)
