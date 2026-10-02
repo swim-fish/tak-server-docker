@@ -6,12 +6,12 @@ from pathlib import Path
 from xml.etree import ElementTree as ET
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from build_icu_qr import build_profile
+from build_icu_qr import RTSP_PORT, RTSPS_PORT, build_profile
 
 
 class BuildIcuQrTests(unittest.TestCase):
     def test_default_profile_sets_indoor_streaming_and_metric_altitude(self) -> None:
-        root = ET.fromstring(build_profile("takbox.local", 8322, "live/alpha/1/", "icu-alpha"))
+        root = ET.fromstring(build_profile("takbox.local", RTSP_PORT, "live/alpha/1/", "icu-alpha"))
         entries = {entry.get("key"): entry for entry in root.findall("./preference/entry")}
         expected = {
             "disableLocalBroadcast": ("class java.lang.Boolean", "true"),
@@ -26,7 +26,7 @@ class BuildIcuQrTests(unittest.TestCase):
         self.assertNotIn("display_coord_sys", entries)
 
     def test_profile_accepts_supported_quality_and_altitude_values(self) -> None:
-        root = ET.fromstring(build_profile("takbox.local", 8322, "live/", "publisher",
+        root = ET.fromstring(build_profile("takbox.local", RTSP_PORT, "live/", "publisher",
                                          stream_resolution="2", stream_frame_rate="30",
                                          stream_bit_rate="2000", altitude_display="1",
                                          disable_local_broadcast=False))
@@ -36,6 +36,19 @@ class BuildIcuQrTests(unittest.TestCase):
         self.assertEqual(values["stream_frame_rate"], "30")
         self.assertEqual(values["stream_bit_rate"], "2000")
         self.assertEqual(values["display_coord_alt"], "1")
+
+    def test_default_profile_publishes_plain_rtsp_for_atak_video_aliases(self) -> None:
+        root = ET.fromstring(build_profile("takbox.local", RTSP_PORT, "live/alpha/1/", "icu-alpha"))
+        values = {entry.get("key"): entry.text for entry in root.findall("./preference/entry")}
+        self.assertEqual(values["videoServerSSL"], "false")
+        self.assertEqual(values["videoServerPort"], "8554")
+
+    def test_profile_can_still_publish_rtsps(self) -> None:
+        root = ET.fromstring(build_profile("takbox.local", RTSPS_PORT, "live/alpha/1/", "icu-alpha",
+                                         use_ssl=True))
+        values = {entry.get("key"): entry.text for entry in root.findall("./preference/entry")}
+        self.assertEqual(values["videoServerSSL"], "true")
+        self.assertEqual(values["videoServerPort"], "8322")
 
 
 if __name__ == "__main__":

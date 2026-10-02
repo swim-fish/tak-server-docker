@@ -6,6 +6,7 @@
 
 | 項目 | 結果與界線 | 紀錄 |
 | --- | --- | --- |
+| Windows Docker UDP RTSP | 經 Docker Desktop 發布通訊埠的 RTSP UDP 因來源通訊埠被改寫而逾時；本機改為 TCP-only，UDP 回 `461`、自動協商改用 TCP；ICU 實機待驗 | [2026-10-02](2026-10-02-windows-docker-udp-rtsp.md) |
 | NetBird TAK／影音／語音 | 同隊 ICU／ATAK RTSP 觀看通過；語音小隊政策與 Vx VPN 介面已修正，Vx 已確認連線，另回報行動網路可連 Mumble；雙向 PTT／音訊品質待驗 | [2026-10-01](2026-10-01-netbird-tak-media-voice.md) |
 | Windows mDNS | 主機與 Android 名稱解析曾通過；仍需在每個部署網段確認 | [2026-09-21](2026-09-21-windows-mdns.md) |
 | TAK 與 DPK | 裝置憑證連線、群組與 CRL 撤銷測試 | [2026-09-21](2026-09-21-tak-server-dpk.md) |
@@ -58,4 +59,4 @@ Mumble 前景防火牆既有測試涵蓋介面未啟用、建立失敗清理、C
 5. 測斷線重連、短暫切換網路與延遲／丟包；保留去識別的結果。
 6. 完成同 UUID 任務重複下載、新 UUID 同名任務與既有密碼快取的測試。
 
-整合 TAK＋Vx 包的 Server Download、Linux、MediaMTX 跨網路 UDP、ATAK 自動 RTSPS 通告替代方式、公開 8446／ACME 及資料庫升級尚未驗收，見[後續計畫](../plans/roadmap.md)。
+整合 TAK＋Vx 包的 Server Download、Linux、ICU 在本機 TCP-only 模式的實機發布、ATAK 自動 RTSPS 通告替代方式、公開 8446／ACME 及資料庫升級尚未驗收，見[後續計畫](../plans/roadmap.md)。

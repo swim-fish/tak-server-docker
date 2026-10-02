@@ -26,7 +26,7 @@ import share_portal as portal
 import media_registry as media
 import service_health
 from console_ui import breadcrumb, navbar
-from build_icu_qr import build_profile
+from build_icu_qr import RTSP_PORT, build_profile
 from certificate_validity import local_expiry
 from icu_profiles import SQUADS, stream_path
 import squad_groups
@@ -458,7 +458,7 @@ def run_icu_batch(operation_id: str, receipt: dict) -> dict:
             continue
         person = item["person"]
         path = f"live/{squad}/{person}/"
-        profile = build_profile("takbox.local", 8322, path,
+        profile = build_profile("takbox.local", RTSP_PORT, path,
                                 publisher["user"], publisher["password"])
         share_id = portal.create_share("icu", "", values["ttl"], values["limit"],
                                        profile=profile, media_owner="squad:" + squad,
@@ -741,7 +741,7 @@ def provision_execute() -> str | Response:
             owner = "squad:" + values["squad"]
             for item in values["paths"]:
                 publisher = media.ensure_squad(values["squad"], item["expected_path"])
-                profile = build_profile("takbox.local", 8322, item["stream_path"],
+                profile = build_profile("takbox.local", RTSP_PORT, item["stream_path"],
                                         publisher["user"], publisher["password"])
                 label = (f"ICU-ADV-{item['stream_path'].strip('/')}"
                          if values["icu_mode"] == "advanced" else f"ICU-{values['squad']}-{item['person']}")
@@ -1052,7 +1052,7 @@ def media_update() -> str | Response:
                     if action == "reshare" and f"{key}|{actual}" not in selected_paths:
                         continue
                     path = actual.removesuffix("VIDEO_1")
-                    profile = build_profile("takbox.local", 8322, path, item["user"], item["password"])
+                    profile = build_profile("takbox.local", RTSP_PORT, path, item["user"], item["password"])
                     share_id = portal.create_share("icu", "", ttl, limit, profile=profile,
                                                    media_owner=key, media_path=path,
                                                    display_name=previous_labels.get((key, path)))

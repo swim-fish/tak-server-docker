@@ -23,6 +23,7 @@
 | 頻道已連線但沒有聲音 | 麥克風權限、VS1／VS2、PTT 指派、UDP 與另一用戶端 | 按[音訊驗收](validation/README.md#待完成的實機驗收)另測 |
 | NetBird 已連線但 Mumble／Vx 逾時 | 使用者 `auto_groups`、peer 群組傳遞、TCP／UDP `40000` 語音政策及 Vx 的 `Network` 介面 | [NetBird 排查順序](network/netbird-user-guide.md#5-troubleshoot-in-order)、[長按 Network 選 VPN](atak/vx-missions.md#透過-netbird-選擇-vpn-介面) |
 | Vx TLS 交握被重設且重試仍失敗 | Mumble 是否出現暫時 `Global ban`；避免連續重試 | 保留防護，等待到期或由管理者備份後執行必要的 Mumble-only 重新啟動，見 [語音實測](validation/2026-10-01-netbird-tak-media-voice.md) |
+| 本機 ICU／裝置 RTSP 發布約 10 秒後 `session timed out`，或收到 `461 Unsupported Transport` | 是否使用 UDP 傳輸；本機 MediaMTX 只接受 TCP | 改用 TCP（FFmpeg `-rtsp_transport tcp`）；原因見 [Windows Docker UDP 限制](validation/2026-10-02-windows-docker-udp-rtsp.md) |
 | NetBird RTSP 人物 Video 無法播放 | ICU 是否正在發布、是否為純 RTSP、peer／完整路徑是否有讀取權限 | [ICU／ATAK 操作](network/netbird-user-guide.md#3-publish-icu-and-view-in-atak) |
 | ICU 啟用 SSL 後，ATAK 人物 Video 顯示 `Failed to Connect` | 自動網址是否為 `rtsps`；ATAK 5.7.0.15 是否記錄 `using raw for: rtsps`、`protocol=raw` 與 `createFromFileNative` 例外 | [2026-09-30 實測](validation/2026-09-30-icu-ssl-atak-rtsps.md)：雲端原帳密 `DESCRIBE` 已回應 `200 OK`，此版本須另用相容的觀看來源；後續 NetBird 純 RTSP 人物 Video 已確認可觀看，見 [新流程](network/netbird-user-guide.md#3-publish-icu-and-view-in-atak) |
 

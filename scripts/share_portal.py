@@ -24,7 +24,7 @@ from urllib.parse import quote
 import qrcode
 from flask import Flask, Response, request
 
-from build_icu_qr import build_profile, build_uri
+from build_icu_qr import RTSP_PORT, build_profile, build_uri
 from console_ui import navbar
 
 
@@ -285,7 +285,7 @@ def create_share(kind: str, source: str, ttl_minutes: int | None,
     if kind == "icu" and not source:
         if profile is None:
             password = PUBLISH_PASSWORD_FILE.read_text(encoding="utf-8").rstrip("\r\n")
-            data = build_profile("takbox.local", 8322, "live/", "atak-publisher", password)
+            data = build_profile("takbox.local", RTSP_PORT, "live/", "atak-publisher", password)
         else:
             data = profile
         target.write_bytes(data)

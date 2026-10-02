@@ -5,7 +5,8 @@
 - 第一次建置：[首次建置腳本](docs/scripts/first-time-setup.md)或[逐步手動流程](docs/getting-started.md)。
 - 日常操作與問題查詢：[文件首頁](docs/README.md)。
 - 現行部署範圍：[架構與驗證狀態](docs/architecture.md)。
-- 尚待驗收：熱點外部的 MediaMTX UDP、公開 WebRTC 網際網路入口、公開 8446／ACME 與 Linux 遷移，見[後續計畫](docs/plans/roadmap.md)。
+- 本機 MediaMTX RTSP 限制為 TCP 模式：Windows Docker Desktop 會改寫 UDP 來源通訊埠，見[紀錄](docs/validation/2026-10-02-windows-docker-udp-rtsp.md)。
+- 尚待驗收：公開 WebRTC 網際網路入口、公開 8446／ACME 與 Linux 遷移，見[後續計畫](docs/plans/roadmap.md)。
 
 `vendor/`、`runtime/` 保存官方套件與本機部署資料，不提交 Git。TAK 憑證 DPK 含裝置私鑰；Vx-only 任務包不含登入密碼。
 

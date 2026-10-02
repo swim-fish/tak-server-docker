@@ -4,7 +4,7 @@
 
 ```mermaid
 flowchart LR
-    ICU["TAK ICU<br/>擷取與編碼影像"] -->|"RTSPS 8322/TCP<br/>Use SSL? 勾選；TLS"| MTX["mediamtx<br/>驗證發布身分與 live/ 路徑<br/>接收並供讀取"]
+    ICU["TAK ICU<br/>擷取與編碼影像"] -->|"QR 預設 RTSP 8554；無 TLS<br/>或 RTSPS 8322／TLS"| MTX["mediamtx<br/>驗證發布身分與 live/ 路徑<br/>接收並供讀取"]
     DRONE["無人機／編碼器<br/>裝置端產生影像"] -->|"RTSPS 8322/TCP；TLS<br/>或 RTSP 8554/TCP；無 TLS"| MTX
     OTHER["其他 RTSP 來源"] -->|"RTSPS 8322/TCP；TLS<br/>或 RTSP 8554/TCP；無 TLS"| MTX
 
@@ -32,7 +32,7 @@ flowchart LR
 
 | 連線 | 協定與通訊埠 | TLS／媒體加密 | 現況 |
 | --- | --- | --- | --- |
-| TAK ICU → `mediamtx` | RTSPS `8322/TCP` | TLS；ICU 介面勾選 `Use SSL?` | Android ICU 7.5.1 已驗證發布。ICU 的純 RTSP 測試曾逾時，不能當作已驗證的備援路徑。 |
+| TAK ICU → `mediamtx` | QR 預設 RTSP `8554`；手動可選 RTSPS `8322/TCP` | RTSP 無 TLS；RTSPS 需勾選 `Use SSL?` | Android ICU 7.5.1 的 RTSPS 發布已在本機驗證；RTSP 發布已在雲端驗證。本機早期純 RTSP 逾時肇因於 Docker Desktop UDP，已改為 TCP-only；ICU 實機改用 TCP 待驗。 |
 | 無人機／其他設備 → `mediamtx` | 優先 RTSPS `8322/TCP`；也接受 RTSP `8554/TCP` | RTSPS 有 TLS；RTSP 無 TLS | FFmpeg 模擬無人機兩種方式已驗證；實體無人機尚未驗收。 |
 | `mediamtx` → ATAK | RTSP `8554/TCP`，讀取帳密 | 無 TLS | ATAK CIV 5.7.0.15 的手動 Video Alias 與 Reliable／TCP 已實測；ICU 自動 RTSPS 通告在該版本無法直接播放。 |
 | `mediamtx` → WebRTC viewer／preview | Compose 內 RTSP `8554/TCP`，按需拉流 | 無 TLS；僅走 Compose 網路 | viewer 與 preview 為兩個獨立的 MediaMTX 容器。 |
@@ -42,7 +42,7 @@ flowchart LR
 
 RTSPS 使用 MediaMTX 專用伺服器憑證；發布／讀取帳密負責授權，兩者用途不同。純 RTSP 與內部 RTSP 段均不使用 TLS。完整通訊埠及防火牆範圍見[通訊埠與連線方向](../network/ports-and-protocols.md)。
 
-MediaMTX 也映射 RTSP 的 RTP／RTCP `8000-8001/UDP`，以及 RTSPS 的 SRTP／SRTCP `8004-8005/UDP`；表格列出的本機成功案例主要使用 TCP。Docker Desktop 跨網路的 UDP 媒體路徑尚不能視為實機驗收通過。
+本機 MediaMTX 只接受 TCP 傳輸，不映射 RTP／RTCP 與 SRTP／SRTCP 的 UDP 通訊埠：Windows Docker Desktop 會改寫 UDP 來源通訊埠，使 RTSP UDP 發布約 10 秒後逾時。要求 UDP 的用戶端會收到 `461`，見 [2026-10-02 紀錄](../validation/2026-10-02-windows-docker-udp-rtsp.md)。
 
 2026-09-30 雲端另確認：ICU SSL 發布的實際人物 CoT 連結使用 `rtsps`，ATAK 5.7.0.15 將其解析成 `raw` 並顯示 `Failed to Connect`；同一連結使用原帳密的公開 RTSPS `DESCRIBE` 已回應 `200 OK`。詳見[SSL 相容性實測](../validation/2026-09-30-icu-ssl-atak-rtsps.md)。
 
