@@ -56,7 +56,7 @@ The three nodes share the `tak-edge` network and use Compose service names for i
 
 | Service | Configuration | Role | Host-published ports |
 | --- | --- | --- | --- |
-| `mediamtx` | `/config/mediamtx.yml` | RTSP/RTSPS publication, direct ATAK reading, main API | `TAK_BIND_IP`: TCP 8554/8322; UDP 8000/8001/8004/8005 |
+| `mediamtx` | `/config/mediamtx.yml` | RTSP/RTSPS publication, direct ATAK reading, main API | `TAK_BIND_IP`: TCP 8554/8322 (TCP-only RTSP; no RTP/SRTP UDP ports because Docker Desktop on Windows rewrites UDP source ports) |
 | `media-viewer` | `/config/viewer-public.yml` | Public WebRTC reading; anonymous `live/` read grant | `TAK_BIND_IP`: TCP/UDP 8189; HTTP 8889 and API 9997 stay inside Compose |
 | `media-preview` | `/config/viewer-preview.yml` | Independent authenticated operator WebRTC reading | Loopback: TCP 8890 → container 8889; TCP/UDP 8190 |
 | `media-viewer-gateway` | `/media-config/viewer_state.json` | LAN HTTP/WHEP relay and persistent public-viewing switch | `TAK_BIND_IP`: TCP 8889 |

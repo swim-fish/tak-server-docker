@@ -39,7 +39,7 @@ if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administra
 $interfaceAlias = $network[0].InterfaceAlias
 $rules = @(
     @{ Name = 'TAK-Local-MediaMTX-TCP'; Protocol = 'TCP'; Ports = @('8554', '8322', '8189', '8889') },
-    @{ Name = 'TAK-Local-MediaMTX-UDP'; Protocol = 'UDP'; Ports = @('8000', '8001', '8004', '8005', '8189') }
+    @{ Name = 'TAK-Local-MediaMTX-UDP'; Protocol = 'UDP'; Ports = @('8189') }
 )
 foreach ($rule in $rules) {
     Get-NetFirewallRule -Name $rule.Name -ErrorAction SilentlyContinue |

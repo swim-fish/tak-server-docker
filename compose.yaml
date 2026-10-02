@@ -162,10 +162,7 @@ services:
     ports:
       - "${TAK_BIND_IP:-192.168.137.1}:8554:8554/tcp"
       - "${TAK_BIND_IP:-192.168.137.1}:8322:8322/tcp"
-      - "${TAK_BIND_IP:-192.168.137.1}:8000:8000/udp"
-      - "${TAK_BIND_IP:-192.168.137.1}:8001:8001/udp"
-      - "${TAK_BIND_IP:-192.168.137.1}:8004:8004/udp"
-      - "${TAK_BIND_IP:-192.168.137.1}:8005:8005/udp"
+      # RTSP is TCP-only; Docker Desktop UDP port forwarding breaks RTP/RTCP.
     networks:
       - tak-edge
     security_opt:

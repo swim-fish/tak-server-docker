@@ -60,7 +60,7 @@ Get-NetFirewallRule -Name 'TAK-Local-Mumble-*' | Select-Object Name,DisplayName,
 
 ## MediaMTX 規則
 
-在一般 PowerShell 啟動，腳本先檢查目標 IP，再請求 UAC。它建立持久的 `TAK-Local-MediaMTX-TCP`（8554、8322、8189、8889）與 `TAK-Local-MediaMTX-UDP`（8000、8001、8004、8005、8189）規則，限制主機位址、網路介面及來源網段：
+在一般 PowerShell 啟動，腳本先檢查目標 IP，再請求 UAC。它建立持久的 `TAK-Local-MediaMTX-TCP`（8554、8322、8189、8889）與 `TAK-Local-MediaMTX-UDP`（8189，WebRTC ICE）規則。RTSP 為 TCP-only（Windows Docker Desktop UDP 限制），不再開放 8000、8001、8004、8005；先前版本建立的規則會在重新執行腳本時被取代，限制主機位址、網路介面及來源網段：
 
 ```powershell
 ./scripts/Install-MediaMtxFirewall.ps1

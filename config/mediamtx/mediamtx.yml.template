@@ -21,7 +21,10 @@ authInternalUsers:
 __DYNAMIC_USERS__
 
 rtsp: true
-rtspTransports: [tcp, udp]
+# TCP only: Docker Desktop on Windows rewrites the UDP source port of published
+# ports, so MediaMTX cannot match RTP/RTCP to the SETUP client_port and the
+# session times out. See docs/mediamtx/server.md.
+rtspTransports: [tcp]
 rtspEncryption: optional
 rtspAddress: :8554
 rtspsAddress: :8322

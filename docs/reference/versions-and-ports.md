@@ -26,8 +26,8 @@ Vx 標籤中的 `[5.6.0]` 是套件標示；與 ATAK 5.7 的可用性以本次�
 | TAK CoT TLS | `8089/TCP` | `8089/TCP` |
 | TAK 管理 API | `8443/TCP` | `8443/TCP`，使用管理用戶端憑證；ATAK Data Packages 會連向主機 `8443` |
 | Mumble | `40000/TCP`、`40000/UDP` | `64738/TCP`、`64738/UDP` |
-| MediaMTX RTSP | `8554/TCP`、`8000-8001/UDP` | TCP 控制／媒體、UDP RTP／RTCP |
-| MediaMTX RTSPS | `8322/TCP`、`8004-8005/UDP` | TLS 控制／TCP 媒體、UDP SRTP／SRTCP |
+| MediaMTX RTSP | `8554/TCP` | TCP 控制與 interleaved 媒體；Windows Docker Desktop UDP 限制，不開 RTP／RTCP UDP |
+| MediaMTX RTSPS | `8322/TCP` | TLS 控制與 TCP 媒體；不開 SRTP／SRTCP UDP |
 | 公開 WebRTC 觀看 | `8889/TCP`，綁定 `TAK_BIND_IP` | 匿名 viewer gateway；控制台預覽另綁 Windows loopback |
 | 公開 WebRTC ICE | `8189/TCP`、`8189/UDP`，綁定 `TAK_BIND_IP` | Viewer 媒體連線；需與 `8889/TCP` 一起驗證 |
 | 控制台即時預覽 | `127.0.0.1:8890/TCP`、`127.0.0.1:8190/TCP/UDP` | 僅 Windows 本機；與公開觀看分開 |

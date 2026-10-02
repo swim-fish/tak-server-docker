@@ -9,7 +9,7 @@
 1. 在「引導式佈建 → ICU 小隊發布」選小隊，再從 1–10 號隊員中單選、多選或全選；預設勾選全部隊員。每名所選隊員各有一張 QR。
 2. 自訂單一路徑時選 Advanced，具名小隊的 Stream Path 必須留在 `live/<小隊>/` 下並以 `/` 結尾。ICU 會在末端加上 `VIDEO_1`。
 3. 設定 QR 時間與下載上限，預覽各隊員路徑後執行；結果頁左右切換 QR，分別交付完整 `icu://download?url=...`。
-4. 在 ICU 核對外部設定、RTSP-Push、`takbox.local:8322` 與 SSL，再啟動串流並查 MediaMTX 線上路徑。新 QR 預設 720p、15 fps、900 kbps、高度公尺 MSL，且勾選 Disable Local Broadcasting。
+4. 在 ICU 核對外部設定、RTSP-Push、`takbox.local:8554` 且 `Use SSL?` 不勾選，再啟動串流並查 MediaMTX 線上路徑。新 QR 預設 720p、15 fps、900 kbps、高度公尺 MSL，且勾選 Disable Local Broadcasting。
 
 同一小隊共用發布密碼。**同隊可使用同一張 QR**；匯入後各裝置可在 ICU 把小隊後段改成自己的路徑，例如 `live/alpha/1/` 改為 `live/alpha/2/`，帳密維持不變。不同裝置應使用不同完整路徑。QR 下載的 `initial.prefs` 含密碼；只看到匯入提示尚未證明影像已發布。已建立的 QR 是設定檔快照，變更預設值後須重新分享。
 
@@ -85,7 +85,7 @@
 
 ## 任務七　檢視影像與控制觀看
 
-先看下方流向圖，再依播放端選擇連線：ICU 以 RTSPS（`Use SSL?` 勾選）發布；無人機／一般設備可用 RTSPS，受控區域網路內也可用無 TLS 的 RTSP。ATAK 的已驗證路徑是直接向 MediaMTX 以 RTSP／TCP 讀取；瀏覽器則由獨立 viewer／preview 容器按需讀取後提供 WebRTC。逐段協定、加密與實測限制見[本機影像處理與流向](../../mediamtx/video-flow.md)。
+先看下方流向圖，再依播放端選擇連線：ICU QR 預設以 RTSP `8554`（`Use SSL?` 不勾選）發布，與 ATAK Video Alias 支援的協定一致；無人機／一般設備可用 RTSPS，受控區域網路內也可用無 TLS 的 RTSP。ATAK 的已驗證路徑是直接向 MediaMTX 以 RTSP／TCP 讀取；瀏覽器則由獨立 viewer／preview 容器按需讀取後提供 WebRTC。逐段協定、加密與實測限制見[本機影像處理與流向](../../mediamtx/video-flow.md)。
 
 1. 在「MediaMTX 管理」選線上串流，按「即時預覽」；看完按「關閉預覽」。
 2. 熱點裝置使用 `http://takbox.local:8889/live/<path>/` 觀看，末尾斜線需保留。

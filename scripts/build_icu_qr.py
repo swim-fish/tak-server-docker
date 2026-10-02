@@ -13,10 +13,13 @@ DESTINATION = "RTSP-Push (Video Management System)"
 STREAM_RESOLUTIONS = {"0": "Lowest", "1": "240p", "2": "480p", "3": "720p", "4": "Maximum"}
 STREAM_BIT_RATES = {"400", "700", "900", "2000", "3000"}
 ALTITUDE_DISPLAYS = {"0": "m MSL", "1": "m HAE", "2": "ft MSL", "3": "ft HAE"}
+# ATAK 5.7 Video Aliases play plain RTSP; ICU QR profiles publish there by default.
+RTSP_PORT = 8554
+RTSPS_PORT = 8322
 
 
 def build_profile(host: str, port: int, stream_path: str, username: str,
-                  password: str | None = None, *, stream_resolution: str = "3",
+                  password: str | None = None, *, use_ssl: bool = False, stream_resolution: str = "3",
                   stream_frame_rate: str = "15", stream_bit_rate: str = "900",
                   altitude_display: str = "0", disable_local_broadcast: bool = True) -> bytes:
     if not host or "://" in host or "/" in host:
@@ -43,7 +46,7 @@ def build_profile(host: str, port: int, stream_path: str, username: str,
         "videoServerIP": ("class java.lang.String", host),
         "videoServerPort": ("class java.lang.String", str(port)),
         "videoServerPath": ("class java.lang.String", stream_path),
-        "videoServerSSL": ("class java.lang.Boolean", "true"),
+        "videoServerSSL": ("class java.lang.Boolean", str(use_ssl).lower()),
         "videoServerUsername": ("class java.lang.String", username),
         "disableLocalBroadcast": ("class java.lang.Boolean", str(disable_local_broadcast).lower()),
         "stream_resolution": ("class java.lang.String", stream_resolution),
@@ -73,7 +76,10 @@ def build_uri(profile_url: str) -> str:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--host", required=True)
-    parser.add_argument("--port", type=int, default=8322)
+    parser.add_argument("--port", type=int,
+                        help=f"Default: {RTSP_PORT} for RTSP, or {RTSPS_PORT} with --ssl")
+    parser.add_argument("--ssl", action="store_true",
+                        help="Publish with RTSPS; ATAK 5.7 Video Aliases cannot play RTSPS")
     parser.add_argument("--stream-path", default="live/")
     parser.add_argument("--username", default="atak-publisher")
     parser.add_argument("--stream-resolution", choices=STREAM_RESOLUTIONS, default="3",
@@ -99,8 +105,9 @@ def main() -> None:
         if urlsplit(args.profile_url).scheme == "http" and not args.allow_http_password:
             parser.error("HTTP delivery of a password requires --allow-http-password")
         password = args.password_file.read_text(encoding="utf-8").rstrip("\r\n")
-    profile = build_profile(args.host, args.port, args.stream_path, args.username, password,
-                            stream_resolution=args.stream_resolution,
+    port = args.port or (RTSPS_PORT if args.ssl else RTSP_PORT)
+    profile = build_profile(args.host, port, args.stream_path, args.username, password,
+                            use_ssl=args.ssl, stream_resolution=args.stream_resolution,
                             stream_frame_rate=args.stream_frame_rate,
                             stream_bit_rate=args.stream_bit_rate,
                             altitude_display=args.altitude_display,

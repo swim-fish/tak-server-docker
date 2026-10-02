@@ -45,7 +45,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--host-ip", default=HOST_IP)
     parser.add_argument("--dns", default="takbox.local")
-    parser.add_argument("--include-udp", action="store_true")
+    parser.add_argument("--include-udp", action="store_true",
+                        help="Also check that UDP transport is refused (RTSP is TCP-only)")
     parser.add_argument("--via-host", action="store_true",
                         help="Test the Windows-published ports from Docker's default bridge")
     args = parser.parse_args()
@@ -69,8 +70,10 @@ def main() -> int:
         networks = json.loads(inspect.stdout)
         address = networks[NETWORK]["IPAddress"]
     cases = [("rtsp", "tcp"), ("rtsps", "tcp")]
+    # UDP is disabled in MediaMTX (Docker Desktop rewrites UDP source ports); expect refusal.
+    # FFmpeg always uses TCP for rtsps://, so only plain RTSP can request UDP.
     if args.include_udp:
-        cases.extend((("rtsp", "udp"), ("rtsps", "udp")))
+        cases.append(("rtsp", "udp"))
 
     for scheme, transport in cases:
         port = 8322 if scheme == "rtsps" else 8554
@@ -90,6 +93,11 @@ def main() -> int:
                                      text=True)
         try:
             time.sleep(2)
+            if transport == "udp":
+                if publisher.poll() is None:
+                    raise RuntimeError(f"{scheme}/udp publisher was accepted; RTSP must be TCP-only")
+                print(f"{scheme.upper()} over UDP: refused as expected")
+                continue
             if publisher.poll() is not None:
                 _, error = publisher.communicate(timeout=2)
                 for password in passwords:

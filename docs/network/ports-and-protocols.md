@@ -11,10 +11,8 @@
 | `8089` | TCP／TLS | ATAK 的 TAK CoT 連線，使用裝置憑證 | TAK Server `8089` | 區域網路；Windows TAK 防火牆規則限制來源網段 |
 | `8443` | TCP／HTTPS | TAK API、ATAK Data Packages 下載 | TAK Server `8443` | 區域網路；部分 API 使用管理用戶端憑證。`.env` 可改主機映射，但 ATAK 的套件下載仍須驗證固定入口 |
 | `40000` | TCP／TLS、UDP | Mumble 控制連線與語音媒體；Vx 使用 | Mumble `64738` TCP／UDP | 區域網路；防火牆使用前景工作階段，Ctrl+C 清除此工作階段的規則 |
-| `8554` | TCP | MediaMTX RTSP 控制與 TCP 媒體 | MediaMTX `8554` | 區域網路；可用帳密發布或讀取，明文 RTSP 只在受控網路或 VPN 使用 |
-| `8000`、`8001` | UDP | RTSP 的 RTP／RTCP 媒體 | MediaMTX 同號 | 區域網路；已映射，Docker Desktop 與裝置端 UDP 傳輸仍須另行驗收 |
+| `8554` | TCP | MediaMTX RTSP 控制與 TCP 媒體 | MediaMTX `8554` | 區域網路；可用帳密發布或讀取，明文 RTSP 只在受控網路或 VPN 使用。只接受 TCP：Windows Docker Desktop 改寫 UDP 來源通訊埠，RTP／RTCP `8000-8001/UDP` 與 SRTP／SRTCP `8004-8005/UDP` 不映射，見 [2026-10-02 紀錄](../validation/2026-10-02-windows-docker-udp-rtsp.md) |
 | `8322` | TCP／TLS | MediaMTX RTSPS；ICU 影像發布的主要入口 | MediaMTX `8322` | 區域網路；憑證名稱及發布帳密均須正確 |
-| `8004`、`8005` | UDP | RTSPS 的 SRTP／SRTCP 媒體 | MediaMTX 同號 | 區域網路；已映射，UDP 媒體仍須另行驗收 |
 | `8889` | TCP／HTTP | 匿名 WebRTC 觀看頁與信令入口 | Viewer gateway `8889` | 區域網路；目前只驗證熱點觀看。若要網際網路觀看，還需網域、HTTPS、NAT 與 ICE 驗收 |
 | `8189` | TCP、UDP | 公開 WebRTC 觀看的 ICE 媒體連線 | MediaMTX viewer `8189` | 區域網路；`8889` 可開頁面不代表 ICE 媒體一定可達 |
 | `10065` | TCP／HTTP | 限時、限次的 DPK／ICU 設定下載與 QR 連結 | Share public `8765` | 區域網路；僅在 `sharing` profile 啟動；下載內容可能含私鑰或發布密碼，分享後應停止 |
@@ -41,7 +39,7 @@
 | --- | --- | --- |
 | `Install-TakFirewall.ps1` | `8089/TCP`、`8443/TCP` | 持久規則；變更 `.env` 後重建 |
 | `Install-MumbleFirewall.ps1` | `40000/TCP`、`40000/UDP` | 前景工作階段；Ctrl+C 移除本次規則 |
-| `Install-MediaMtxFirewall.ps1` | `8554`、`8322`、`8189`、`8889/TCP`；`8000`、`8001`、`8004`、`8005`、`8189/UDP` | 持久規則；限制主機位址、介面與來源網段 |
+| `Install-MediaMtxFirewall.ps1` | `8554`、`8322`、`8189`、`8889/TCP`；`8189/UDP` | 持久規則；限制主機位址、介面與來源網段 |
 | `Install-SharePortalFirewall.ps1` | `10065/TCP` | 下載期間的前景規則；管理頁 `10066` 不開給裝置 |
 | `Manage-WindowsMdns.ps1` | `5353/UDP` | Windows mDNS 規則與服務，依實際介面設定 |
 
@@ -50,7 +48,7 @@
 ```powershell
 docker compose ps
 Get-NetTCPConnection -State Listen | Where-Object LocalPort -in 8089,8443,40000,8554,8322,8889,8189,10065,10066
-Get-NetUDPEndpoint | Where-Object LocalPort -in 40000,8000,8001,8004,8005,8189,8190,5353
+Get-NetUDPEndpoint | Where-Object LocalPort -in 40000,8189,8190,5353
 ```
 
 這些命令檢查主機映射及監聽狀態；連線是否可用仍須從實際裝置確認。`8446` 是 TAK Server 的 WebTAK/OAuth HTTPS 入口，目前未發布；Federation Hub 與 TAK federation listener 也尚未部署或發布，所需通訊埠與連線方向見[Federation Hub 串接](../tak-server/federation-hub.md)。RTMP 與 SRT 目前未啟用，也沒有將任何服務驗收為網際網路可用。完整規則與重新開機步驟見[Windows 防火牆](firewall.md)，版本及容器來源見[版本參考](../reference/versions-and-ports.md)。
