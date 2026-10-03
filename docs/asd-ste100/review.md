@@ -37,13 +37,13 @@ to disconnect it.
 
 ## Technical correction
 
-The original troubleshooting block lists only `takbox.local:8322` for ICU.
-The revised row distinguishes default RTSP `takbox.local:8554` with SSL clear
-from RTSPS `takbox.local:8322` with SSL enabled.
-The constants and SSL preference construction in
+The original troubleshooting block listed only `takbox.local:8322` for ICU.
+The source manual and both revisions now distinguish default RTSP
+`takbox.local:8554` with SSL clear from RTSPS `takbox.local:8322` with SSL
+enabled. The constants and SSL preference construction in
 [build_icu_qr.py](../../scripts/build_icu_qr.py) and the
 [ICU QR reference](../mediamtx/icu-qrcode.md) support this correction.
-The original block remains in the comparison data.
+The source snapshot in the comparison data follows the corrected source.
 
 Statements about the original validation scope are explicitly attributed to
 the source. No new service acceptance result is claimed.
