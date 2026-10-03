@@ -1,0 +1,262 @@
+{
+  "exit_code": 0,
+  "files": {
+    "en/certificates-and-groups.md": "af109f114d90fce04b0d760a7805f53d8d49149dd1df6011d7390b57348eb2ec",
+    "en/index.md": "696c6f2d798a9d3476a63c2bf44c9b94246e6878632036ca0782c233a41e26d4",
+    "en/icu-and-mediamtx.md": "b2809282942a073f836f5345cb4e6fe3ee99de937fbb012e10706b4532787e74",
+    "en/sharing-and-troubleshooting.md": "89f1ac8197179a4637c9a634cfec983f886a86b56524e9590b10400c32f49c8b",
+    "en/vx-and-mumble.md": "6167cef640723567dde6dc2be18dffa6772ea4261f38f8944bfb5c252a9cf1ef"
+  },
+  "report": {
+    "violations": [
+      {
+        "file": "docs/asd-ste100/en/certificates-and-groups.md",
+        "line": 29,
+        "col": 84,
+        "rule": "passive-voice",
+        "level": "advisory",
+        "match": "are concealed",
+        "message": "Possible passive voice. Name the actor and use an active verb, unless the actor is unknown or irrelevant."
+      },
+      {
+        "file": "docs/asd-ste100/en/certificates-and-groups.md",
+        "line": 35,
+        "col": 114,
+        "rule": "synonym-rotation",
+        "level": "advisory",
+        "match": "confirm",
+        "message": "'confirm' and 'check' may name different technical actions. Standardize only after confirming the meanings are equivalent."
+      },
+      {
+        "file": "docs/asd-ste100/en/certificates-and-groups.md",
+        "line": 37,
+        "col": 22,
+        "rule": "synonym-rotation",
+        "level": "advisory",
+        "match": "display",
+        "message": "'display' and 'show' may name different technical actions. Standardize only after confirming the meanings are equivalent."
+      },
+      {
+        "file": "docs/asd-ste100/en/certificates-and-groups.md",
+        "line": 65,
+        "col": 7,
+        "rule": "synonym-rotation",
+        "level": "advisory",
+        "match": "remove",
+        "message": "'remove' and 'delete' may name different technical actions. Standardize only after confirming the meanings are equivalent."
+      },
+      {
+        "file": "docs/asd-ste100/en/certificates-and-groups.md",
+        "line": 84,
+        "col": 62,
+        "rule": "passive-voice",
+        "level": "advisory",
+        "match": "was submitted",
+        "message": "Possible passive voice. Name the actor and use an active verb, unless the actor is unknown or irrelevant."
+      },
+      {
+        "file": "docs/asd-ste100/en/certificates-and-groups.md",
+        "line": 88,
+        "col": 112,
+        "rule": "passive-voice",
+        "level": "advisory",
+        "match": "are concealed",
+        "message": "Possible passive voice. Name the actor and use an active verb, unless the actor is unknown or irrelevant."
+      },
+      {
+        "file": "docs/asd-ste100/en/certificates-and-groups.md",
+        "line": 111,
+        "col": 83,
+        "rule": "passive-voice",
+        "level": "advisory",
+        "match": "are concealed",
+        "message": "Possible passive voice. Name the actor and use an active verb, unless the actor is unknown or irrelevant."
+      },
+      {
+        "file": "docs/asd-ste100/en/certificates-and-groups.md",
+        "line": 139,
+        "col": 169,
+        "rule": "passive-voice",
+        "level": "advisory",
+        "match": "was restored",
+        "message": "Possible passive voice. Name the actor and use an active verb, unless the actor is unknown or irrelevant."
+      },
+      {
+        "file": "docs/asd-ste100/en/certificates-and-groups.md",
+        "line": 145,
+        "col": 135,
+        "rule": "passive-voice",
+        "level": "advisory",
+        "match": "are concealed",
+        "message": "Possible passive voice. Name the actor and use an active verb, unless the actor is unknown or irrelevant."
+      },
+      {
+        "file": "docs/asd-ste100/en/certificates-and-groups.md",
+        "line": 149,
+        "col": 110,
+        "rule": "passive-voice",
+        "level": "advisory",
+        "match": "are concealed",
+        "message": "Possible passive voice. Name the actor and use an active verb, unless the actor is unknown or irrelevant."
+      },
+      {
+        "file": "docs/asd-ste100/en/certificates-and-groups.md",
+        "line": 157,
+        "col": 82,
+        "rule": "passive-voice",
+        "level": "advisory",
+        "match": "are concealed",
+        "message": "Possible passive voice. Name the actor and use an active verb, unless the actor is unknown or irrelevant."
+      },
+      {
+        "file": "docs/asd-ste100/en/index.md",
+        "line": 9,
+        "col": 239,
+        "rule": "passive-voice",
+        "level": "advisory",
+        "match": "are concealed",
+        "message": "Possible passive voice. Name the actor and use an active verb, unless the actor is unknown or irrelevant."
+      },
+      {
+        "file": "docs/asd-ste100/en/index.md",
+        "line": 49,
+        "col": 91,
+        "rule": "passive-voice",
+        "level": "advisory",
+        "match": "is published",
+        "message": "Possible passive voice. Name the actor and use an active verb, unless the actor is unknown or irrelevant."
+      },
+      {
+        "file": "docs/asd-ste100/en/icu-and-mediamtx.md",
+        "line": 9,
+        "col": 200,
+        "rule": "passive-voice",
+        "level": "advisory",
+        "match": "is selected",
+        "message": "Possible passive voice. Name the actor and use an active verb, unless the actor is unknown or irrelevant."
+      },
+      {
+        "file": "docs/asd-ste100/en/icu-and-mediamtx.md",
+        "line": 12,
+        "col": 67,
+        "rule": "passive-voice",
+        "level": "advisory",
+        "match": "are selected",
+        "message": "Possible passive voice. Name the actor and use an active verb, unless the actor is unknown or irrelevant."
+      },
+      {
+        "file": "docs/asd-ste100/en/icu-and-mediamtx.md",
+        "line": 56,
+        "col": 244,
+        "rule": "passive-voice",
+        "level": "advisory",
+        "match": "are applied",
+        "message": "Possible passive voice. Name the actor and use an active verb, unless the actor is unknown or irrelevant."
+      },
+      {
+        "file": "docs/asd-ste100/en/icu-and-mediamtx.md",
+        "line": 68,
+        "col": 31,
+        "rule": "synonym-rotation",
+        "level": "advisory",
+        "match": "display",
+        "message": "'display' and 'show' may name different technical actions. Standardize only after confirming the meanings are equivalent."
+      },
+      {
+        "file": "docs/asd-ste100/en/icu-and-mediamtx.md",
+        "line": 84,
+        "col": 16,
+        "rule": "synonym-rotation",
+        "level": "advisory",
+        "match": "verify",
+        "message": "'verify' and 'check' may name different technical actions. Standardize only after confirming the meanings are equivalent."
+      },
+      {
+        "file": "docs/asd-ste100/en/icu-and-mediamtx.md",
+        "line": 104,
+        "col": 14,
+        "rule": "passive-voice",
+        "level": "advisory",
+        "match": "was deactivated",
+        "message": "Possible passive voice. Name the actor and use an active verb, unless the actor is unknown or irrelevant."
+      },
+      {
+        "file": "docs/asd-ste100/en/icu-and-mediamtx.md",
+        "line": 120,
+        "col": 90,
+        "rule": "synonym-rotation",
+        "level": "advisory",
+        "match": "confirm",
+        "message": "'confirm' and 'check' may name different technical actions. Standardize only after confirming the meanings are equivalent."
+      },
+      {
+        "file": "docs/asd-ste100/en/icu-and-mediamtx.md",
+        "line": 193,
+        "col": 142,
+        "rule": "synonym-rotation",
+        "level": "advisory",
+        "match": "obtain",
+        "message": "'obtain' and 'get' may name different technical actions. Standardize only after confirming the meanings are equivalent."
+      },
+      {
+        "file": "docs/asd-ste100/en/icu-and-mediamtx.md",
+        "line": 195,
+        "col": 71,
+        "rule": "passive-voice",
+        "level": "advisory",
+        "match": "are selected",
+        "message": "Possible passive voice. Name the actor and use an active verb, unless the actor is unknown or irrelevant."
+      },
+      {
+        "file": "docs/asd-ste100/en/icu-and-mediamtx.md",
+        "line": 202,
+        "col": 73,
+        "rule": "passive-voice",
+        "level": "advisory",
+        "match": "is disconnected",
+        "message": "Possible passive voice. Name the actor and use an active verb, unless the actor is unknown or irrelevant."
+      },
+      {
+        "file": "docs/asd-ste100/en/icu-and-mediamtx.md",
+        "line": 238,
+        "col": 165,
+        "rule": "passive-voice",
+        "level": "advisory",
+        "match": "was deactivated",
+        "message": "Possible passive voice. Name the actor and use an active verb, unless the actor is unknown or irrelevant."
+      },
+      {
+        "file": "docs/asd-ste100/en/sharing-and-troubleshooting.md",
+        "line": 32,
+        "col": 68,
+        "rule": "passive-voice",
+        "level": "advisory",
+        "match": "is logged",
+        "message": "Possible passive voice. Name the actor and use an active verb, unless the actor is unknown or irrelevant."
+      },
+      {
+        "file": "docs/asd-ste100/en/vx-and-mumble.md",
+        "line": 21,
+        "col": 53,
+        "rule": "synonym-rotation",
+        "level": "advisory",
+        "match": "confirm",
+        "message": "'confirm' and 'check' may name different technical actions. Standardize only after confirming the meanings are equivalent."
+      },
+      {
+        "file": "docs/asd-ste100/en/vx-and-mumble.md",
+        "line": 40,
+        "col": 5,
+        "rule": "synonym-rotation",
+        "level": "advisory",
+        "match": "Delete",
+        "message": "'delete' and 'remove' may name different technical actions. Standardize only after confirming the meanings are equivalent."
+      }
+    ],
+    "count": 27,
+    "hard_count": 0,
+    "baseline": 0,
+    "words": 4474,
+    "per_100_words": 0.6
+  }
+}

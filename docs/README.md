@@ -26,6 +26,7 @@
 | 用控制台管理用戶端憑證、群組、DPK 與撤銷 | [用戶端憑證控制台](tak-server/certificate-console.md) |
 | 依畫面操作簽發、交付、群組與撤銷 | [憑證控制台使用手冊](tak-server/certificate-operator-guide.md) |
 | 依任務操作整套 TAK 控制台 | [任務操作手冊](tak-server/console-task-manual.md) |
+| 閱讀控制台手冊的 ASD-STE100 繁中與英文改寫，或逐段比對原文 | [ASD-STE100 中英文對照](asd-ste100/README.md) |
 | 啟動 Mumble、建立頻道或更換密碼 | [Mumble Server](mumble/server.md) |
 | 啟動 RTSP／RTSPS 影像服務、設定 TAK ICU | [MediaMTX](mediamtx/server.md) |
 | 檢視 ICU、無人機、ATAK 與 WebRTC 的影像流向和加密狀態 | [本機影像處理與流向](mediamtx/video-flow.md) |

@@ -1,0 +1,1119 @@
+{
+  "schema_version": 1,
+  "scope": "TAK console task manual and its four chapters",
+  "standard": "ASD-STE100 writing principles; not certified conformance",
+  "documents": [
+    {
+      "source": "docs/tak-server/console-task-manual/certificates-and-groups.md",
+      "blocks": [
+        {
+          "id": 1,
+          "original": "# TAK 裝置憑證與群組",
+          "zh": "# TAK 裝置憑證與群組",
+          "en": "# TAK device certificates and groups"
+        },
+        {
+          "id": 2,
+          "original": "[返回任務索引](../console-task-manual.md)",
+          "zh": "[返回任務索引](../console-task-manual.md)",
+          "en": "[Return to the task index](../console-task-manual.md)"
+        },
+        {
+          "id": 3,
+          "original": "<a id=\"task-01\"></a>",
+          "zh": "<a id=\"task-01\"></a>",
+          "en": "<a id=\"task-01\"></a>"
+        },
+        {
+          "id": 4,
+          "original": "## 任務一　交付既有 TAK 裝置憑證",
+          "zh": "## 任務一　交付既有 TAK 裝置憑證",
+          "en": "## Task 1: Deliver an existing TAK certificate"
+        },
+        {
+          "id": 5,
+          "original": "1. 在「引導式佈建 → TAK Server 連線」選擇有效且已註冊的憑證，核對 CN、CRL ID 與到期日。每台裝置使用自己的 DPK。\n2. 設定分享期限與下載上限，按「預覽」後建立 QR。讓指定 Android 掃完整 `tak://` 連結並在 ATAK 確認匯入。\n3. 確認 ATAK 已連上 `takbox.local:8089:ssl`；分享紀錄應顯示 `<CN>-<CRL ID>`。",
+          "zh": "每台裝置須使用自己的 DPK。\n\n1. 在「引導式佈建 → TAK Server 連線」選擇有效且已註冊的憑證。\n2. 核對 CN、CRL ID 與到期日。\n3. 設定分享期限與下載上限。\n4. 按「預覽」。\n5. 建立 QR。\n6. 讓指定 Android 掃描完整 `tak://` 連結。\n7. 在 ATAK 確認匯入。\n8. 確認 ATAK 已連上 `takbox.local:8089:ssl`。\n9. 核對分享紀錄顯示 `<CN>-<CRL ID>`。",
+          "en": "Each device must use its own DPK.\n\n1. Select a valid, registered certificate in 「引導式佈建 → TAK Server 連線」.\n2. Check the CN, CRL ID, and expiry date.\n3. Set the sharing expiry and download limit.\n4. Select 「預覽」.\n5. Create the QR.\n6. Let the assigned Android device scan the complete `tak://` link.\n7. Check the import in ATAK.\n8. Check that ATAK connects to `takbox.local:8089:ssl`.\n9. Check that the sharing record shows `<CN>-<CRL ID>`."
+        },
+        {
+          "id": 6,
+          "original": "同名舊 DPK 若阻止更新，先清除裝置上的舊下載副本。匯入提示或下載通知不能代替連線驗收。",
+          "zh": "同名舊 DPK 若阻止更新，先清除裝置上的舊下載副本。匯入提示或下載通知不能代替連線驗收。",
+          "en": "If an old DPK with the same name prevents the update, first delete the old downloaded copy from the device. An import message or download notification does not prove a successful connection."
+        },
+        {
+          "id": 7,
+          "original": "![交付頁選取憑證與分享限制](../../images/console-task-01-existing-tak.png)",
+          "zh": "![交付頁選取憑證與分享限制](../../images/console-task-01-existing-tak.png)",
+          "en": "![Certificate selection and sharing limits](../../images/console-task-01-existing-tak.png)"
+        },
+        {
+          "id": 8,
+          "original": "圖 1：選擇憑證，設定 QR 分享時間與下載上限。",
+          "zh": "圖 1：選擇憑證，設定 QR 分享時間與下載上限。",
+          "en": "Figure 1: Select the certificate. Set the QR sharing duration and download limit."
+        },
+        {
+          "id": 9,
+          "original": "![憑證清冊篩選與識別欄位](../../images/console-task-01b-inventory.png)",
+          "zh": "![憑證清冊篩選與識別欄位](../../images/console-task-01b-inventory.png)",
+          "en": "![Certificate inventory filters and identifiers](../../images/console-task-01b-inventory.png)"
+        },
+        {
+          "id": 10,
+          "original": "圖 2：回清冊用 CN 或 CRL ID 核對身分；識別資料已遮蔽。",
+          "zh": "圖 2：回清冊用 CN 或 CRL ID 核對身分。識別資料已遮蔽。",
+          "en": "Figure 2: Use the CN or CRL ID to check the identity in the inventory. Identifiers are concealed."
+        },
+        {
+          "id": 11,
+          "original": "<a id=\"task-02\"></a>",
+          "zh": "<a id=\"task-02\"></a>",
+          "en": "<a id=\"task-02\"></a>"
+        },
+        {
+          "id": 12,
+          "original": "## 任務二　新增 TAK 裝置並指定群組",
+          "zh": "## 任務二　新增 TAK 裝置並指定群組",
+          "en": "## Task 2: Add TAK devices and assign groups"
+        },
+        {
+          "id": 13,
+          "original": "1. 在「引導式佈建 → 新增 TAK 用戶端」為每台填顯示名稱與唯一 ASCII CN。到期日可用日曆，或選 1 小時、1 天、7 天、14 天、28 天、90 天。\n2. 將群組移到 In／寫入、Out／讀取或 In + Out／讀寫；至少指定一種權限。批次可建 1 至 10 台，各有獨立私鑰與 DPK。\n3. 按「預覽批次」核對 CN、效期、群組及 QR 限制，再確認簽發。結果頁逐台檢查註冊、序號與 QR；TAK 會重啟一次。",
+          "zh": "批次可建立 1 至 10 台裝置。每台裝置各有獨立私鑰與 DPK。確認簽發後，TAK 會重啟一次。\n\n1. 在「引導式佈建 → 新增 TAK 用戶端」填入每台裝置的顯示名稱。\n2. 為每台裝置填入唯一的 ASCII CN。\n3. 用日曆設定到期日，或選擇 1 小時、1 天、7 天、14 天、28 天、90 天。\n4. 將群組移到 In／寫入、Out／讀取或 In + Out／讀寫。至少須指定一種權限。\n5. 按「預覽批次」。\n6. 核對 CN、效期、群組及 QR 限制。\n7. 確認簽發。\n8. 在結果頁逐台檢查註冊狀態、序號與 QR。",
+          "en": "A batch can contain 1 to 10 devices. Each device has a separate private key and DPK. TAK restarts once after you confirm issuance. Expiry options are 1 hour, 1 day, 7 days, 14 days, 28 days, and 90 days.\n\n1. Enter each device display name in 「引導式佈建 → 新增 TAK 用戶端」.\n2. Enter a unique ASCII CN for each device.\n3. Set the expiry with the calendar, or select a listed duration.\n4. Move groups to In/write, Out/read, or In + Out/read and write. You must assign at least one permission.\n5. Select 「預覽批次」.\n6. Check the CN, validity period, groups, and QR limits.\n7. Confirm issuance.\n8. Check each device registration, serial number, and QR on the results page."
+        },
+        {
+          "id": 14,
+          "original": "部分完成時先查既有結果，再以相同作業 ID 接續，避免重複簽發。同頁的 QR 下載期限和憑證效期是兩項設定。",
+          "zh": "若批次只完成一部分，先查既有結果。再以相同工作 ID 接續，避免重複簽發。QR 下載期限與憑證效期是兩項獨立設定。",
+          "en": "If the batch completes only some devices, first check the existing results. Continue with the same job ID to prevent duplicate issuance. The QR download expiry and certificate validity period are separate settings."
+        },
+        {
+          "id": 15,
+          "original": "![新增裝置與效期欄位](../../images/console-task-02-new-tak.png)",
+          "zh": "![新增裝置與效期欄位](../../images/console-task-02-new-tak.png)",
+          "en": "![New device and expiry fields](../../images/console-task-02-new-tak.png)"
+        },
+        {
+          "id": 16,
+          "original": "圖 3：逐台填 CN 與到期時間，再設定群組。",
+          "zh": "圖 3：逐台填 CN 與到期時間，再設定群組。",
+          "en": "Figure 3: Enter each CN and expiry time. Then assign the groups."
+        },
+        {
+          "id": 17,
+          "original": "![四欄式群組清單](../../images/console-task-02b-group-lanes.png)",
+          "zh": "![四欄式群組清單](../../images/console-task-02b-group-lanes.png)",
+          "en": "![Four-column group list](../../images/console-task-02b-group-lanes.png)"
+        },
+        {
+          "id": 18,
+          "original": "圖 4：未指派群組不授權讀寫；移到 In、Out 或 In + Out 才生效。",
+          "zh": "圖 4：未指派群組不授權讀寫。移到 In、Out 或 In + Out 才生效。",
+          "en": "Figure 4: Unassigned groups give no read or write permission. Move a group to In, Out, or In + Out to assign permission."
+        },
+        {
+          "id": 19,
+          "original": "<a id=\"task-03\"></a>",
+          "zh": "<a id=\"task-03\"></a>",
+          "en": "<a id=\"task-03\"></a>"
+        },
+        {
+          "id": 20,
+          "original": "## 任務三　調整裝置的資料讀寫範圍",
+          "zh": "## 任務三　調整裝置的資料讀寫範圍",
+          "en": "## Task 3: Change device read and write permissions"
+        },
+        {
+          "id": 21,
+          "original": "1. 開啟「用戶端憑證 → 依群組檢視」，預設篩選「使用中」。可勾選「隱藏空群組」縮短頁面；新增憑證時先取消勾選，才可拖到原本隱藏的空群組。\n2. 可拖曳憑證，或按項目右側的「移動」開啟對話框。選「移動／調整權限」後指定目的群組與 In、Out 或 In + Out；選「從此群組移除」則只移除來源群組。也可拖到「未記錄群組」。\n3. 核對待儲存變更並確認儲存；待儲存數歸零後，從 TAK API 讀回群組。調整既有群組不必重做 DPK。",
+          "zh": "1. 開啟「用戶端憑證 → 依群組檢視」。預設篩選為「使用中」。\n2. 視需要勾選「隱藏空群組」。若新增憑證時要拖到空群組，先取消勾選。\n3. 拖曳憑證，或按項目右側的「移動」開啟對話方塊。\n4. 若要變更目的群組或權限，選「移動／調整權限」。\n5. 若選擇「移動／調整權限」，指定目的群組與 In、Out 或 In + Out。\n6. 若只要移除來源群組，選「從此群組移除」。也可拖到「未記錄群組」。\n7. 核對待儲存變更。\n8. 確認儲存。\n9. 待儲存數歸零後，從 TAK API 讀回群組。\n\n調整既有群組不必重做 DPK。",
+          "en": "1. Open 「用戶端憑證 → 依群組檢視」. The default filter is 「使用中」.\n2. Select 「隱藏空群組」 if necessary. Clear it before you drag a new certificate into an empty group.\n3. Drag the certificate, or select 「移動」 beside the item to open the dialog.\n4. To change the destination group or permissions, select 「移動／調整權限」.\n5. If you select 「移動／調整權限」, specify the destination group and In, Out, or In + Out.\n6. To remove only the source group, select 「從此群組移除」. You can also drag to 「未記錄群組」.\n7. Check the pending changes.\n8. Confirm the save.\n9. When the pending count reaches zero, read the groups from the TAK API.\n\nYou do not need a new DPK after changes to existing groups."
+        },
+        {
+          "id": 22,
+          "original": "驗證隔離時，要經 TAK Server 傳送新的 CoT；同一 Wi-Fi 的本機廣播無法證明群組規則。[雙裝置實測](../../validation/2026-09-24-ca-rotation-device-baseline.md)記錄 Alpha／Bravo 的結果。",
+          "zh": "驗證隔離時，須經 TAK Server 傳送新的 CoT。同一 Wi-Fi 的本機廣播無法證明群組規則。[雙裝置實測](../../validation/2026-09-24-ca-rotation-device-baseline.md)記錄 Alpha／Bravo 的結果。",
+          "en": "To test isolation, send new CoT through TAK Server. Local broadcasts on the same Wi-Fi do not prove group isolation. The [two-device test](../../validation/2026-09-24-ca-rotation-device-baseline.md) records the Alpha/Bravo results."
+        },
+        {
+          "id": 23,
+          "original": "![依群組檢視憑證](../../images/console-task-03-groups.png)",
+          "zh": "![依群組檢視憑證](../../images/console-task-03-groups.png)",
+          "en": "![Certificates grouped by permissions](../../images/console-task-03-groups.png)"
+        },
+        {
+          "id": 24,
+          "original": "圖 5：目前的狀態篩選、隱藏空群組、三欄權限與單一「移動」按鈕。",
+          "zh": "圖 5：目前的狀態篩選、隱藏空群組、三欄權限與單一「移動」按鈕。",
+          "en": "Figure 5: Status filters, hidden empty groups, three permission columns, and the single 「移動」 button."
+        },
+        {
+          "id": 25,
+          "original": "![移動憑證並調整 In Out 權限的對話框](../../images/console-task-03-move-dialog.png)",
+          "zh": "![移動憑證並調整 In Out 權限的對話方塊](../../images/console-task-03-move-dialog.png)",
+          "en": "![Move certificate and change In/Out permissions](../../images/console-task-03-move-dialog.png)"
+        },
+        {
+          "id": 26,
+          "original": "圖 5a：「移動／調整權限」可選目的群組與權限；按「暫存移動」後仍須儲存群組變更。",
+          "zh": "圖 5a：「移動／調整權限」可選目的群組與權限。按「暫存移動」後仍須儲存群組變更。",
+          "en": "Figure 5a: 「移動／調整權限」 lets you select the destination and permissions. After 「暫存移動」, you must still save the group changes."
+        },
+        {
+          "id": 27,
+          "original": "![從目前群組移除憑證的對話框](../../images/console-task-03-remove-dialog.png)",
+          "zh": "![從目前群組移除憑證的對話方塊](../../images/console-task-03-remove-dialog.png)",
+          "en": "![Remove certificate from the current group](../../images/console-task-03-remove-dialog.png)"
+        },
+        {
+          "id": 28,
+          "original": "圖 5b：切換「從此群組移除」後，只移除來源群組；圖中未送出變更。",
+          "zh": "圖 5b：切換「從此群組移除」後，只移除來源群組。圖中未送出變更。",
+          "en": "Figure 5b: 「從此群組移除」 removes only the source group. No change was submitted in this image."
+        },
+        {
+          "id": 29,
+          "original": "![新增憑證到群組視窗](../../images/console-task-03b-add-group.png)",
+          "zh": "![新增憑證到群組視窗](../../images/console-task-03b-add-group.png)",
+          "en": "![Add a certificate to a group](../../images/console-task-03b-add-group.png)"
+        },
+        {
+          "id": 30,
+          "original": "圖 6：搜尋尚未加入的使用中憑證，選擇加入權限；憑證識別資料已遮蔽。",
+          "zh": "圖 6：搜尋尚未加入的使用中憑證，選擇加入權限。憑證識別資料已遮蔽。",
+          "en": "Figure 6: Find an active certificate that is not in the group. Select its permissions. Certificate identifiers are concealed."
+        },
+        {
+          "id": 31,
+          "original": "<a id=\"task-11\"></a>",
+          "zh": "<a id=\"task-11\"></a>",
+          "en": "<a id=\"task-11\"></a>"
+        },
+        {
+          "id": 32,
+          "original": "## 任務十一　撤銷 TAK 裝置憑證",
+          "zh": "## 任務十一　撤銷 TAK 裝置憑證",
+          "en": "## Task 11: Revoke a TAK device certificate"
+        },
+        {
+          "id": 33,
+          "original": "1. 在「用戶端憑證 → 憑證清冊」核對 CN、簽發 CA、CRL ID 與 SHA-256 指紋；不可只靠可能重複的名稱。\n2. 選取有效憑證，按「撤銷選取的憑證」，再於確認視窗勾選。撤銷不可復原；控制台會停止關聯 QR、更新 CRL 並重啟 TAK。\n3. 檢查 CRL 含該序號，並用舊 DPK 重新連線驗證 8089 拒絕；Android 可能只顯示 `IO Error`。",
+          "zh": "**注意：撤銷不可復原。** 控制台會停止關聯 QR、更新 CRL 並重啟 TAK。不可只靠可能重複的名稱識別憑證。\n\n1. 在「用戶端憑證 → 憑證清冊」核對 CN、簽發 CA、CRL ID 與 SHA-256 指紋。\n2. 選取有效憑證。\n3. 按「撤銷選取的憑證」。\n4. 在確認視窗勾選確認。\n5. 檢查 CRL 含有該序號。\n6. 用舊 DPK 重新連線，確認 8089 拒絕連線。Android 可能只顯示 `IO Error`。",
+          "en": "**CAUTION: You cannot reverse revocation.** The console stops related QR links, updates the CRL, and restarts TAK. Do not identify certificates only by names that can be duplicates.\n\n1. Check the CN, issuing CA, CRL ID, and SHA-256 fingerprint in 「用戶端憑證 → 憑證清冊」.\n2. Select the valid certificate.\n3. Select 「撤銷選取的憑證」.\n4. Select the confirmation checkbox in the dialog.\n5. Check that the CRL contains the serial number.\n6. Reconnect with the old DPK to check that 8089 rejects the connection. Android may show only `IO Error`."
+        },
+        {
+          "id": 34,
+          "original": "一般撤銷流程會自動更新 CRL 並重啟 TAK Server；若撤銷紀錄已寫入，但發布或重啟失敗，可選「重新發布 CRL 並重啟」。它會依目前 CA 資料庫重新產生 Root CA 與簽發中繼 CA 的 CRL，不會新增或還原撤銷紀錄，也不會撤銷中繼 CA。8443 須另測。中繼 CA 替換使用獨立子頁，並須檢查 TAK 信任憑證鏈資料庫（truststore）是否仍直接信任舊 CA；詳見[憑證使用手冊](../certificate-operator-guide.md)。",
+          "zh": "一般撤銷流程會自動更新 CRL 並重啟 TAK Server。若撤銷紀錄已寫入，但發布或重啟失敗，可選「重新發布 CRL 並重啟」。\n\n這項操作會依目前 CA 資料庫重新產生 Root CA 與簽發中繼 CA 的 CRL。它不會新增或還原撤銷紀錄，也不會撤銷中繼 CA。\n\n8443 須另測。中繼 CA 替換使用獨立子頁。替換時須檢查 TAK 信任憑證鏈資料庫（truststore）是否仍直接信任舊 CA。詳見[憑證使用手冊](../certificate-operator-guide.md)。",
+          "en": "The usual revocation procedure updates the CRL and restarts TAK Server automatically. If the revocation record exists but publication or restart fails, you can select 「重新發布 CRL 並重啟」.\n\nThis operation generates Root CA and issuing intermediate CA CRLs from the current CA database. It does not add or reverse revocation records. It does not revoke the intermediate CA.\n\nTest 8443 separately. Intermediate CA replacement uses a separate subpage. Check whether the TAK truststore still directly trusts the old CA. See the [certificate operator guide](../certificate-operator-guide.md)."
+        },
+        {
+          "id": 35,
+          "original": "![憑證清冊選取狀態](../../images/console-task-11b-selected-certificate.png)",
+          "zh": "![憑證清冊選取狀態](../../images/console-task-11b-selected-certificate.png)",
+          "en": "![Selected certificate in the inventory](../../images/console-task-11b-selected-certificate.png)"
+        },
+        {
+          "id": 36,
+          "original": "圖 21：先選憑證並核對識別欄位；識別資料已遮蔽。",
+          "zh": "圖 21：先選憑證並核對識別欄位。識別資料已遮蔽。",
+          "en": "Figure 21: Select the certificate first. Check the identifier fields. Identifiers are concealed."
+        },
+        {
+          "id": 37,
+          "original": "![撤銷憑證確認視窗](../../images/console-task-11-revoke.png)",
+          "zh": "![撤銷憑證確認視窗](../../images/console-task-11-revoke.png)",
+          "en": "![Certificate revocation dialog](../../images/console-task-11-revoke.png)"
+        },
+        {
+          "id": 38,
+          "original": "圖 22：再次確認影響範圍；截圖停在確認視窗，沒有送出撤銷。",
+          "zh": "圖 22：再次確認影響範圍。截圖停在確認視窗，沒有送出撤銷。",
+          "en": "Figure 22: Check the effect again. The screenshot shows the confirmation dialog before revocation submission."
+        },
+        {
+          "id": 39,
+          "original": "<a id=\"task-ca-replace\"></a>",
+          "zh": "<a id=\"task-ca-replace\"></a>",
+          "en": "<a id=\"task-ca-replace\"></a>"
+        },
+        {
+          "id": 40,
+          "original": "## 任務十二　替換簽發中繼 CA 並重簽裝置",
+          "zh": "## 任務十二　替換簽發中繼 CA 並重簽裝置",
+          "en": "## Task 12: Replace the issuing intermediate CA and reissue certificates"
+        },
+        {
+          "id": 41,
+          "original": "1. 到「用戶端憑證 → CA 替換」，核對目前 CA ID。先確認控制台與 Windows 憑證管理程式正常，並安排 TAK、Mumble、MediaMTX 的短暫中斷。\n2. 勾選要重簽的使用中憑證。原到期日會自動帶入，可為每張憑證個別使用日曆調整，或選從現在起 7、14、28、90、730 天。未勾選的舊憑證會隨舊 CA 撤銷而失效，但不會產生新 DPK。\n3. 核對 CN、群組與新到期日，開啟確認視窗並勾選兩項獨立確認後送出。TAK、Mumble 與 MediaMTX 會短暫中斷；同頁可檢視背景工作的階段與結果。\n4. 到清冊確認舊憑證標示「簽發 CA 已撤銷」，逐一交付新 DPK。分別測試 ATAK 的 8089／8443 與 Vx 四頻道；Mumble 原有帳號另行管理。",
+          "zh": "**注意：替換會短暫中斷 TAK、Mumble 與 MediaMTX。** 未勾選的舊憑證會隨舊 CA 撤銷而失效。系統不會為未勾選的憑證產生新 DPK。\n\n1. 開啟「用戶端憑證 → CA 替換」。\n2. 核對目前 CA ID。\n3. 確認控制台與 Windows 憑證管理程式正常。\n4. 安排 TAK、Mumble、MediaMTX 的短暫中斷。\n5. 勾選要重簽的使用中憑證。系統會帶入原到期日。\n6. 如需調整效期，為每張憑證使用日曆，或選從現在起 7、14、28、90、730 天。\n7. 核對 CN、群組與新到期日。\n8. 開啟確認視窗。\n9. 勾選兩項獨立確認。\n10. 送出工作。同頁可檢視背景工作的階段與結果。\n11. 到清冊確認舊憑證標示「簽發 CA 已撤銷」。\n12. 逐一交付新 DPK。\n13. 分別測試 ATAK 的 8089／8443 與 Vx 四頻道。\n\nMumble 原有帳號須另行管理。",
+          "en": "**CAUTION: Replacement briefly interrupts TAK, Mumble, and MediaMTX.** Revocation of the old CA invalidates old certificates that you do not select. The system does not generate new DPK files for those certificates. Preset durations are 7, 14, 28, 90, and 730 days from now.\n\n1. Open 「用戶端憑證 → CA 替換」.\n2. Check the current CA ID.\n3. Check that the console and Windows certificate worker operate correctly.\n4. Schedule a brief interruption of TAK, Mumble, and MediaMTX.\n5. Select the active certificates to reissue. The system copies their original expiry dates.\n6. If necessary, change each expiry with the calendar, or select a preset duration.\n7. Check the CN, groups, and new expiry dates.\n8. Open the confirmation dialog.\n9. Select both independent confirmation checkboxes.\n10. Submit the job. The same page shows the background job stages and results.\n11. Check that the inventory marks old certificates 「簽發 CA 已撤銷」.\n12. Deliver each new DPK.\n13. Test ATAK 8089/8443 and all four Vx channels separately.\n\nManage existing Mumble accounts separately."
+        },
+        {
+          "id": 42,
+          "original": "8443 的受控測試已確認：實際載入 Root CRL 時，舊 CA 憑證的新連線會遭拒。現行設定已還原為只直接載入第一筆 CRL；每次 CA 替換後仍須以舊憑證重連 8443 確認遭拒，並以新憑證確認仍可使用。見[8443 測試紀錄](../../validation/2026-09-26-ca-rotation-8443-retest.md)。",
+          "zh": "8443 的受控測試確認：實際載入 Root CRL 時，舊 CA 憑證的新連線會遭拒。原始文件所述設定已還原為只直接載入第一筆 CRL。\n\n每次 CA 替換後，須以舊憑證重新連線 8443，確認連線遭拒。再以新憑證確認服務仍可使用。見[8443 測試紀錄](../../validation/2026-09-26-ca-rotation-8443-retest.md)。",
+          "en": "The controlled 8443 test confirmed rejection of new connections from old CA certificates when the server loaded the Root CRL. The configuration described in the source was restored to direct loading of only the first CRL.\n\nAfter each CA replacement, reconnect to 8443 with an old certificate to check rejection. Then check access with a new certificate. See the [8443 test record](../../validation/2026-09-26-ca-rotation-8443-retest.md)."
+        },
+        {
+          "id": 43,
+          "original": "![CA 替換頁的重簽選取與個別到期時間欄位](../../images/console-ca-rotation-1440.png)",
+          "zh": "![CA 替換頁的重簽選取與個別到期時間欄位](../../images/console-ca-rotation-1440.png)",
+          "en": "![CA replacement selection and expiry fields](../../images/console-ca-rotation-1440.png)"
+        },
+        {
+          "id": 44,
+          "original": "圖 23：替換會使舊憑證失效，頁面以紅色警告標示；為選取的裝置指定新到期時間。識別資料已遮蔽。",
+          "zh": "圖 23：替換會使舊憑證失效，頁面以紅色警告標示。為選取的裝置指定新到期時間。識別資料已遮蔽。",
+          "en": "Figure 23: Replacement invalidates old certificates. The page shows a red warning. Set a new expiry for selected devices. Identifiers are concealed."
+        },
+        {
+          "id": 45,
+          "original": "![手機寬度的 CA 替換頁](../../images/console-ca-rotation-390.png)",
+          "zh": "![手機寬度的 CA 替換頁](../../images/console-ca-rotation-390.png)",
+          "en": "![CA replacement at phone width](../../images/console-ca-rotation-390.png)"
+        },
+        {
+          "id": 46,
+          "original": "圖 24：窄螢幕依序呈現高風險紅色警告、裝置卡片與操作按鈕；識別資料已遮蔽。",
+          "zh": "圖 24：窄螢幕依序呈現高風險紅色警告、裝置卡片與操作按鈕。識別資料已遮蔽。",
+          "en": "Figure 24: The narrow layout shows the red risk warning, device cards, and controls in sequence. Identifiers are concealed."
+        },
+        {
+          "id": 47,
+          "original": "![CA 替換的雙重確認視窗](../../images/console-ca-rotation-confirm.png)",
+          "zh": "![CA 替換的雙重確認視窗](../../images/console-ca-rotation-confirm.png)",
+          "en": "![Two CA replacement confirmations](../../images/console-ca-rotation-confirm.png)"
+        },
+        {
+          "id": 48,
+          "original": "圖 25：兩項確認均勾選後，送出按鈕才可使用。此圖攝於送出前。",
+          "zh": "圖 25：兩項確認均勾選後，送出按鈕才可使用。此圖攝於送出前。",
+          "en": "Figure 25: Both checkboxes must be selected before submission is available. The image precedes submission."
+        },
+        {
+          "id": 49,
+          "original": "![CA 替換完成](../../images/console-ca-rotation-complete.png)",
+          "zh": "![CA 替換完成](../../images/console-ca-rotation-complete.png)",
+          "en": "![Completed CA replacement](../../images/console-ca-rotation-complete.png)"
+        },
+        {
+          "id": 50,
+          "original": "圖 26：本機測試已完成一張憑證重簽；CA ID 等識別資料已遮蔽。這次曾因 TAK API 啟動較慢而由原批次人工復原，詳見[驗證紀錄](../../validation/2026-09-25-wifi-env-ca-console.md)。",
+          "zh": "圖 26：本機測試已完成一張憑證重簽。CA ID 等識別資料已遮蔽。這次曾因 TAK API 啟動較慢而由原批次人工復原，詳見[驗證紀錄](../../validation/2026-09-25-wifi-env-ca-console.md)。",
+          "en": "Figure 26: The local test reissued one certificate. CA IDs and other identifiers are concealed. A slow TAK API startup required manual recovery through the original batch. See the [validation record](../../validation/2026-09-25-wifi-env-ca-console.md)."
+        },
+        {
+          "id": 51,
+          "original": "![舊 CA 憑證的撤銷狀態](../../images/console-ca-rotation-revoked.png)",
+          "zh": "![舊 CA 憑證的撤銷狀態](../../images/console-ca-rotation-revoked.png)",
+          "en": "![Revoked certificates from the old CA](../../images/console-ca-rotation-revoked.png)"
+        },
+        {
+          "id": 52,
+          "original": "圖 27：舊憑證在清冊顯示「簽發 CA 已撤銷」，不可再選取或交付。",
+          "zh": "圖 27：舊憑證在清冊顯示「簽發 CA 已撤銷」，不可再選取或交付。",
+          "en": "Figure 27: The inventory marks old certificates 「簽發 CA 已撤銷」. You cannot select or deliver them."
+        },
+        {
+          "id": 53,
+          "original": "若工作失敗，先依[憑證使用手冊](../certificate-operator-guide.md#撤銷ca-輪替與復原)檢查快照、Root CRL 與服務狀態，不要直接重試。Android 新 DPK 匯入、8443 套件與 Vx 四頻道仍須分別驗收。",
+          "zh": "若工作失敗，不要直接重試。先依[憑證使用手冊](../certificate-operator-guide.md#撤銷ca-輪替與復原)檢查快照、Root CRL 與服務狀態。Android 新 DPK 匯入、8443 套件與 Vx 四頻道仍須分別驗收。",
+          "en": "If the job fails, do not retry immediately. First check snapshots, the Root CRL, and service states through the [certificate operator guide](../certificate-operator-guide.md#撤銷ca-輪替與復原). Test the new Android DPK import, 8443 packages, and all four Vx channels separately."
+        },
+        {
+          "id": 54,
+          "original": "[返回任務索引](../console-task-manual.md)",
+          "zh": "[返回任務索引](../console-task-manual.md)",
+          "en": "[Return to the task index](../console-task-manual.md)"
+        }
+      ]
+    },
+    {
+      "source": "docs/tak-server/console-task-manual.md",
+      "blocks": [
+        {
+          "id": 1,
+          "original": "# TAK 控制台任務操作手冊",
+          "zh": "# TAK 控制台任務操作手冊",
+          "en": "# TAK console task manual"
+        },
+        {
+          "id": 2,
+          "original": "本手冊供本機 TAK 5.8 測試環境的管理人員使用。依要完成的任務找入口、執行步驟與驗收結果；控制台頁面名稱及按鈕文字以目前版本為準。管理入口只供 Windows 主機使用，Android 只接收短效 QR 所指向的設定檔或 DPK。",
+          "zh": "本手冊供本機 TAK 5.8 測試環境的管理人員使用。依任務尋找入口、操作步驟與驗收結果。控制台頁面名稱及按鈕文字以目前版本為準。\n\n管理入口只供 Windows 主機使用。Android 只接收短效 QR 所指向的設定檔或 DPK。",
+          "en": "This manual is for administrators of the local TAK 5.8 test environment. Find the entry point, procedure, and acceptance criteria for each task. Use the page names and button labels in the installed console.\n\nThe management entry point is for the Windows host only. Android receives configuration files or DPK files through short-lived QR links."
+        },
+        {
+          "id": 3,
+          "original": "現場交付與停用請先看圖片版[現場人員 Quick Start](frontline-quick-start.md)；本手冊保留完整步驟及驗收資訊。",
+          "zh": "現場交付與停用請先看圖片版[現場人員 Quick Start](frontline-quick-start.md)。本手冊提供完整步驟及驗收資訊。",
+          "en": "For field delivery and deactivation, first read the illustrated [frontline Quick Start](frontline-quick-start.md). This manual gives the full procedures and acceptance criteria."
+        },
+        {
+          "id": 4,
+          "original": "控制台截圖取自 2026-09-25 至 26 日的本機環境，ICU 章另附實機設定畫面。部分舊圖以黃色框標出操作區；裝置名稱、憑證識別資料與註冊身分等資訊在需要時已遮蔽。線上數量與分享狀態會隨時間改變。",
+          "zh": "控制台截圖取自 2026-09-25 至 26 日的本機環境。ICU 章另附實機設定畫面。部分舊圖以黃色框標出操作區。裝置名稱、憑證識別資料與註冊身分等資訊在需要時已遮蔽。線上數量與分享狀態會隨時間改變。",
+          "en": "The console screenshots show the local environment on 2026-09-25 and 26. The ICU chapter also includes device settings. Yellow boxes identify controls in some older images. Device names, certificate identifiers, and registered identities are concealed where necessary. Online counts and sharing states change with time."
+        },
+        {
+          "id": 5,
+          "original": "![目前 TAK 控制台的六個主導覽入口](../images/console-current-navbar.png)",
+          "zh": "![目前 TAK 控制台的六個主導覽入口](../images/console-current-navbar.png)",
+          "en": "![Six main navigation entries in the TAK console](../images/console-current-navbar.png)"
+        },
+        {
+          "id": 6,
+          "original": "從圖中的六個主導覽入口找任務；「小隊與群組」用來設定 ICU 小隊與 TAK 群組的對應。下表連到各章的操作步驟與驗收項目。",
+          "zh": "從圖中的六個主導覽入口尋找任務。「小隊與群組」用來設定 ICU 小隊與 TAK 群組的對應。下表連到各章的操作步驟與驗收項目。",
+          "en": "Find the task through the six navigation entries in the image. The 「小隊與群組」 page maps ICU squads to TAK groups. The table below links to procedures and acceptance criteria."
+        },
+        {
+          "id": 7,
+          "original": "## 先開啟控制台",
+          "zh": "## 先開啟控制台",
+          "en": "## Open the console"
+        },
+        {
+          "id": 8,
+          "original": "1. 啟動 Docker Desktop、Windows 熱點與 `takbox.local` 名稱解析，在專案根目錄執行 `docker compose up -d`。需要讓 Android 掃描下載 QR 時，另執行 `docker compose --profile sharing up -d share-public`，並保持分享防火牆的前景視窗開啟。\n2. 執行 `.\\scripts\\Manage-TakControlWorkers.ps1 -Action Status`；憑證或 Mumble 管理程式未執行時，以 `-Action Start` 啟動。首次安裝才使用 `-Action Install`。\n3. 在 Windows 瀏覽器開啟 `http://127.0.0.1:10066/`。以 `admin` 和本機 `runtime/secrets/share_admin_password` 登入。若 `.env` 已改 `SHARE_ADMIN_HOST_PORT`，使用實際通訊埠。\n4. 先核對頁面 Navbar 可以開啟「檔案分享」、「引導式佈建」、「MediaMTX 管理」、「Mumble 管理」、「用戶端憑證」及「小隊與群組」。需要裝置掃 QR 時，再確認 Android 位於相同熱點、可解析 `takbox.local`。",
+          "zh": "1. 啟動 Docker Desktop。\n2. 啟動 Windows 熱點。\n3. 啟動 `takbox.local` 名稱解析。\n4. 在專案根目錄執行 `docker compose up -d`。\n5. 若需要讓 Android 掃描下載 QR，執行 `docker compose --profile sharing up -d share-public`。\n6. 若需要讓 Android 掃描下載 QR，保持分享防火牆的前景視窗開啟。\n7. 執行 `.\\scripts\\Manage-TakControlWorkers.ps1 -Action Status`。\n8. 若憑證或 Mumble 管理程式未執行，以 `-Action Start` 啟動。首次安裝才使用 `-Action Install`。\n9. 在 Windows 瀏覽器開啟 `http://127.0.0.1:10066/`。若 `.env` 已改 `SHARE_ADMIN_HOST_PORT`，使用實際通訊埠。\n10. 以 `admin` 和本機 `runtime/secrets/share_admin_password` 登入。\n11. 核對 Navbar 可以開啟「檔案分享」、「引導式佈建」、「MediaMTX 管理」、「Mumble 管理」、「用戶端憑證」及「小隊與群組」。\n12. 若需要讓裝置掃 QR，確認 Android 位於相同熱點。\n13. 若需要讓裝置掃 QR，確認 Android 可解析 `takbox.local`。",
+          "en": "1. Start Docker Desktop.\n2. Start the Windows hotspot.\n3. Start name resolution for `takbox.local`.\n4. Run `docker compose up -d` from the project root.\n5. If Android must scan a download QR, run `docker compose --profile sharing up -d share-public`.\n6. If Android must scan a download QR, keep the sharing firewall window open in the foreground.\n7. Run `.\\scripts\\Manage-TakControlWorkers.ps1 -Action Status`.\n8. If the certificate or Mumble worker is not running, start it with `-Action Start`. Use `-Action Install` only for initial installation.\n9. Open `http://127.0.0.1:10066/` in a Windows browser. If `.env` changes `SHARE_ADMIN_HOST_PORT`, use that port.\n10. Log in with `admin` and the local `runtime/secrets/share_admin_password`.\n11. Check that Navbar opens 「檔案分享」, 「引導式佈建」, 「MediaMTX 管理」, 「Mumble 管理」, 「用戶端憑證」, and 「小隊與群組」.\n12. If a device must scan a QR, check that Android uses the same hotspot.\n13. If a device must scan a QR, check that Android can resolve `takbox.local`."
+        },
+        {
+          "id": 9,
+          "original": "管理頁使用 `127.0.0.1`，不可將它當成 Android 的下載網址。DPK 含裝置私鑰；ICU 設定含 MediaMTX 發布密碼。分享時設定期限與下載上限，完成後停止分享。詳細的啟動、防火牆及通訊埠調整見[分享服務](../sharing/portal.md)與[憑證控制台](certificate-console.md)。",
+          "zh": "管理頁使用 `127.0.0.1`。不可將這個位址當成 Android 的下載網址。\n\nDPK 含裝置私鑰。ICU 設定含 MediaMTX 發布密碼。分享時須設定期限與下載上限。完成後須停止分享。啟動、防火牆及通訊埠調整方式見[分享服務](../sharing/portal.md)與[憑證控制台](certificate-console.md)。",
+          "en": "The management page uses `127.0.0.1`. Do not use this address as the Android download address.\n\nDPK files contain device private keys. ICU settings contain the MediaMTX publisher password. Set the sharing expiry and download limit. Stop sharing after delivery. See [sharing service](../sharing/portal.md) and [certificate console](certificate-console.md) for startup, firewall, and port changes."
+        },
+        {
+          "id": 10,
+          "original": "## 依任務找頁面",
+          "zh": "## 依任務找頁面",
+          "en": "## Find a task"
+        },
+        {
+          "id": 11,
+          "original": "| 你要完成的任務 | 控制台入口 | 完成時應看見 |\n| --- | --- | --- |\n| [交付既有 TAK 裝置憑證](console-task-manual/certificates-and-groups.md#task-01) | 引導式佈建 → TAK Server 連線，或用戶端憑證 → 詳細頁 | 每張憑證有獨立短效 DPK QR；ATAK 連上 `takbox.local:8089:ssl` |\n| [新增一台或一批 TAK 裝置](console-task-manual/certificates-and-groups.md#task-02) | 引導式佈建 → 新增 TAK 用戶端 | 每台各有 CN、序號、群組、DPK 與 QR |\n| [更改裝置 In／Out 權限](console-task-manual/certificates-and-groups.md#task-03) | 用戶端憑證 → 依群組檢視，或詳細頁 | 儲存後從 TAK API 讀回相同群組 |\n| [更新 Vx 四頻道任務](console-task-manual/vx-and-mumble.md#task-04) | 引導式佈建 → Vx 任務 | TAK Server 只剩一筆 `ATAK Local Voice`；裝置下載後能加入四頻道 |\n| [交付 ICU 設定](console-task-manual/icu-and-mediamtx.md#task-05) | 引導式佈建 → ICU 影像發布 | ICU 顯示外部設定，並在 MediaMTX 看見預期 `live/.../VIDEO_1` |\n| [設定無人機或編碼器](console-task-manual/icu-and-mediamtx.md#task-06) | 引導式佈建 → Advanced → 一般設備 | 個別帳密及 RTSP／RTSPS 發布網址、QR |\n| [檢視或關閉影像](console-task-manual/icu-and-mediamtx.md#task-07) | MediaMTX 管理 → ICU／觀看工作階段 | 串流清單、即時預覽、公開觀看開關及觀看工作階段符合預期 |\n| [停用、重新啟用或輪替影像發布身分](console-task-manual/icu-and-mediamtx.md#task-08) | MediaMTX 管理 → ICU／其他 | 小隊或裝置身分狀態符合操作結果，舊連線依密碼選項處理 |\n| [停止設定檔或 DPK 下載](console-task-manual/sharing-and-troubleshooting.md#task-09) | 檔案分享 → 分享紀錄 | QR 無法再下載；目前有效連結消失 |\n| [中斷語音或管理註冊身分](console-task-manual/vx-and-mumble.md#task-10) | Mumble 管理 | 線上連線或註冊清單反映變更 |\n| [撤銷 TAK 裝置憑證](console-task-manual/certificates-and-groups.md#task-11) | 用戶端憑證 → 憑證清冊 | CRL 發布、TAK 重啟，舊憑證新連線遭拒 |\n| [替換中繼 CA 並選擇重簽裝置](console-task-manual/certificates-and-groups.md#task-ca-replace) | 用戶端憑證 → CA 替換 | 新 DPK 可登入 ATAK 與 Vx；8443 須以舊／新憑證建立新連線，逐次確認停權與可用性 |",
+          "zh": "| 你要完成的任務 | 控制台入口 | 完成時應看見 |\n| --- | --- | --- |\n| [交付既有 TAK 裝置憑證](console-task-manual/certificates-and-groups.md#task-01) | 引導式佈建 → TAK Server 連線，或用戶端憑證 → 詳細頁 | 每張憑證有獨立短效 DPK QR；ATAK 連上 `takbox.local:8089:ssl` |\n| [新增一台或一批 TAK 裝置](console-task-manual/certificates-and-groups.md#task-02) | 引導式佈建 → 新增 TAK 用戶端 | 每台各有 CN、序號、群組、DPK 與 QR |\n| [更改裝置 In／Out 權限](console-task-manual/certificates-and-groups.md#task-03) | 用戶端憑證 → 依群組檢視，或詳細頁 | 儲存後從 TAK API 讀回相同群組 |\n| [更新 Vx 四頻道任務](console-task-manual/vx-and-mumble.md#task-04) | 引導式佈建 → Vx 任務 | TAK Server 只剩一筆 `ATAK Local Voice`；裝置下載後能加入四頻道 |\n| [交付 ICU 設定](console-task-manual/icu-and-mediamtx.md#task-05) | 引導式佈建 → ICU 影像發布 | ICU 顯示外部設定，並在 MediaMTX 看見預期 `live/.../VIDEO_1` |\n| [設定無人機或編碼器](console-task-manual/icu-and-mediamtx.md#task-06) | `引導式佈建 → Advanced → 一般設備` | 個別帳密及 RTSP／RTSPS 發布網址、QR |\n| [檢視或關閉影像](console-task-manual/icu-and-mediamtx.md#task-07) | MediaMTX 管理 → ICU／觀看工作階段 | 串流清單、即時預覽、公開觀看開關及觀看工作階段符合預期 |\n| [停用、重新啟用或輪替影像發布身分](console-task-manual/icu-and-mediamtx.md#task-08) | MediaMTX 管理 → ICU／其他 | 小隊或裝置身分狀態符合操作結果，舊連線依密碼選項處理 |\n| [停止設定檔或 DPK 下載](console-task-manual/sharing-and-troubleshooting.md#task-09) | 檔案分享 → 分享紀錄 | QR 無法再下載；目前有效連結消失 |\n| [中斷語音或管理註冊身分](console-task-manual/vx-and-mumble.md#task-10) | Mumble 管理 | 線上連線或註冊清單反映變更 |\n| [撤銷 TAK 裝置憑證](console-task-manual/certificates-and-groups.md#task-11) | 用戶端憑證 → 憑證清冊 | CRL 發布、TAK 重啟，舊憑證新連線遭拒 |\n| [替換中繼 CA 並選擇重簽裝置](console-task-manual/certificates-and-groups.md#task-ca-replace) | 用戶端憑證 → CA 替換 | 新 DPK 可登入 ATAK 與 Vx；8443 須以舊／新憑證建立新連線，逐次確認停權與可用性 |",
+          "en": "| Task | Console entry | Acceptance criteria |\n| --- | --- | --- |\n| [Deliver an existing TAK certificate](console-task-manual/certificates-and-groups.md#task-01) | 引導式佈建 → TAK Server 連線, or 用戶端憑證 → 詳細頁 | Each certificate has a separate short-lived DPK QR. ATAK connects to `takbox.local:8089:ssl`. |\n| [Add TAK devices](console-task-manual/certificates-and-groups.md#task-02) | 引導式佈建 → 新增 TAK 用戶端 | Each device has its own CN, serial number, groups, DPK, and QR. |\n| [Change In/Out permissions](console-task-manual/certificates-and-groups.md#task-03) | 用戶端憑證 → 依群組檢視, or 詳細頁 | The TAK API returns the saved groups. |\n| [Update the four-channel Vx mission](console-task-manual/vx-and-mumble.md#task-04) | 引導式佈建 → Vx 任務 | TAK Server has only one `ATAK Local Voice` package. The device can join all four channels after download. |\n| [Deliver ICU settings](console-task-manual/icu-and-mediamtx.md#task-05) | 引導式佈建 → ICU 影像發布 | ICU shows external settings. MediaMTX shows the expected `live/.../VIDEO_1` path. |\n| [Configure a drone or encoder](console-task-manual/icu-and-mediamtx.md#task-06) | 引導式佈建 → Advanced → 一般設備 | Each device has credentials, RTSP/RTSPS publisher URLs, and QR codes. |\n| [View or close video](console-task-manual/icu-and-mediamtx.md#task-07) | MediaMTX 管理 → ICU／觀看工作階段 | Check the stream list, live preview, public viewing switch, and viewer sessions. |\n| [Manage publisher identities](console-task-manual/icu-and-mediamtx.md#task-08) | MediaMTX 管理 → ICU／其他 | Identity states match the operation. The password option determines the effect on old connections. |\n| [Stop configuration or DPK downloads](console-task-manual/sharing-and-troubleshooting.md#task-09) | 檔案分享 → 分享紀錄 | The QR cannot download files. Active links disappear. |\n| [Disconnect voice or manage identities](console-task-manual/vx-and-mumble.md#task-10) | Mumble 管理 | The online or registered identity list shows the change. |\n| [Revoke a TAK certificate](console-task-manual/certificates-and-groups.md#task-11) | 用戶端憑證 → 憑證清冊 | The CRL is published. TAK restarts. New connections with the old certificate fail. |\n| [Replace the intermediate CA](console-task-manual/certificates-and-groups.md#task-ca-replace) | 用戶端憑證 → CA 替換 | New DPK files allow ATAK and Vx login. Test new 8443 connections with old and new certificates after each replacement. |"
+        },
+        {
+          "id": 12,
+          "original": "## 驗收範圍",
+          "zh": "## 驗收範圍",
+          "en": "## Verification scope"
+        },
+        {
+          "id": 13,
+          "original": "本手冊以目前實作、既有瀏覽器及 Android 測試紀錄為依據。2026-09-26 另擷取新版群組操作、CA 警告及觀看工作階段頁；這些圖片只證明頁面顯示，不代表重新執行 CA 輪替或觀看連線。已實測的 ATAK、Vx、ICU、MediaMTX 及憑證撤銷結果，見[驗證索引](../validation/README.md)。",
+          "zh": "本手冊以原始文件所述的實作、瀏覽器測試及 Android 測試紀錄為依據。2026-09-26 另擷取新版群組操作、CA 警告及觀看工作階段頁。這些圖片只證明頁面顯示，不代表重新執行 CA 輪替或觀看連線。ATAK、Vx、ICU、MediaMTX 及憑證撤銷的實測結果，見[驗證索引](../validation/README.md)。",
+          "en": "This manual uses the implementation, browser tests, and Android tests described in the source documents. Additional screenshots from 2026-09-26 show group operations, CA warnings, and viewer sessions. These images show page content only. They do not prove a repeated CA replacement or viewer connection test. See the [validation index](../validation/README.md) for ATAK, Vx, ICU, MediaMTX, and certificate revocation results."
+        }
+      ],
+      "order": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        8,
+        10,
+        11,
+        12,
+        13
+      ]
+    },
+    {
+      "source": "docs/tak-server/console-task-manual/icu-and-mediamtx.md",
+      "blocks": [
+        {
+          "id": 1,
+          "original": "# ICU 與 MediaMTX 影像",
+          "zh": "# ICU 與 MediaMTX 影像",
+          "en": "# ICU and MediaMTX video"
+        },
+        {
+          "id": 2,
+          "original": "[返回任務索引](../console-task-manual.md)",
+          "zh": "[返回任務索引](../console-task-manual.md)",
+          "en": "[Return to the task index](../console-task-manual.md)"
+        },
+        {
+          "id": 3,
+          "original": "<a id=\"task-05\"></a>",
+          "zh": "<a id=\"task-05\"></a>",
+          "en": "<a id=\"task-05\"></a>"
+        },
+        {
+          "id": 4,
+          "original": "## 任務五　替人員建立 ICU 影像發布 QR",
+          "zh": "## 任務五　替人員建立 ICU 影像發布 QR",
+          "en": "## Task 5: Create ICU publisher QR codes for personnel"
+        },
+        {
+          "id": 5,
+          "original": "1. 在「引導式佈建 → ICU 小隊發布」選小隊，再從 1–10 號隊員中單選、多選或全選；預設勾選全部隊員。每名所選隊員各有一張 QR。\n2. 自訂單一路徑時選 Advanced，具名小隊的 Stream Path 必須留在 `live/<小隊>/` 下並以 `/` 結尾。ICU 會在末端加上 `VIDEO_1`。\n3. 設定 QR 時間與下載上限，預覽各隊員路徑後執行；結果頁左右切換 QR，分別交付完整 `icu://download?url=...`。\n4. 在 ICU 核對外部設定、RTSP-Push、`takbox.local:8554` 且 `Use SSL?` 不勾選，再啟動串流並查 MediaMTX 線上路徑。新 QR 預設 720p、15 fps、900 kbps、高度公尺 MSL，且勾選 Disable Local Broadcasting。",
+          "zh": "`initial.prefs` 含發布密碼。同一小隊共用發布密碼。新 QR 預設為 720p、15 fps、900 kbps、高度公尺 MSL，並勾選 Disable Local Broadcasting。\n\n1. 在「引導式佈建 → ICU 小隊發布」選擇小隊。\n2. 從 1–10 號隊員中單選、多選或全選。預設勾選全部隊員，每名所選隊員各有一張 QR。\n3. 若要自訂單一路徑，選 Advanced。具名小隊的 Stream Path 必須位於 `live/<小隊>/` 下，並以 `/` 結尾。ICU 會在末端加上 `VIDEO_1`。\n4. 設定 QR 時間與下載上限。\n5. 預覽各隊員路徑。\n6. 執行工作。\n7. 在結果頁左右切換 QR。\n8. 分別交付完整 `icu://download?url=...` 連結。\n9. 在 ICU 核對外部設定、RTSP-Push 與 `takbox.local:8554`。\n10. 確認 `Use SSL?` 未勾選。\n11. 啟動串流。\n12. 在 MediaMTX 核對線上路徑。",
+          "en": "The `initial.prefs` file contains the publisher password. Members of one squad share this password. New QR defaults are 720p, 15 fps, 900 kbps, and altitude in meters MSL. Disable Local Broadcasting is selected by default.\n\n1. Select the squad in 「引導式佈建 → ICU 小隊發布」.\n2. Select one, several, or all members numbered 1–10. All members are selected by default. Each selected member gets a QR.\n3. To specify a single custom path, select Advanced. A named squad Stream Path must stay under `live/<小隊>/` and end with `/`. ICU adds `VIDEO_1`.\n4. Set the QR duration and download limit.\n5. Preview each member path.\n6. Run the job.\n7. Switch between QR codes on the results page.\n8. Deliver each complete `icu://download?url=...` link.\n9. In ICU, check external settings, RTSP-Push, and `takbox.local:8554`.\n10. Check that `Use SSL?` is clear.\n11. Start the stream.\n12. Check the online path in MediaMTX."
+        },
+        {
+          "id": 6,
+          "original": "同一小隊共用發布密碼。**同隊可使用同一張 QR**；匯入後各裝置可在 ICU 把小隊後段改成自己的路徑，例如 `live/alpha/1/` 改為 `live/alpha/2/`，帳密維持不變。不同裝置應使用不同完整路徑。QR 下載的 `initial.prefs` 含密碼；只看到匯入提示尚未證明影像已發布。已建立的 QR 是設定檔快照，變更預設值後須重新分享。",
+          "zh": "**同隊可使用同一張 QR。** 匯入後，各裝置可在 ICU 把小隊後段改成自己的路徑。例如，將 `live/alpha/1/` 改為 `live/alpha/2/`，帳密維持不變。不同裝置應使用不同完整路徑。\n\nQR 下載的 `initial.prefs` 含密碼。匯入提示不能證明影像已發布。已建立的 QR 是設定檔快照。變更預設值後，須重新分享。",
+          "en": "**Squad members can use the same QR.** After import, each device can change the path suffix in ICU. For example, change `live/alpha/1/` to `live/alpha/2/` without changes to credentials. Different devices should use different complete paths.\n\nThe downloaded `initial.prefs` contains a password. An import message does not prove video publication. An existing QR is a configuration snapshot. Share a new QR after default settings change."
+        },
+        {
+          "id": 7,
+          "original": "若還要把影像別名發布到 TAK 群組，改選「引導式佈建 → ICU 小隊批次交付」：選小隊、起始隊員與人數，再選 TAK 影像別名的可見群組。預覽核對每名隊員的 `live/<小隊>/<隊員>/VIDEO_1` 與可讀憑證後執行。交付時讓每台裝置掃自己的 QR，並在 ATAK 影像清單核對相應的 `ICU <小隊> <隊員>` 別名。若改選群組，舊別名會先移除再重建，影像清單可能短暫消失。TAK 群組只限制別名清單可見性；已取得觀看帳密的裝置不會因群組變更自動失去播放權限。詳見[批次操作與限制](../../mediamtx/management.md#批次交付隊員-qr-與-tak-影像別名)。",
+          "zh": "若還要把影像別名發布到 TAK 群組，使用下列批次流程。\n\nTAK 群組只限制別名清單的可見性。已取得觀看帳密的裝置，不會因群組變更而自動失去播放權限。若改選群組，系統會先移除舊別名再重建。影像清單可能短暫消失。\n\n1. 選「引導式佈建 → ICU 小隊批次交付」。\n2. 選擇小隊、起始隊員與人數。\n3. 選擇 TAK 影像別名的可見群組。\n4. 在預覽核對每名隊員的 `live/<小隊>/<隊員>/VIDEO_1` 與可讀憑證。\n5. 執行工作。\n6. 讓每台裝置掃描自己的 QR。\n7. 在 ATAK 影像清單核對相應的 `ICU <小隊> <隊員>` 別名。\n\n詳見[批次操作與限制](../../mediamtx/management.md#批次交付隊員-qr-與-tak-影像別名)。",
+          "en": "Use the following batch procedure if you also need to publish video aliases to TAK groups.\n\nTAK groups control only alias list visibility. Devices with viewer credentials do not automatically lose playback permission after group changes. If you select different groups, the system deletes and recreates old aliases. The video list may disappear briefly.\n\n1. Select 「引導式佈建 → ICU 小隊批次交付」.\n2. Select the squad, first member, and member count.\n3. Select the groups that can see the TAK video aliases.\n4. In the preview, check each `live/<小隊>/<隊員>/VIDEO_1` path and the certificates with read permission.\n5. Run the job.\n6. Let each device scan its own QR.\n7. Check the corresponding `ICU <小隊> <隊員>` alias in the ATAK video list.\n\nSee [batch operations and limits](../../mediamtx/management.md#批次交付隊員-qr-與-tak-影像別名)."
+        },
+        {
+          "id": 8,
+          "original": "![ICU 標準模式選項](../../images/console-task-05-icu.png)",
+          "zh": "![ICU 標準模式選項](../../images/console-task-05-icu.png)",
+          "en": "![ICU standard mode options](../../images/console-task-05-icu.png)"
+        },
+        {
+          "id": 9,
+          "original": "圖 9：依小隊與人員代號產生標準路徑及短效 QR。",
+          "zh": "圖 9：依小隊與人員代號產生標準路徑及短效 QR。",
+          "en": "Figure 9: Generate standard paths and short-lived QR codes from squad and member identifiers."
+        },
+        {
+          "id": 10,
+          "original": "![ICU Advanced 路徑預覽](../../images/console-task-05b-advanced-path.png)",
+          "zh": "![ICU Advanced 路徑預覽](../../images/console-task-05b-advanced-path.png)",
+          "en": "![ICU Advanced path preview](../../images/console-task-05b-advanced-path.png)"
+        },
+        {
+          "id": 11,
+          "original": "圖 10：Advanced 只改 Stream Path；預覽會顯示 ICU 自動附加的 `VIDEO_1`。",
+          "zh": "圖 10：Advanced 只改 Stream Path。預覽會顯示 ICU 自動附加的 `VIDEO_1`。",
+          "en": "Figure 10: Advanced changes only Stream Path. The preview shows the `VIDEO_1` suffix that ICU adds."
+        },
+        {
+          "id": 12,
+          "original": "![同一張 Alpha QR 改成 2 號路徑後上線](../../images/console-icu-alpha-2-live-path.png)",
+          "zh": "![同一張 Alpha QR 改成 2 號路徑後上線](../../images/console-icu-alpha-2-live-path.png)",
+          "en": "![Alpha QR changed to member 2 and online](../../images/console-icu-alpha-2-live-path.png)"
+        },
+        {
+          "id": 13,
+          "original": "圖 10a：Android ICU 匯入原 Alpha QR 後，使用者手動改成 `live/alpha/2/` 並成功發布；控制台顯示完整路徑 `live/alpha/2/VIDEO_1`。此圖只顯示路徑，沒有擷取實際影像。",
+          "zh": "圖 10a：Android ICU 匯入原 Alpha QR 後，使用者手動改成 `live/alpha/2/` 並成功發布。控制台顯示完整路徑 `live/alpha/2/VIDEO_1`。此圖只顯示路徑，沒有擷取實際影像。",
+          "en": "Figure 10a: After import of the original Alpha QR, the user changed the Android ICU path to `live/alpha/2/`. Publication succeeded. The console shows `live/alpha/2/VIDEO_1`. The image shows the path only, without video capture."
+        },
+        {
+          "id": 14,
+          "original": "### 裝置端核對畫面",
+          "zh": "### 裝置端核對畫面",
+          "en": "### Check settings on the device"
+        },
+        {
+          "id": 15,
+          "original": "下列圖片由使用者提供的實機截圖裁切，保留原始設定內容。圖 A 顯示已勾選的狀態；圖 B、C 只顯示設定入口，**不能單靠截圖證明裝置已套用 900 kbps 或公尺 MSL**。掃描新 QR 後，須在 ICU 開啟選項核對，並以 MediaMTX 的線上路徑驗證發布。設定鍵與可用值見 [ICU QR 設定](../../mediamtx/icu-qrcode.md#室內定位與影像設定)。",
+          "zh": "下列圖片由使用者提供的實機截圖裁切，保留原始設定內容。圖 A 顯示已勾選的狀態。圖 B、C 只顯示設定入口。**不能單靠截圖證明裝置已套用 900 kbps 或公尺 MSL。**\n\n掃描新 QR 後，須在 ICU 開啟選項核對設定。再以 MediaMTX 的線上路徑驗證發布。設定鍵與可用值見 [ICU QR 設定](../../mediamtx/icu-qrcode.md#室內定位與影像設定)。",
+          "en": "These crops come from device screenshots supplied by the user. They retain the original settings. Figure A shows a selected checkbox. Figures B and C show only the settings entries. **These screenshots do not prove that 900 kbps or meters MSL are applied.**\n\nAfter a new QR scan, open the ICU options to check the settings. Then check publication through the MediaMTX online path. See [ICU QR settings](../../mediamtx/icu-qrcode.md#室內定位與影像設定) for keys and available values."
+        },
+        {
+          "id": 16,
+          "original": "![ICU 已勾選 Disable Local Broadcasting](../../images/icu-disable-local-broadcasting.jpg)",
+          "zh": "![ICU 已勾選 Disable Local Broadcasting](../../images/icu-disable-local-broadcasting.jpg)",
+          "en": "![ICU Disable Local Broadcasting selected](../../images/icu-disable-local-broadcasting.jpg)"
+        },
+        {
+          "id": 17,
+          "original": "圖 A：室內 GPS 失效時，使用者觀察到未勾選這項設定可能使影像發布中斷；新 QR 預設勾選，仍需實機複測。",
+          "zh": "圖 A：室內 GPS 失效時，使用者觀察到未勾選這項設定可能使影像發布中斷。新 QR 預設勾選，仍需實機複測。",
+          "en": "Figure A: A user observed that a clear checkbox may interrupt video publication when indoor GPS fails. New QR codes select it by default. Device retesting is still necessary."
+        },
+        {
+          "id": 18,
+          "original": "![ICU 串流解析度、影格率與位元率設定入口](../../images/icu-stream-quality-preferences.jpg)",
+          "zh": "![ICU 串流解析度、影格率與位元率設定入口](../../images/icu-stream-quality-preferences.jpg)",
+          "en": "![ICU stream resolution, frame rate, and bit rate entries](../../images/icu-stream-quality-preferences.jpg)"
+        },
+        {
+          "id": 19,
+          "original": "圖 B：串流畫質看 Resolution、TS Frame Rate、Stream Bit Rate；MP4 錄影使用另一組設定。",
+          "zh": "圖 B：串流畫質看 Resolution、TS Frame Rate、Stream Bit Rate。MP4 錄影使用另一組設定。",
+          "en": "Figure B: Resolution, TS Frame Rate, and Stream Bit Rate control stream quality. MP4 recording uses separate settings."
+        },
+        {
+          "id": 20,
+          "original": "![ICU 座標格式與高度顯示設定入口](../../images/icu-display-preferences.jpg)",
+          "zh": "![ICU 座標格式與高度顯示設定入口](../../images/icu-display-preferences.jpg)",
+          "en": "![ICU coordinate and altitude display entries](../../images/icu-display-preferences.jpg)"
+        },
+        {
+          "id": 21,
+          "original": "圖 C：Altitude Display 控制公尺或英尺；Coordinate Display 控制座標格式。",
+          "zh": "圖 C：Altitude Display 控制公尺或英尺。Coordinate Display 控制座標格式。",
+          "en": "Figure C: Altitude Display selects meters or feet. Coordinate Display selects the coordinate format."
+        },
+        {
+          "id": 22,
+          "original": "<a id=\"task-06\"></a>",
+          "zh": "<a id=\"task-06\"></a>",
+          "en": "<a id=\"task-06\"></a>"
+        },
+        {
+          "id": 23,
+          "original": "## 任務六　讓無人機或編碼器發布影像",
+          "zh": "## 任務六　讓無人機或編碼器發布影像",
+          "en": "## Task 6: Publish video from a drone or encoder"
+        },
+        {
+          "id": 24,
+          "original": "1. 在「引導式佈建 → Advanced → 一般設備」填設備名稱與唯一的 `live/` 完整路徑；URL input group 會顯示 RTSPS 預覽。\n2. 預覽後建立設備身分。結果頁按「顯示連線資訊」，RTSP 與 RTSPS 各有一組完整網址、「複製網址」按鈕及 QR；每台裝置有獨立帳密與指定路徑。網址格式為 `rtsps://<帳號>:<密碼>@takbox.local:8322/<Stream Path>`，RTSP 使用 `rtsp://` 與 `8554`。\n3. 優先用 RTSPS 發布並驗證 TAK CA 憑證鏈與 `takbox.local`；僅支援 RTSP 的裝置可在受控熱點使用 `8554`。最後在 MediaMTX 確認完整路徑上線，再用另一個讀取端驗證影像。",
+          "zh": "1. 在「`引導式佈建 → Advanced → 一般設備`」填入裝置名稱。\n2. 填入唯一的 `live/` 完整路徑。URL input group 會顯示 RTSPS 預覽。\n3. 核對預覽。\n4. 建立裝置身分。\n5. 在結果頁按「顯示連線資訊」。RTSP 與 RTSPS 各有完整網址、「複製網址」按鈕及 QR。\n6. 優先用 RTSPS 發布。\n7. 使用 RTSPS 時，驗證 TAK CA 憑證鏈與 `takbox.local`。僅支援 RTSP 的裝置可在受控熱點使用 `8554`。\n8. 在 MediaMTX 確認完整路徑上線。\n9. 用另一個讀取端驗證影像。\n\n每台裝置有獨立帳密與指定路徑。RTSPS 網址格式為 `rtsps://<帳號>:<密碼>@takbox.local:8322/<Stream Path>`。RTSP 使用 `rtsp://` 與 `8554`。",
+          "en": "1. Enter the device name in 「引導式佈建 → Advanced → 一般設備」.\n2. Enter a unique complete `live/` path. The URL input group shows an RTSPS preview.\n3. Check the preview.\n4. Create the device identity.\n5. Select 「顯示連線資訊」 on the results page. RTSP and RTSPS each have a complete URL, 「複製網址」 button, and QR.\n6. Prefer RTSPS for publication.\n7. With RTSPS, verify the TAK CA chain and `takbox.local`. RTSP-only devices can use `8554` on a controlled hotspot.\n8. Check that the complete path is online in MediaMTX.\n9. Test the video with a separate reader.\n\nEach device has separate credentials and an assigned path. The RTSPS format is `rtsps://<帳號>:<密碼>@takbox.local:8322/<Stream Path>`. RTSP uses `rtsp://` and `8554`."
+        },
+        {
+          "id": 25,
+          "original": "發布網址與 QR 含帳密，不要貼進日誌或 Git。一般裝置使用的 QR 沒有 ICU 分享下載期限；停用身分或重設密碼才會讓舊連線資訊失效。一般設備不會自動附加 `VIDEO_1`。",
+          "zh": "**注意：發布網址與 QR 含帳密。不要貼進日誌或 Git。** 一般裝置的 QR 沒有 ICU 分享下載期限。停用身分或重設密碼才會讓舊連線資訊失效。一般裝置不會自動附加 `VIDEO_1`。",
+          "en": "**CAUTION: Publisher URLs and QR codes contain credentials. Do not paste them into logs or Git.** General device QR codes do not have the ICU sharing expiry. Only identity deactivation or password reset invalidates the old connection details. General devices do not automatically add `VIDEO_1`."
+        },
+        {
+          "id": 26,
+          "original": "![一般設備 URL input group](../../images/console-task-06-device.png)",
+          "zh": "![一般裝置 URL input group](../../images/console-task-06-device.png)",
+          "en": "![General device URL input group](../../images/console-task-06-device.png)"
+        },
+        {
+          "id": 27,
+          "original": "圖 11：先核對設備名稱與完整 Stream Path。",
+          "zh": "圖 11：先核對裝置名稱與完整 Stream Path。",
+          "en": "Figure 11: First check the device name and complete Stream Path."
+        },
+        {
+          "id": 28,
+          "original": "![一般設備發布預覽頁](../../images/console-task-06b-preview.png)",
+          "zh": "![一般裝置發布預覽頁](../../images/console-task-06b-preview.png)",
+          "en": "![General device publisher preview](../../images/console-task-06b-preview.png)"
+        },
+        {
+          "id": 29,
+          "original": "圖 12：預覽確認路徑及 TLS 條件；截圖未建立帳號。",
+          "zh": "圖 12：預覽確認路徑及 TLS 條件。截圖未建立帳號。",
+          "en": "Figure 12: Check the path and TLS conditions in the preview. The screenshot precedes account creation."
+        },
+        {
+          "id": 30,
+          "original": "### 本機模擬無人機實測",
+          "zh": "### 本機模擬無人機實測",
+          "en": "### Local simulated drone test"
+        },
+        {
+          "id": 31,
+          "original": "2026-09-25 在控制台建立 `Drone RTSPS Validation`，路徑為 `live/drone/validation-20260925`。使用獨立 Docker bridge 上的 FFmpeg 模擬無人機，經 Windows 熱點位址向 `takbox.local:8322` 發布 H.264 影像；獨立讀取帳號從相同路徑解碼 30 個影格，控制台 WebRTC 預覽也顯示測試色條。RTSP `8554/TCP` 另以相同身分發布、讀取 30 個影格。測試後已停用身分，舊網址無法再發布；這不是實體無人機或外網驗收。詳見[驗證紀錄](../../validation/2026-09-25-drone-synthetic-stream.md)。",
+          "zh": "2026-09-25 在控制台建立 `Drone RTSPS Validation`，路徑為 `live/drone/validation-20260925`。測試使用獨立 Docker bridge 上的 FFmpeg 模擬無人機。FFmpeg 經 Windows 熱點位址向 `takbox.local:8322` 發布 H.264 影像。\n\n獨立讀取帳號從相同路徑解碼 30 個影格。控制台 WebRTC 預覽也顯示測試色條。RTSP `8554/TCP` 另以相同身分發布，並讀取 30 個影格。\n\n測試後已停用身分，舊網址無法再發布。這次測試不代表實體無人機或外網驗收。詳見[驗證紀錄](../../validation/2026-09-25-drone-synthetic-stream.md)。",
+          "en": "On 2026-09-25, the console created `Drone RTSPS Validation` with path `live/drone/validation-20260925`. FFmpeg on a separate Docker bridge simulated a drone. It published H.264 through the Windows hotspot address to `takbox.local:8322`.\n\nA separate reader account decoded 30 frames from the same path. The console WebRTC preview also showed test color bars. A separate RTSP `8554/TCP` test published with the same identity and read 30 frames.\n\nThe identity was deactivated after testing. The old URL could no longer publish. This test does not establish acceptance for a physical drone or internet access. See the [validation record](../../validation/2026-09-25-drone-synthetic-stream.md)."
+        },
+        {
+          "id": 32,
+          "original": "![一般設備實測的發布 URL 預覽](../../images/console-drone-01-url-preview.png)",
+          "zh": "![一般裝置實測的發布 URL 預覽](../../images/console-drone-01-url-preview.png)",
+          "en": "![General device publisher URL preview](../../images/console-drone-01-url-preview.png)"
+        },
+        {
+          "id": 33,
+          "original": "圖 12a：建立前的 URL 預覽只有主機、通訊埠與路徑；帳密在建立後才產生。",
+          "zh": "圖 12a：建立前的 URL 預覽只有主機、通訊埠與路徑。帳密在建立後才產生。",
+          "en": "Figure 12a: Before creation, the URL preview contains only the host, port, and path. Credentials become available after creation."
+        },
+        {
+          "id": 34,
+          "original": "![一般設備 RTSP 與 RTSPS 複製按鈕](../../images/console-drone-05-copy-links-redacted.png)",
+          "zh": "![一般裝置 RTSP 與 RTSPS 複製按鈕](../../images/console-drone-05-copy-links-redacted.png)",
+          "en": "![General device RTSP and RTSPS copy controls](../../images/console-drone-05-copy-links-redacted.png)"
+        },
+        {
+          "id": 35,
+          "original": "圖 12b：建立後展開連線資訊，可分別複製 RTSP／RTSPS 網址或掃 QR。截圖中的網址與 QR 已遮蔽，不能用來連線。",
+          "zh": "圖 12b：建立後展開連線資訊，可分別複製 RTSP／RTSPS 網址或掃 QR。截圖中的網址與 QR 已遮蔽，不能用來連線。",
+          "en": "Figure 12b: After creation, expand the connection details to copy RTSP/RTSPS URLs or scan QR codes. Concealed URLs and QR codes in the screenshot cannot connect."
+        },
+        {
+          "id": 36,
+          "original": "![模擬無人機串流卡片](../../images/console-drone-03-stream-card.png)",
+          "zh": "![模擬無人機串流卡片](../../images/console-drone-03-stream-card.png)",
+          "en": "![Simulated drone stream card](../../images/console-drone-03-stream-card.png)"
+        },
+        {
+          "id": 37,
+          "original": "圖 12c：發布後先核對 `live/drone/validation-20260925` 是否出現在「目前發布的串流」。",
+          "zh": "圖 12c：發布後先核對 `live/drone/validation-20260925` 是否出現在「目前發布的串流」。",
+          "en": "Figure 12c: After publication, check for `live/drone/validation-20260925` in 「目前發布的串流」."
+        },
+        {
+          "id": 38,
+          "original": "![模擬無人機影像在控制台播放](../../images/console-drone-02-live-preview.png)",
+          "zh": "![模擬無人機影像在控制台播放](../../images/console-drone-02-live-preview.png)",
+          "en": "![Simulated drone video in the console](../../images/console-drone-02-live-preview.png)"
+        },
+        {
+          "id": 39,
+          "original": "圖 12d：控制台預覽收到 FFmpeg 測試色條；播放成功還需以獨立讀取端確認影像可解碼。",
+          "zh": "圖 12d：控制台預覽收到 FFmpeg 測試色條。播放成功還需以獨立讀取端確認影像可解碼。",
+          "en": "Figure 12d: The console preview received FFmpeg color bars. A separate reader must still confirm successful video decoding."
+        },
+        {
+          "id": 40,
+          "original": "<a id=\"task-07\"></a>",
+          "zh": "<a id=\"task-07\"></a>",
+          "en": "<a id=\"task-07\"></a>"
+        },
+        {
+          "id": 41,
+          "original": "## 任務七　檢視影像與控制觀看",
+          "zh": "## 任務七　檢視影像與控制觀看",
+          "en": "## Task 7: View video and control viewing"
+        },
+        {
+          "id": 42,
+          "original": "先看下方流向圖，再依播放端選擇連線：ICU QR 預設以 RTSP `8554`（`Use SSL?` 不勾選）發布，與 ATAK Video Alias 支援的協定一致；無人機／一般設備可用 RTSPS，受控區域網路內也可用無 TLS 的 RTSP。ATAK 的已驗證路徑是直接向 MediaMTX 以 RTSP／TCP 讀取；瀏覽器則由獨立 viewer／preview 容器按需讀取後提供 WebRTC。逐段協定、加密與實測限制見[本機影像處理與流向](../../mediamtx/video-flow.md)。",
+          "zh": "先看下方流向圖，再依播放端選擇連線。ICU QR 預設以 RTSP `8554` 發布，且 `Use SSL?` 不勾選。這與 ATAK Video Alias 支援的協定一致。無人機與一般裝置可用 RTSPS。在受控區域網路內，也可使用無 TLS 的 RTSP。\n\nATAK 的已驗證路徑是直接向 MediaMTX 以 RTSP／TCP 讀取。瀏覽器則由獨立 viewer／preview 容器按需讀取，再提供 WebRTC。逐段協定、加密與實測限制見[本機影像處理與流向](../../mediamtx/video-flow.md)。",
+          "en": "First read the flow diagram below. Then select the connection for the playback device. ICU QR defaults use RTSP `8554` with `Use SSL?` clear. This matches the protocol supported by ATAK Video Alias. Drones and general devices can use RTSPS. They can also use RTSP without TLS on a controlled LAN.\n\nThe verified ATAK path reads directly from MediaMTX through RTSP/TCP. For browsers, separate viewer/preview containers read on demand and supply WebRTC. See [local video flow](../../mediamtx/video-flow.md) for protocols, encryption, and test limits."
+        },
+        {
+          "id": 43,
+          "original": "1. 在「MediaMTX 管理」選線上串流，按「即時預覽」；看完按「關閉預覽」。\n2. 熱點裝置使用 `http://takbox.local:8889/live/<path>/` 觀看，末尾斜線需保留。\n3. 以「公開 WebRTC 觀看」開關控制新觀看與現有公開工作階段；此開關不停止 ICU 推流。切到「觀看工作階段」子頁，核對公開觀看的數量、路徑、來源位址與連線狀態；管理頁即時預覽不列入。此頁每 5 秒更新，可搜尋或按「立即更新」。\n4. 若在 ATAK CIV 5.7.0.15 觀看 ICU 影像，先確認發布端仍持續發布；在 ATAK 手動建立 RTSP 來源，使用 `takbox.local:8554`、實際 `live/.../VIDEO_1` 路徑及 `atak-viewer` 讀取帳密，並勾選 **Reliable P2P Connection (consumes more resources)**，讓 RTSP 走 TCP。ICU 自動分享的 RTSPS 來源不能直接用這版 ATAK 內建播放器開啟。RTSP 只限受控區域網路或 VPN；見[實機紀錄](../../validation/2026-09-25-atak-icu-viewer.md)。",
+          "zh": "### 在管理頁預覽\n\n1. 在「MediaMTX 管理」選擇線上串流。\n2. 按「即時預覽」。\n3. 看完後按「關閉預覽」。\n\n### 在熱點裝置觀看\n\n1. 使用 `http://takbox.local:8889/live/<path>/` 觀看。須保留末尾斜線。\n\n### 控制公開 WebRTC 觀看\n\n「公開 WebRTC 觀看」開關控制新觀看與現有公開工作階段。這個開關不停止 ICU 推流。管理頁即時預覽不列入公開觀看工作階段。\n\n1. 依需求設定「公開 WebRTC 觀看」開關。\n2. 切到「觀看工作階段」子頁。\n3. 核對公開觀看的數量、路徑、來源位址與連線狀態。\n\n此頁每 5 秒更新。可搜尋工作階段，或按「立即更新」。\n\n### 在 ATAK CIV 5.7.0.15 觀看 ICU 影像\n\nICU 自動分享的 RTSPS 來源，不能直接用這版 ATAK 內建播放器開啟。RTSP 只限受控區域網路或 VPN。\n\n1. 確認發布端仍持續發布。\n2. 在 ATAK 手動建立 RTSP 來源。\n3. 填入 `takbox.local:8554`、實際 `live/.../VIDEO_1` 路徑及 `atak-viewer` 讀取帳密。\n4. 勾選 **Reliable P2P Connection (consumes more resources)**，讓 RTSP 使用 TCP。\n\n見[實機紀錄](../../validation/2026-09-25-atak-icu-viewer.md)。",
+          "en": "### Preview in the management page\n\n1. Select an online stream in 「MediaMTX 管理」.\n2. Select 「即時預覽」.\n3. When finished, select 「關閉預覽」.\n\n### View from a hotspot device\n\n1. Open `http://takbox.local:8889/live/<path>/`. Keep the final slash.\n\n### Control public WebRTC viewing\n\nThe 「公開 WebRTC 觀看」 switch controls new viewing and existing public sessions. It does not stop ICU publication. Public session counts exclude management previews.\n\n1. Set 「公開 WebRTC 觀看」 as required.\n2. Open the 「觀看工作階段」 subpage.\n3. Check the public viewer count, paths, source addresses, and connection states.\n\nThe page updates every 5 seconds. You can search sessions or select 「立即更新」.\n\n### View ICU video in ATAK CIV 5.7.0.15\n\nThis ATAK built-in player cannot directly open the RTSPS source that ICU shares automatically. Use RTSP only on a controlled LAN or VPN.\n\n1. Check that the publisher continues to publish.\n2. Manually create an RTSP source in ATAK.\n3. Enter `takbox.local:8554`, the actual `live/.../VIDEO_1` path, and the `atak-viewer` credentials.\n4. Select **Reliable P2P Connection (consumes more resources)** to use RTSP over TCP.\n\nSee the [device test record](../../validation/2026-09-25-atak-icu-viewer.md)."
+        },
+        {
+          "id": 44,
+          "original": "目前只驗證熱點觀看；網際網路仍需 FQDN、HTTPS、NAT 與 ICE 驗收。下方圖 13 截圖時沒有線上串流。",
+          "zh": "本節引用的原始驗收只涵蓋熱點觀看。網際網路仍需 FQDN、HTTPS、NAT 與 ICE 驗收。圖 13 截圖時沒有線上串流。",
+          "en": "The original acceptance test cited here covers hotspot viewing only. Internet access still needs FQDN, HTTPS, NAT, and ICE acceptance tests. No streams were online in Figure 13."
+        },
+        {
+          "id": 45,
+          "original": "![WebRTC 觀看狀態控制](../../images/console-task-07-viewer.png)",
+          "zh": "![WebRTC 觀看狀態控制](../../images/console-task-07-viewer.png)",
+          "en": "![WebRTC viewing controls](../../images/console-task-07-viewer.png)"
+        },
+        {
+          "id": 46,
+          "original": "圖 13：管理頁顯示公開觀看開關、工作階段數與串流清單。",
+          "zh": "圖 13：管理頁顯示公開觀看開關、工作階段數與串流清單。",
+          "en": "Figure 13: The management page shows the public viewing switch, session count, and stream list."
+        },
+        {
+          "id": 47,
+          "original": "![ICU、無人機、MediaMTX、ATAK、WebRTC 與縮圖的影像流向](../../images/console-task-07b-viewing-flow.png)",
+          "zh": "![ICU、無人機、MediaMTX、ATAK、WebRTC 與縮圖的影像流向](../../images/console-task-07b-viewing-flow.png)",
+          "en": "![ICU, drone, MediaMTX, ATAK, WebRTC, and thumbnail flows](../../images/console-task-07b-viewing-flow.png)"
+        },
+        {
+          "id": 48,
+          "original": "圖 14：來源推流、MediaMTX 接收、ATAK 直接讀取、瀏覽器 WebRTC 與單影格縮圖分屬不同處理路徑。`Use SSL?` 代表 ICU 的 RTSPS／TLS；WebRTC 的 HTTP 信令與加密媒體也分開標示。",
+          "zh": "圖 14：來源推流、MediaMTX 接收、ATAK 直接讀取、瀏覽器 WebRTC 與單影格縮圖分屬不同處理路徑。`Use SSL?` 代表 ICU 的 RTSPS／TLS。WebRTC 的 HTTP 信令與加密媒體也分開標示。",
+          "en": "Figure 14: Publication, MediaMTX reception, direct ATAK reading, browser WebRTC, and single-frame thumbnails use different paths. `Use SSL?` means ICU RTSPS/TLS. The diagram separates WebRTC HTTP signaling from encrypted media."
+        },
+        {
+          "id": 49,
+          "original": "![MediaMTX 公開觀看工作階段頁](../../images/console-media-viewer-sessions.png)",
+          "zh": "![MediaMTX 公開觀看工作階段頁](../../images/console-media-viewer-sessions.png)",
+          "en": "![Public MediaMTX viewer sessions](../../images/console-media-viewer-sessions.png)"
+        },
+        {
+          "id": 50,
+          "original": "圖 14a：2026-09-26 截圖時沒有公開觀看工作階段；這是空清單的頁面檢查，未驗證實際播放。來源位址若經 NAT 或代理，不一定是觀看裝置的原始 IP。",
+          "zh": "圖 14a：2026-09-26 截圖時沒有公開觀看工作階段。這是空清單的頁面檢查，未驗證實際播放。來源位址若經 NAT 或代理，不一定是觀看裝置的原始 IP。",
+          "en": "Figure 14a: No public viewer sessions existed in the 2026-09-26 screenshot. This empty-list page check did not test playback. After NAT or a proxy, the source address may differ from the device IP."
+        },
+        {
+          "id": 51,
+          "original": "<a id=\"task-08\"></a>",
+          "zh": "<a id=\"task-08\"></a>",
+          "en": "<a id=\"task-08\"></a>"
+        },
+        {
+          "id": 52,
+          "original": "## 任務八　停用或輪替 MediaMTX 發布身分",
+          "zh": "## 任務八　停用或輪替 MediaMTX 發布身分",
+          "en": "## Task 8: Deactivate publisher identities or change their passwords"
+        },
+        {
+          "id": 53,
+          "original": "1. 開啟「MediaMTX 管理」。切到「ICU」管理小隊卡片；切到「其他」管理一般設備表格。兩頁的線上串流與觀看開關共用。\n2. 搜尋並切換「啟用中／停用／顯示全部」。在「ICU」，「啟用」表示身分允許登入；「串流中」徽章與路徑數表示 MediaMTX 目前有可用發布串流，展開「QR 路徑」可逐條核對。在「其他」可設定每頁 10／20／30 筆，並使用上一頁／下一頁。勾選要修改的身分。\n3. 再次發布時展開小隊卡片的 QR 路徑，預設全選，也能逐條勾選或使用「全選／全部不選」；至少選一條。接著依目的選「再次發布 ICU QR」、「停用選取身分」或「重設選取密碼」，勾選頁面確認後送出。\n4. 重設小隊密碼後，整個小隊須重新掃 QR；一般設備則重新取得專屬發布網址。核對原發布連線已中斷。",
+          "zh": "### 選取發布身分\n\n1. 開啟「MediaMTX 管理」。\n2. 若要管理小隊，切到「ICU」。若要管理一般裝置，切到「其他」。\n3. 搜尋身分。\n4. 依需求切換「啟用中／停用／顯示全部」。\n5. 勾選要修改的身分。\n\n兩頁共用線上串流與觀看開關。在「ICU」，「啟用」表示身分允許登入。「串流中」徽章與路徑數表示 MediaMTX 目前有可用發布串流。展開「QR 路徑」可逐條核對。\n\n在「其他」，可設定每頁 10／20／30 筆，並使用上一頁或下一頁。\n\n### 依目的執行操作\n\n再次發布 QR 不會更改原密碼。重設小隊密碼後，整個小隊須重新掃 QR。一般裝置須重新取得專屬發布網址。\n\n1. 若要再次發布 ICU QR，展開小隊卡片的 QR 路徑。預設全選。\n2. 若要再次發布 ICU QR，逐條勾選或使用「全選／全部不選」。至少須選一條。\n3. 依目的選「再次發布 ICU QR」、「停用選取身分」或「重設選取密碼」。\n4. 勾選頁面確認。\n5. 送出工作。\n6. 若已重設小隊密碼，讓整個小隊重新掃 QR。\n7. 若已重設一般裝置密碼，重新取得專屬發布網址。\n8. 若已重設密碼，核對原發布連線已中斷。",
+          "en": "### Select publisher identities\n\n1. Open 「MediaMTX 管理」.\n2. For squads, select 「ICU」. For general devices, select 「其他」.\n3. Search for the identity.\n4. Set 「啟用中／停用／顯示全部」 as required.\n5. Select the identities to change.\n\nBoth pages share the online streams and viewing switch. On 「ICU」, 「啟用」 means the identity can log in. The 「串流中」 badge and path count indicate available publisher streams in MediaMTX. Expand 「QR 路徑」 to check individual paths.\n\nOn 「其他」, select 10/20/30 entries per page. Use the previous and next page controls.\n\n### Select the operation\n\nReissuing QR codes does not change the password. After a squad password reset, every squad member must scan a QR again. General devices must obtain their own publisher URLs again.\n\n1. To reissue ICU QR codes, expand the squad card QR paths. All paths are selected by default.\n2. To reissue ICU QR codes, select individual paths or use 「全選／全部不選」. You must select at least one path.\n3. Select 「再次發布 ICU QR」, 「停用選取身分」, or 「重設選取密碼」 for the required operation.\n4. Select the page confirmation checkbox.\n5. Submit the job.\n6. After a squad password reset, let all squad members scan the QR again.\n7. After a general device password reset, obtain its assigned publisher URL again.\n8. After a password reset, check that the original publisher connection is disconnected."
+        },
+        {
+          "id": 54,
+          "original": "再次發布 QR 不會更改原密碼。小隊共用帳密；要單獨停用一台裝置，應使用一般設備身分。",
+          "zh": "再次發布 QR 不會更改原密碼。小隊共用帳密。要單獨停用一台裝置，應使用一般裝置身分。",
+          "en": "Reissuing QR codes does not change the original password. Squad members share credentials. To deactivate one device separately, you should use a general device identity."
+        },
+        {
+          "id": 55,
+          "original": "![MediaMTX 發布身分清單](../../images/console-task-08-publishers.png)",
+          "zh": "![MediaMTX 發布身分清單](../../images/console-task-08-publishers.png)",
+          "en": "![MediaMTX publisher identities](../../images/console-task-08-publishers.png)"
+        },
+        {
+          "id": 56,
+          "original": "圖 15：搜尋與篩選發布身分。",
+          "zh": "圖 15：搜尋與篩選發布身分。",
+          "en": "Figure 15: Search and filter publisher identities."
+        },
+        {
+          "id": 57,
+          "original": "![選取身分後的管理按鈕](../../images/console-task-08b-selected-publisher.png)",
+          "zh": "![選取身分後的管理按鈕](../../images/console-task-08b-selected-publisher.png)",
+          "en": "![Controls for selected identities](../../images/console-task-08b-selected-publisher.png)"
+        },
+        {
+          "id": 58,
+          "original": "圖 16：選取後才可再次發布、停用或重設；截圖未送出變更。",
+          "zh": "圖 16：選取後才可再次發布、停用或重設。截圖未送出變更。",
+          "en": "Figure 16: Select identities before reissuing, deactivating, or resetting. The screenshot precedes submission."
+        },
+        {
+          "id": 59,
+          "original": "![ICU 子頁的小隊卡片](../../images/console-media-icu-cards.png)",
+          "zh": "![ICU 子頁的小隊卡片](../../images/console-media-icu-cards.png)",
+          "en": "![Squad cards on the ICU subpage](../../images/console-media-icu-cards.png)"
+        },
+        {
+          "id": 60,
+          "original": "圖 17：ICU 子頁保留小隊卡片與「再次發布 ICU QR」。",
+          "zh": "圖 17：ICU 子頁保留小隊卡片與「再次發布 ICU QR」。",
+          "en": "Figure 17: The ICU subpage keeps squad cards and 「再次發布 ICU QR」."
+        },
+        {
+          "id": 61,
+          "original": "![其他子頁的設備表格](../../images/console-media-other-table.png)",
+          "zh": "![其他子頁的裝置表格](../../images/console-media-other-table.png)",
+          "en": "![Device table on the other subpage](../../images/console-media-other-table.png)"
+        },
+        {
+          "id": 62,
+          "original": "圖 18：「其他」子頁提供狀態篩選、搜尋、每頁筆數及設備列的重新啟用入口。",
+          "zh": "圖 18：「其他」子頁提供狀態篩選、搜尋、每頁筆數及裝置列的重新啟用入口。",
+          "en": "Figure 18: The 「其他」 subpage has status filters, search, page size, and reactivation controls in device rows."
+        },
+        {
+          "id": 63,
+          "original": "### 重新啟用已停用的裝置",
+          "zh": "### 重新啟用已停用的裝置",
+          "en": "### Reactivate a device"
+        },
+        {
+          "id": 64,
+          "original": "1. 切到「其他」→「停用」，找到設備後按「重新啟用」。\n2. 在對話框選「沿用舊密碼」或「產生新密碼」，勾選確認再送出。沿用時原網址恢復可用；產生新密碼後，原網址失效。\n3. 結果頁按「顯示連線資訊」，分別複製 RTSP／RTSPS 新網址或使用 QR。核對指定路徑可以推流。",
+          "zh": "沿用舊密碼時，原網址會恢復可用。產生新密碼後，原網址失效。\n\n1. 切到「其他」→「停用」。\n2. 找到裝置。\n3. 按「重新啟用」。\n4. 在對話方塊選「沿用舊密碼」或「產生新密碼」。\n5. 勾選確認。\n6. 送出工作。\n7. 在結果頁按「顯示連線資訊」。\n8. 分別複製 RTSP／RTSPS 新網址，或使用 QR。\n9. 核對指定路徑可以推流。",
+          "en": "With the old password, the original URL becomes usable again. A new password invalidates the original URL.\n\n1. Select 「其他」 → 「停用」.\n2. Find the device.\n3. Select 「重新啟用」.\n4. Select 「沿用舊密碼」 or 「產生新密碼」 in the dialog.\n5. Select the confirmation checkbox.\n6. Submit the job.\n7. Select 「顯示連線資訊」 on the results page.\n8. Copy the RTSP/RTSPS URLs separately, or use the QR.\n9. Check that the assigned path accepts publication."
+        },
+        {
+          "id": 65,
+          "original": "![重新啟用設備的密碼選項](../../images/console-media-reactivate-dialog.png)",
+          "zh": "![重新啟用裝置的密碼選項](../../images/console-media-reactivate-dialog.png)",
+          "en": "![Password options for device reactivation](../../images/console-media-reactivate-dialog.png)"
+        },
+        {
+          "id": 66,
+          "original": "圖 19：預設選取「產生新密碼」，也可明確改成「沿用舊密碼」。測試身分曾沿用舊密碼重新啟用並成功推流，驗證後已再次停用；產生新密碼尚未完成實際推流驗收。",
+          "zh": "圖 19：預設選取「產生新密碼」，也可明確改成「沿用舊密碼」。測試身分曾沿用舊密碼重新啟用並成功推流，驗證後已再次停用。產生新密碼尚未完成實際推流驗收。",
+          "en": "Figure 19: The default is 「產生新密碼」. You can explicitly select 「沿用舊密碼」. A test identity successfully published after reactivation with its old password. The identity was deactivated again after verification. Publication with a new password still needs a test."
+        },
+        {
+          "id": 67,
+          "original": "[返回任務索引](../console-task-manual.md)",
+          "zh": "[返回任務索引](../console-task-manual.md)",
+          "en": "[Return to the task index](../console-task-manual.md)"
+        }
+      ],
+      "order": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        25,
+        24,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63,
+        64,
+        65,
+        66,
+        67
+      ]
+    },
+    {
+      "source": "docs/tak-server/console-task-manual/sharing-and-troubleshooting.md",
+      "blocks": [
+        {
+          "id": 1,
+          "original": "# 分享與疑難排解",
+          "zh": "# 分享與疑難排解",
+          "en": "# Sharing and troubleshooting"
+        },
+        {
+          "id": 2,
+          "original": "[返回任務索引](../console-task-manual.md)",
+          "zh": "[返回任務索引](../console-task-manual.md)",
+          "en": "[Return to the task index](../console-task-manual.md)"
+        },
+        {
+          "id": 3,
+          "original": "<a id=\"task-09\"></a>",
+          "zh": "<a id=\"task-09\"></a>",
+          "en": "<a id=\"task-09\"></a>"
+        },
+        {
+          "id": 4,
+          "original": "## 任務九　檢視與停止設定檔分享",
+          "zh": "## 任務九　檢視與停止設定檔分享",
+          "en": "## Task 9: Inspect and stop configuration sharing"
+        },
+        {
+          "id": 5,
+          "original": "1. 在「檔案分享」看頁首總開關及「分享中」連結；分享紀錄可切換每頁 10、20、30 筆與狀態篩選。\n2. 要停止單筆，按「停止分享」；全部暫停則用總開關。分享中會顯示剩餘時間與下載次數。\n3. 確認舊 QR 無法再下載。已下載到裝置的 DPK 或 `initial.prefs` 不會自動消失，身分停用須另行處理。",
+          "zh": "分享紀錄會顯示剩餘時間與下載次數。可切換每頁 10、20、30 筆，也可使用狀態篩選。\n\n1. 在「檔案分享」核對頁首總開關及「分享中」連結。\n2. 若要停止單筆分享，按該筆紀錄的「停止分享」。\n3. 若要暫停全部分享，使用總開關。\n4. 確認舊 QR 無法再下載。\n\n已下載到裝置的 DPK 或 `initial.prefs` 不會自動消失。身分停用須另行處理。",
+          "en": "Sharing records show the remaining time and download count. You can select 10, 20, or 30 entries per page and apply a status filter.\n\n1. In 「檔案分享」, check the master switch and 「分享中」 links at the top.\n2. To stop one share, select 「停止分享」 for that record.\n3. To pause all shares, use the master switch.\n4. Check that the old QR cannot download files.\n\nDownloaded DPK files and `initial.prefs` do not disappear from devices. Deactivate identities separately."
+        },
+        {
+          "id": 6,
+          "original": "時間與次數可同時限制，先達到者即停止新下載；開啟 QR 本身不占下載次數。",
+          "zh": "時間與次數可同時限制。任一限制先達上限，系統就會停止新下載。開啟 QR 本身不占下載次數。",
+          "en": "Time and count limits can apply together. The first limit reached stops new downloads. Opening the QR itself does not count as a download."
+        },
+        {
+          "id": 7,
+          "original": "![分享紀錄狀態篩選](../../images/console-task-09-shares.png)",
+          "zh": "![分享紀錄狀態篩選](../../images/console-task-09-shares.png)",
+          "en": "![Sharing record status filter](../../images/console-task-09-shares.png)"
+        },
+        {
+          "id": 8,
+          "original": "圖 17：每頁筆數、狀態與下載用量；截圖顯示已結束的紀錄。",
+          "zh": "圖 17：每頁筆數、狀態與下載用量。截圖顯示已結束的紀錄。",
+          "en": "Figure 17: Page size, status, and download usage. The screenshot shows ended records."
+        },
+        {
+          "id": 9,
+          "original": "![分享下載總開關](../../images/console-task-09b-master-switch.png)",
+          "zh": "![分享下載總開關](../../images/console-task-09b-master-switch.png)",
+          "en": "![Master download sharing switch](../../images/console-task-09b-master-switch.png)"
+        },
+        {
+          "id": 10,
+          "original": "圖 18：總開關影響所有分享；停止單筆時請到該筆紀錄操作。",
+          "zh": "圖 18：總開關影響所有分享。停止單筆時請到該筆紀錄操作。",
+          "en": "Figure 18: The master switch affects all shares. To stop one share, use its record."
+        },
+        {
+          "id": 11,
+          "original": "## 操作後核對與疑難排解",
+          "zh": "## 操作後核對與疑難排解",
+          "en": "## Check results and troubleshoot"
+        },
+        {
+          "id": 12,
+          "original": "| 現象 | 先核對 | 下一步 |\n| --- | --- | --- |\n| 管理頁顯示 worker 無法取得資料 | Windows 已登入；`Manage-TakControlWorkers.ps1 -Action Status` | 用 `-Action Start` 啟動；再查 `runtime/tak-cert-control/worker.log` 或 `runtime/share-control/worker.log` |\n| Android 掃 QR 只顯示下載通知 | 同熱點、mDNS、分享期限／次數、完整 `tak://` 或 `icu://` 連結 | 到 ATAK／ICU 核對真正匯入結果；同名 DPK 可先清除舊副本 |\n| ATAK 已連線但看不到 Vx 套件 | Data Packages → Download 選對 TAK Server；8443 可達 | 查 TAK 套件是否只剩一筆、`tool=public` 與 `missionpackage`；不要改走一般 Vx QR |\n| ICU 顯示外部設定但沒有影像 | Type、SSL、`takbox.local:8322`、Stream Path 和小隊帳密 | 啟動發布後查 MediaMTX 線上路徑；避免兩台使用相同 `VIDEO_1` 路徑 |\n| ICU 在室內 GPS 失效後中斷 | 核對 Disable Local Broadcasting 是否勾選；使用者曾觀察到未勾選時停止發布 | 重新分享並匯入新版 ICU QR，再確認設定值及 MediaMTX 線上路徑；此情境仍待複測 |\n| Vx 不再提示密碼但仍可登入 | 已註冊 Mumble 身分可能仍有效 | 到 Mumble 管理頁移除註冊身分，再用未註冊裝置驗證新密碼 |\n| 公開影像在外網打不開 | 目前只有熱點入口 | 待 FQDN、HTTPS、NAT、ICE 與防火牆完成後另做外網驗收 |",
+          "zh": "| 現象 | 先核對 | 下一步 |\n| --- | --- | --- |\n| 管理頁顯示 worker 無法取得資料 | 確認 Windows 已登入。執行 `Manage-TakControlWorkers.ps1 -Action Status`。 | 用 `-Action Start` 啟動。再查 `runtime/tak-cert-control/worker.log` 或 `runtime/share-control/worker.log`。 |\n| Android 掃 QR 只顯示下載通知 | 核對相同熱點、mDNS、分享期限與次數，以及完整 `tak://` 或 `icu://` 連結。 | 到 ATAK／ICU 核對實際匯入結果。同名 DPK 可先清除舊副本。 |\n| ATAK 已連線但看不到 Vx 套件 | 在 Data Packages → Download 確認選對 TAK Server。確認 8443 可達。 | 查 TAK 套件是否只剩一筆。核對 `tool=public` 與 `missionpackage`。不要改用一般 Vx QR。 |\n| ICU 顯示外部設定但沒有影像 | 核對 Type、SSL、Stream Path 和小隊帳密。預設 RTSP 使用 `takbox.local:8554`，且 `Use SSL?` 不勾選。若設定為 RTSPS，使用 `takbox.local:8322` 並啟用 SSL。 | 啟動發布後，查 MediaMTX 線上路徑。避免兩台使用相同 `VIDEO_1` 路徑。 |\n| ICU 在室內 GPS 失效後中斷 | 核對 Disable Local Broadcasting 是否勾選。使用者曾觀察到未勾選時停止發布。 | 重新分享並匯入新版 ICU QR。再確認設定值與 MediaMTX 線上路徑。此情境仍待複測。 |\n| Vx 不再提示密碼但仍可登入 | 已註冊 Mumble 身分可能仍有效。 | 到 Mumble 管理頁移除註冊身分。再用未註冊裝置驗證新密碼。 |\n| 公開影像在外網打不開 | 本節原始驗收只涵蓋熱點入口。 | 待 FQDN、HTTPS、NAT、ICE 與防火牆完成後，另做外網驗收。 |",
+          "en": "| Symptom | First check | Next action |\n| --- | --- | --- |\n| The management page cannot read worker data | Check that Windows is logged in. Run `Manage-TakControlWorkers.ps1 -Action Status`. | Start with `-Action Start`. Then read `runtime/tak-cert-control/worker.log` or `runtime/share-control/worker.log`. |\n| Android only shows a download notification after a QR scan | Check the same hotspot, mDNS, sharing limits, and complete `tak://` or `icu://` link. | Check the actual import in ATAK/ICU. You can first delete an old DPK copy with the same name. |\n| ATAK connects but cannot see the Vx package | Check the selected TAK Server in Data Packages → Download. Check access to 8443. | Check that only one TAK package remains. Check `tool=public` and `missionpackage`. Do not use a general Vx QR. |\n| ICU shows external settings without video | Check Type, SSL, Stream Path, and squad credentials. Default RTSP uses `takbox.local:8554` with `Use SSL?` clear. RTSPS uses `takbox.local:8322` with SSL enabled. | After publication starts, check the MediaMTX online path. Prevent two devices from using the same `VIDEO_1` path. |\n| ICU stops when indoor GPS fails | Check Disable Local Broadcasting. A user observed stopped publication with this checkbox clear. | Share and import a new ICU QR. Then check settings and the MediaMTX online path. This case still needs retesting. |\n| Vx logs in without a password prompt | A registered Mumble identity may still be valid. | Delete the registered identity in Mumble management. Then test the new password with an unregistered device. |\n| Public video does not open from the internet | The original acceptance scope here covers only the hotspot entry point. | After FQDN, HTTPS, NAT, ICE, and firewall work is complete, test internet access separately. |",
+          "correction": {
+            "reason": "The original troubleshooting row lists only RTSPS 8322. The generator defaults to RTSP 8554. Both protocols now have explicit SSL conditions.",
+            "evidence": [
+              "scripts/build_icu_qr.py",
+              "docs/mediamtx/icu-qrcode.md"
+            ]
+          }
+        },
+        {
+          "id": 13,
+          "original": "[返回任務索引](../console-task-manual.md)",
+          "zh": "[返回任務索引](../console-task-manual.md)",
+          "en": "[Return to the task index](../console-task-manual.md)"
+        }
+      ]
+    },
+    {
+      "source": "docs/tak-server/console-task-manual/vx-and-mumble.md",
+      "blocks": [
+        {
+          "id": 1,
+          "original": "# Vx 任務與 Mumble 語音",
+          "zh": "# Vx 任務與 Mumble 語音",
+          "en": "# Vx missions and Mumble voice"
+        },
+        {
+          "id": 2,
+          "original": "[返回任務索引](../console-task-manual.md)",
+          "zh": "[返回任務索引](../console-task-manual.md)",
+          "en": "[Return to the task index](../console-task-manual.md)"
+        },
+        {
+          "id": 3,
+          "original": "<a id=\"task-04\"></a>",
+          "zh": "<a id=\"task-04\"></a>",
+          "en": "<a id=\"task-04\"></a>"
+        },
+        {
+          "id": 4,
+          "original": "## 任務四　更新 Vx 四頻道任務",
+          "zh": "## 任務四　更新 Vx 四頻道任務",
+          "en": "## Task 4: Update the four-channel Vx mission"
+        },
+        {
+          "id": 5,
+          "original": "1. 在「引導式佈建 → Vx 任務佈建」產生套件並預覽，核對 SHA-256 與同名套件筆數。\n2. 確認後執行「備份並強制替換」；結果須只剩一筆 `ATAK Local Voice`。\n3. ATAK 從 TAK Server 的 Data Packages → Download 取得套件，再到 TAK Voice 逐一加入 Primary、Alternate、Medical、Emergency。",
+          "zh": "1. 在「引導式佈建 → Vx 任務佈建」產生套件。\n2. 預覽套件。\n3. 核對 SHA-256 與同名套件筆數。\n4. 確認後執行「備份並強制替換」。\n5. 核對結果只剩一筆 `ATAK Local Voice`。\n6. 在 ATAK 的 Data Packages → Download，從 TAK Server 取得套件。\n7. 到 TAK Voice 逐一加入 Primary、Alternate、Medical、Emergency。",
+          "en": "1. Generate the package in 「引導式佈建 → Vx 任務佈建」.\n2. Preview the package.\n3. Check the SHA-256 and the number of packages with the same name.\n4. After confirmation, select 「備份並強制替換」.\n5. Check that only one `ATAK Local Voice` package remains.\n6. In ATAK, download the package from TAK Server through Data Packages → Download.\n7. In TAK Voice, join Primary, Alternate, Medical, and Emergency individually."
+        },
+        {
+          "id": 6,
+          "original": "Vx-only DPK 的一般下載 QR 無法直接建立 Mission。若誤用 `Clear Database`，任務會被移除，須重新下載；替換失敗時使用作業備份復原。",
+          "zh": "Vx-only DPK 的一般下載 QR 無法直接建立 Mission。若誤用 `Clear Database`，任務會被移除，須重新下載。若替換失敗，使用工作備份復原。",
+          "en": "A general download QR for a Vx-only DPK cannot directly create a Mission. If you accidentally use `Clear Database`, it removes the mission. Download the mission again. If replacement fails, restore from the job backup."
+        },
+        {
+          "id": 7,
+          "original": "![Vx 套件佈建入口](../../images/console-task-04-vx.png)",
+          "zh": "![Vx 套件佈建入口](../../images/console-task-04-vx.png)",
+          "en": "![Vx package provisioning entry](../../images/console-task-04-vx.png)"
+        },
+        {
+          "id": 8,
+          "original": "圖 7：產生套件後先預覽，再確認替換固定名稱的伺服器套件。",
+          "zh": "圖 7：產生套件後先預覽，再確認替換固定名稱的伺服器套件。",
+          "en": "Figure 7: Preview the generated package first. Then confirm replacement of the server package with the fixed name."
+        },
+        {
+          "id": 9,
+          "original": "![ATAK Vx 四頻道清單](../../images/atak-vx-four-channel-pool.jpg)",
+          "zh": "![ATAK Vx 四頻道清單](../../images/atak-vx-four-channel-pool.jpg)",
+          "en": "![Four ATAK Vx channels](../../images/atak-vx-four-channel-pool.jpg)"
+        },
+        {
+          "id": 10,
+          "original": "圖 8：裝置下載後，TAK Voice 應顯示四個可加入的頻道。",
+          "zh": "圖 8：裝置下載後，TAK Voice 應顯示四個可加入的頻道。",
+          "en": "Figure 8: After download, TAK Voice should show four channels that the device can join."
+        },
+        {
+          "id": 11,
+          "original": "<a id=\"task-10\"></a>",
+          "zh": "<a id=\"task-10\"></a>",
+          "en": "<a id=\"task-10\"></a>"
+        },
+        {
+          "id": 12,
+          "original": "## 任務十　管理 Vx 語音登入",
+          "zh": "## 任務十　管理 Vx 語音登入",
+          "en": "## Task 10: Manage Vx voice login"
+        },
+        {
+          "id": 13,
+          "original": "1. 在「Mumble 管理 → 線上連線」選 session 並按「中斷選取的連線」；該身分仍可再次登入。\n2. 要移除已記住的身分，到「已註冊身分」勾選並確認刪除。系統會先備份資料庫；有效共用密碼仍可讓使用者重新註冊。\n3. 「重新啟動 Mumble」保留頻道與註冊資料；「重設共用密碼並重新啟動」會改本機 secret。兩者都會中斷線上連線。",
+          "zh": "依目的選擇下列操作。中斷連線、刪除註冊身分、重新啟動與重設密碼是不同操作。\n\n### 中斷目前連線\n\n1. 在「Mumble 管理 → 線上連線」選擇 session。\n2. 按「中斷選取的連線」。\n\n該身分仍可再次登入。\n\n### 刪除已記住的身分\n\n系統會先備份資料庫。有效的共用密碼仍可讓使用者重新註冊。\n\n1. 到「已註冊身分」勾選要刪除的身分。\n2. 確認刪除。\n\n### 重新啟動或重設密碼\n\n兩項操作都會中斷線上連線。\n\n- 若要保留頻道與註冊資料，選「重新啟動 Mumble」。\n- 若要變更本機 secret，選「重設共用密碼並重新啟動」。",
+          "en": "Select the operation for your purpose. Disconnection, identity deletion, restart, and password reset are separate operations.\n\n### Disconnect a current connection\n\n1. Select the session in 「Mumble 管理 → 線上連線」.\n2. Select 「中斷選取的連線」.\n\nThe identity can log in again.\n\n### Delete a remembered identity\n\nThe system first backs up the database. A valid shared password still lets the user register again.\n\n1. Select the identity in 「已註冊身分」.\n2. Confirm deletion.\n\n### Restart or reset the password\n\nBoth operations disconnect online sessions.\n\n- To keep channels and registration data, select 「重新啟動 Mumble」.\n- To change the local secret, select 「重設共用密碼並重新啟動」."
+        },
+        {
+          "id": 14,
+          "original": "驗收線上／註冊清單及 Vx 重登。TAK 憑證撤銷不等於 Mumble 停用；已註冊 Vx 身分在改密碼後仍可能直接登入。",
+          "zh": "核對線上清單與註冊清單。再驗證 Vx 重新登入的結果。TAK 憑證撤銷不等於 Mumble 停用。已註冊 Vx 身分在改密碼後仍可能直接登入。",
+          "en": "Check the online and registered identity lists. Then test Vx login again. TAK certificate revocation does not deactivate Mumble. A registered Vx identity may still log in directly after a password change."
+        },
+        {
+          "id": 15,
+          "original": "![Mumble 線上與註冊清單](../../images/console-task-10-mumble.png)",
+          "zh": "![Mumble 線上與註冊清單](../../images/console-task-10-mumble.png)",
+          "en": "![Mumble online and registered identities](../../images/console-task-10-mumble.png)"
+        },
+        {
+          "id": 16,
+          "original": "圖 19：線上 session 和已註冊身分分開管理；截圖時沒有線上連線。",
+          "zh": "圖 19：線上 session 和已註冊身分分開管理。截圖時沒有線上連線。",
+          "en": "Figure 19: Manage online sessions and registered identities separately. No connections were online in this screenshot."
+        },
+        {
+          "id": 17,
+          "original": "![Mumble 伺服器控制](../../images/console-task-10b-server-controls.png)",
+          "zh": "![Mumble 伺服器控制](../../images/console-task-10b-server-controls.png)",
+          "en": "![Mumble server controls](../../images/console-task-10b-server-controls.png)"
+        },
+        {
+          "id": 18,
+          "original": "圖 20：重新啟動與重設密碼是不同操作，皆會中斷連線。",
+          "zh": "圖 20：重新啟動與重設密碼是不同操作，皆會中斷連線。",
+          "en": "Figure 20: Restart and password reset are separate operations. Both disconnect sessions."
+        },
+        {
+          "id": 19,
+          "original": "[返回任務索引](../console-task-manual.md)",
+          "zh": "[返回任務索引](../console-task-manual.md)",
+          "en": "[Return to the task index](../console-task-manual.md)"
+        }
+      ]
+    }
+  ]
+}

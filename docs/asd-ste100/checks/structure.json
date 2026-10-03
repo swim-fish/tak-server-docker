@@ -1,0 +1,20 @@
+{
+  "documents": 5,
+  "blocks": 166,
+  "generated_files": 15,
+  "markdown_files": 17,
+  "markdown_tables": 173,
+  "checks": [
+    "source coverage",
+    "generated file freshness",
+    "inline identifiers",
+    "numeric values",
+    "task anchors",
+    "local links",
+    "procedure sentence length",
+    "markdown table cells"
+  ],
+  "ste_requested": true,
+  "zhtw_requested": true,
+  "errors": []
+}

@@ -1,0 +1,12 @@
+{
+  "proper_nouns": [
+    "控制台",
+    "撤銷",
+    "一般設備"
+  ],
+  "rationale": {
+    "控制台": "Existing product terminology: TAK 控制台. Keep it aligned with the source manual and installed UI.",
+    "撤銷": "Certificate/CA revocation, not the UI undo command. Replacing it with 復原 reverses the technical meaning.",
+    "一般設備": "Exact console UI label. Narrative text uses 裝置."
+  }
+}
