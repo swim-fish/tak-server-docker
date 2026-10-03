@@ -50,10 +50,10 @@
       "detected_script": "traditional",
       "s2t_applied": false,
       "trace": {
-        "trace_id": "20dffb2f894f7ede97a48bfbc3b37f11",
+        "trace_id": "27ceca0cebee3d1d7a25f1db8cb73adb",
         "ruleset_hash": "26311ae89342f9616e16547b814b0f02901ba3d857e14db8399b1be258ad1fae",
         "input_hash": "a0f9ab25458a6bcd52f099a030673ca6c136d919571a92a47b0fa6c2383eb313",
-        "timestamp": "2026-10-03T12:18:39.566Z",
+        "timestamp": "2026-10-03T12:21:30.274Z",
         "tool": "zhtw",
         "issue_count": 2
       },
@@ -203,10 +203,10 @@
       "detected_script": "traditional",
       "s2t_applied": false,
       "trace": {
-        "trace_id": "e5993c93a6c7afefcb75aed0301986b7",
+        "trace_id": "ac10c228f0c4a0c32d33ba3c86d2bace",
         "ruleset_hash": "26311ae89342f9616e16547b814b0f02901ba3d857e14db8399b1be258ad1fae",
         "input_hash": "3058d134077e30af1035c5a8e525fdf2be718e25972972de8348311a2775f362",
-        "timestamp": "2026-10-03T12:18:39.569Z",
+        "timestamp": "2026-10-03T12:21:30.277Z",
         "tool": "zhtw",
         "issue_count": 0
       },
@@ -337,10 +337,10 @@
       "detected_script": "traditional",
       "s2t_applied": false,
       "trace": {
-        "trace_id": "5e1c5b97096e3e1d44d5d3819fad238c",
+        "trace_id": "316e67d0ce2754e82d2592ff3085c4c2",
         "ruleset_hash": "26311ae89342f9616e16547b814b0f02901ba3d857e14db8399b1be258ad1fae",
         "input_hash": "21cd6d972ed633af4679b509e8dbbb81a3fc2cbe862aab5061ecf4a7db6b977c",
-        "timestamp": "2026-10-03T12:18:39.575Z",
+        "timestamp": "2026-10-03T12:21:30.282Z",
         "tool": "zhtw",
         "issue_count": 0
       },
@@ -471,10 +471,10 @@
       "detected_script": "traditional",
       "s2t_applied": false,
       "trace": {
-        "trace_id": "29670ac41ed7cacfeea8cae2239dbf73",
+        "trace_id": "7771cb80252d9833a8fd95fb24735e3c",
         "ruleset_hash": "26311ae89342f9616e16547b814b0f02901ba3d857e14db8399b1be258ad1fae",
         "input_hash": "dea874d5cc706ec9e1c2d6f3991b98e0a08d767657f883636dd1ffbe7ba162be",
-        "timestamp": "2026-10-03T12:18:39.578Z",
+        "timestamp": "2026-10-03T12:21:30.285Z",
         "tool": "zhtw",
         "issue_count": 0
       },
@@ -604,10 +604,10 @@
       "detected_script": "traditional",
       "s2t_applied": false,
       "trace": {
-        "trace_id": "a3a7a663cc28df624f29a8342f1494dc",
+        "trace_id": "51824d8755a54d96d13c9e2eaedb9dff",
         "ruleset_hash": "26311ae89342f9616e16547b814b0f02901ba3d857e14db8399b1be258ad1fae",
         "input_hash": "6d18282952f602b184a8fb0ea95f0f3c1450acd2d84756f8e0aca795904f9e0c",
-        "timestamp": "2026-10-03T12:18:39.581Z",
+        "timestamp": "2026-10-03T12:21:30.287Z",
         "tool": "zhtw",
         "issue_count": 0
       },
@@ -713,7 +713,7 @@
   },
   {
     "file": "README.md",
-    "sha256": "748adbb19f4ac7ad8a90fc9d7391d81981779985878193714d59862e2b246bc3",
+    "sha256": "5f51872ee609bf04d45d6f5bc732de64161fab6b67a820f5d9be6ded3744bbca",
     "glossary_sha256": "592b2b294323b0b0c1d7f92ae856f660b074cc9aec84b4c784d3f463e46ddb69",
     "result": {
       "accepted": true,
@@ -731,7 +731,7 @@
           "resolution": "deterministic"
         },
         {
-          "offset": 2091,
+          "offset": 2073,
           "length": 24,
           "line": 25,
           "col": 21,
@@ -743,7 +743,7 @@
           "resolution": "deterministic"
         },
         {
-          "offset": 2311,
+          "offset": 2293,
           "length": 4,
           "line": 31,
           "col": 17,
@@ -756,7 +756,7 @@
           "resolution": "deterministic"
         },
         {
-          "offset": 2329,
+          "offset": 2311,
           "length": 4,
           "line": 31,
           "col": 35,
@@ -769,7 +769,7 @@
           "resolution": "deterministic"
         },
         {
-          "offset": 3104,
+          "offset": 3086,
           "length": 6,
           "line": 48,
           "col": 22,
@@ -784,7 +784,7 @@
           "resolution": "deterministic"
         },
         {
-          "offset": 3316,
+          "offset": 3298,
           "length": 6,
           "line": 54,
           "col": 19,
@@ -799,7 +799,7 @@
           "resolution": "deterministic"
         },
         {
-          "offset": 3993,
+          "offset": 3975,
           "length": 4,
           "line": 62,
           "col": 20,
@@ -830,10 +830,10 @@
       "detected_script": "traditional",
       "s2t_applied": false,
       "trace": {
-        "trace_id": "89c129d154ff8986a4e5bde89c5635c3",
+        "trace_id": "a913cfb7d61fc60ab097ee6e28e4d6a3",
         "ruleset_hash": "26311ae89342f9616e16547b814b0f02901ba3d857e14db8399b1be258ad1fae",
-        "input_hash": "9e4ab2d50130b86aa213543e29dda44d2b61852741f1a60bc2191e5cfa588c66",
-        "timestamp": "2026-10-03T12:18:39.585Z",
+        "input_hash": "6704d0e1977c95c60c7d9169bbc05350e7cdf84ab5f5069b45e29eacab2bf15f",
+        "timestamp": "2026-10-03T12:21:30.289Z",
         "tool": "zhtw",
         "issue_count": 7
       },
@@ -841,25 +841,25 @@
         "rules_checked": 1761,
         "rules_matched": 1
       },
-      "oral_density": 0.0022727272,
+      "oral_density": 0.0022857143,
       "ai_signature": {
         "score": 0.2,
         "markers": [],
         "top_signals": [
           "2 個結構性 AI 特徵"
         ],
-        "sentence_variability": 13.927064,
+        "sentence_variability": 13.97574,
         "zero_width_count": 0,
         "punctuation_profile": {
           "comma": {
             "count": 18,
-            "density": 10.404624,
-            "cv": 0.9219478
+            "density": 10.362695,
+            "cv": 0.91585267
           },
           "period": {
             "count": 40,
-            "density": 23.121387,
-            "cv": 1.4960793
+            "density": 23.02821,
+            "cv": 1.489645
           },
           "semicolon": {
             "count": 0,
@@ -867,8 +867,8 @@
           },
           "dunhao": {
             "count": 21,
-            "density": 12.138728,
-            "cv": 1.7489802
+            "density": 12.08981,
+            "cv": 1.7450187
           },
           "dash": {
             "count": 0,
@@ -906,7 +906,7 @@
           {
             "signal": "翻譯腔偵測",
             "count": 2,
-            "density": 1.1560694,
+            "density": 1.1514105,
             "threshold": 7.0
           }
         ],

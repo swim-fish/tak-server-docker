@@ -16,7 +16,7 @@
 
 這次工作未取得官方受控字典，也未執行正式認證。檢查成功只代表符合下述自動檢查條件。技術語意與操作安全仍須人工審閱。這次未操作 TAK、Android 或影音服務，也未重新執行原始手冊引用的實機測試。
 
-原文的 ICU 疑難排解只列出 RTSPS 通訊埠。改寫版依產生器與設定參考，補上 RTSP `8554` 與 RTSPS `8322` 各自的 SSL 條件。證據見 [build_icu_qr.py](../../scripts/build_icu_qr.py)及 [ICU QR 設定](../mediamtx/icu-qrcode.md)。對照版保留原文及修正說明。
+原文的 ICU 疑難排解原本只列出 RTSPS 通訊埠。原文與改寫版都已依產生器與設定參考，分別寫出 RTSP `8554` 與 RTSPS `8322` 的 SSL 條件。證據見 [build_icu_qr.py](../../scripts/build_icu_qr.py)及 [ICU QR 設定](../mediamtx/icu-qrcode.md)。
 
 ## 重新產生與檢查
 
