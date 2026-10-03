@@ -1,0 +1,54 @@
+# TAK 控制台任務操作手冊
+
+本手冊供本機 TAK 5.8 測試環境的管理人員使用。依任務尋找入口、操作步驟與驗收結果。控制台頁面名稱及按鈕文字以目前版本為準。
+
+管理入口只供 Windows 主機使用。Android 只接收短效 QR 所指向的設定檔或 DPK。
+
+現場交付與停用請先看圖片版[現場人員 Quick Start](../../tak-server/frontline-quick-start.md)。本手冊提供完整步驟及驗收資訊。
+
+控制台截圖取自 2026-09-25 至 26 日的本機環境。ICU 章另附實機設定畫面。部分舊圖以黃色框標出操作區。裝置名稱、憑證識別資料與註冊身分等資訊在需要時已遮蔽。線上數量與分享狀態會隨時間改變。
+
+![目前 TAK 控制台的六個主導覽入口](../../images/console-current-navbar.png)
+
+從圖中的六個主導覽入口尋找任務。「小隊與群組」用來設定 ICU 小隊與 TAK 群組的對應。下表連到各章的操作步驟與驗收項目。
+
+## 先開啟控制台
+
+管理頁使用 `127.0.0.1`。不可將這個位址當成 Android 的下載網址。
+
+DPK 含裝置私鑰。ICU 設定含 MediaMTX 發布密碼。分享時須設定期限與下載上限。完成後須停止分享。啟動、防火牆及通訊埠調整方式見[分享服務](../../sharing/portal.md)與[憑證控制台](../../tak-server/certificate-console.md)。
+
+1. 啟動 Docker Desktop。
+2. 啟動 Windows 熱點。
+3. 啟動 `takbox.local` 名稱解析。
+4. 在專案根目錄執行 `docker compose up -d`。
+5. 若需要讓 Android 掃描下載 QR，執行 `docker compose --profile sharing up -d share-public`。
+6. 若需要讓 Android 掃描下載 QR，保持分享防火牆的前景視窗開啟。
+7. 執行 `.\scripts\Manage-TakControlWorkers.ps1 -Action Status`。
+8. 若憑證或 Mumble 管理程式未執行，以 `-Action Start` 啟動。首次安裝才使用 `-Action Install`。
+9. 在 Windows 瀏覽器開啟 `http://127.0.0.1:10066/`。若 `.env` 已改 `SHARE_ADMIN_HOST_PORT`，使用實際通訊埠。
+10. 以 `admin` 和本機 `runtime/secrets/share_admin_password` 登入。
+11. 核對 Navbar 可以開啟「檔案分享」、「引導式佈建」、「MediaMTX 管理」、「Mumble 管理」、「用戶端憑證」及「小隊與群組」。
+12. 若需要讓裝置掃 QR，確認 Android 位於相同熱點。
+13. 若需要讓裝置掃 QR，確認 Android 可解析 `takbox.local`。
+
+## 依任務找頁面
+
+| 你要完成的任務 | 控制台入口 | 完成時應看見 |
+| --- | --- | --- |
+| [交付既有 TAK 裝置憑證](certificates-and-groups.md#task-01) | 引導式佈建 → TAK Server 連線，或用戶端憑證 → 詳細頁 | 每張憑證有獨立短效 DPK QR；ATAK 連上 `takbox.local:8089:ssl` |
+| [新增一台或一批 TAK 裝置](certificates-and-groups.md#task-02) | 引導式佈建 → 新增 TAK 用戶端 | 每台各有 CN、序號、群組、DPK 與 QR |
+| [更改裝置 In／Out 權限](certificates-and-groups.md#task-03) | 用戶端憑證 → 依群組檢視，或詳細頁 | 儲存後從 TAK API 讀回相同群組 |
+| [更新 Vx 四頻道任務](vx-and-mumble.md#task-04) | 引導式佈建 → Vx 任務 | TAK Server 只剩一筆 `ATAK Local Voice`；裝置下載後能加入四頻道 |
+| [交付 ICU 設定](icu-and-mediamtx.md#task-05) | 引導式佈建 → ICU 影像發布 | ICU 顯示外部設定，並在 MediaMTX 看見預期 `live/.../VIDEO_1` |
+| [設定無人機或編碼器](icu-and-mediamtx.md#task-06) | `引導式佈建 → Advanced → 一般設備` | 個別帳密及 RTSP／RTSPS 發布網址、QR |
+| [檢視或關閉影像](icu-and-mediamtx.md#task-07) | MediaMTX 管理 → ICU／觀看工作階段 | 串流清單、即時預覽、公開觀看開關及觀看工作階段符合預期 |
+| [停用、重新啟用或輪替影像發布身分](icu-and-mediamtx.md#task-08) | MediaMTX 管理 → ICU／其他 | 小隊或裝置身分狀態符合操作結果，舊連線依密碼選項處理 |
+| [停止設定檔或 DPK 下載](sharing-and-troubleshooting.md#task-09) | 檔案分享 → 分享紀錄 | QR 無法再下載；目前有效連結消失 |
+| [中斷語音或管理註冊身分](vx-and-mumble.md#task-10) | Mumble 管理 | 線上連線或註冊清單反映變更 |
+| [撤銷 TAK 裝置憑證](certificates-and-groups.md#task-11) | 用戶端憑證 → 憑證清冊 | CRL 發布、TAK 重啟，舊憑證新連線遭拒 |
+| [替換中繼 CA 並選擇重簽裝置](certificates-and-groups.md#task-ca-replace) | 用戶端憑證 → CA 替換 | 新 DPK 可登入 ATAK 與 Vx；8443 須以舊／新憑證建立新連線，逐次確認停權與可用性 |
+
+## 驗收範圍
+
+本手冊以原始文件所述的實作、瀏覽器測試及 Android 測試紀錄為依據。2026-09-26 另擷取新版群組操作、CA 警告及觀看工作階段頁。這些圖片只證明頁面顯示，不代表重新執行 CA 輪替或觀看連線。ATAK、Vx、ICU、MediaMTX 及憑證撤銷的實測結果，見[驗證索引](../../validation/README.md)。

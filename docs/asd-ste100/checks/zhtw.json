@@ -1,0 +1,978 @@
+[
+  {
+    "file": "zh-TW/certificates-and-groups.md",
+    "sha256": "cf930ed1d3394fbaace2a5f78124ccb61cbb3a9b1dcd6c801a885b903bc39a95",
+    "glossary_sha256": "592b2b294323b0b0c1d7f92ae856f660b074cc9aec84b4c784d3f463e46ddb69",
+    "result": {
+      "accepted": true,
+      "issues": [
+        {
+          "offset": 1382,
+          "length": 24,
+          "line": 39,
+          "col": 30,
+          "found": "14 天、28 天、90 天",
+          "suggestions": [],
+          "rule_type": "ai_style",
+          "severity": "info",
+          "context": "AI structural: 三連排比（tricolon）— 三個等長的、分隔片段，常見於 AI 生成文本",
+          "resolution": "deterministic"
+        },
+        {
+          "offset": 5782,
+          "length": 12,
+          "line": 128,
+          "col": 30,
+          "found": "14、28、90",
+          "suggestions": [],
+          "rule_type": "ai_style",
+          "severity": "info",
+          "context": "AI structural: 三連排比（tricolon）— 三個等長的、分隔片段，常見於 AI 生成文本",
+          "resolution": "deterministic"
+        }
+      ],
+      "applied_fixes": 0,
+      "summary": {
+        "errors": 0,
+        "warnings": 0,
+        "info": 2,
+        "tier2_gray_zone": 2
+      },
+      "gate": {
+        "enabled": true,
+        "max_errors": 0,
+        "residual_errors": 0,
+        "max_warnings": 0,
+        "residual_warnings": 0
+      },
+      "profile": "base",
+      "political_stance": "roc_centric",
+      "detected_script": "traditional",
+      "s2t_applied": false,
+      "trace": {
+        "trace_id": "20dffb2f894f7ede97a48bfbc3b37f11",
+        "ruleset_hash": "26311ae89342f9616e16547b814b0f02901ba3d857e14db8399b1be258ad1fae",
+        "input_hash": "a0f9ab25458a6bcd52f099a030673ca6c136d919571a92a47b0fa6c2383eb313",
+        "timestamp": "2026-10-03T12:18:39.566Z",
+        "tool": "zhtw",
+        "issue_count": 2
+      },
+      "coverage": {
+        "rules_checked": 1761,
+        "rules_matched": 2
+      },
+      "oral_density": 0.0,
+      "ai_signature": {
+        "score": 0.2,
+        "markers": [],
+        "top_signals": [
+          "2 個結構性 AI 特徵"
+        ],
+        "sentence_variability": 11.082029,
+        "zero_width_count": 0,
+        "punctuation_profile": {
+          "comma": {
+            "count": 31,
+            "density": 10.448264,
+            "cv": 0.8143378
+          },
+          "period": {
+            "count": 113,
+            "density": 38.08561,
+            "cv": 0.57839537
+          },
+          "semicolon": {
+            "count": 0,
+            "density": 0.0
+          },
+          "dunhao": {
+            "count": 27,
+            "density": 9.100101,
+            "cv": 1.3251522
+          },
+          "dash": {
+            "count": 0,
+            "density": 0.0
+          }
+        }
+      },
+      "translationese_signature": {
+        "score": 0.0,
+        "markers": [
+          {
+            "signal": "被動語態",
+            "count": 0,
+            "density": 0.0,
+            "threshold": 6.0
+          },
+          {
+            "signal": "的字鏈",
+            "count": 1,
+            "density": 1.0,
+            "threshold": 5.0
+          },
+          {
+            "signal": "弱動詞分解",
+            "count": 0,
+            "density": 0.0,
+            "threshold": 4.0
+          },
+          {
+            "signal": "代詞密度",
+            "count": 1,
+            "density": 0.33704078,
+            "threshold": 6.0
+          },
+          {
+            "signal": "翻譯腔偵測",
+            "count": 0,
+            "density": 0.0,
+            "threshold": 7.0
+          }
+        ],
+        "top_signals": [],
+        "max_de_chain": 1,
+        "domain": "technical"
+      },
+      "style_scorecard": {
+        "style_scores": {
+          "ai": 0.2,
+          "translationese": 0.0,
+          "consistency": 0.0
+        },
+        "top_issues_per_axis": {
+          "ai": [
+            {
+              "line": 39,
+              "col": 30,
+              "found": "14 天、28 天、90 天",
+              "severity": "info",
+              "rule_type": "ai_style",
+              "context": "AI structural: 三連排比（tricolon）— 三個等長的、分隔片段，常見於 AI 生成文本"
+            },
+            {
+              "line": 128,
+              "col": 30,
+              "found": "14、28、90",
+              "severity": "info",
+              "rule_type": "ai_style",
+              "context": "AI structural: 三連排比（tricolon）— 三個等長的、分隔片段，常見於 AI 生成文本"
+            }
+          ],
+          "translationese": [],
+          "consistency": []
+        }
+      },
+      "summary_metrics": {
+        "deterministic_fixes": 2,
+        "heuristic_fixes": 0,
+        "llm_judged_fixes": 0,
+        "unresolved": 0,
+        "llm_calls": 0,
+        "llm_tokens": 0,
+        "confidence_distribution": {
+          "high": 2,
+          "medium": 0,
+          "low": 0
+        }
+      }
+    }
+  },
+  {
+    "file": "zh-TW/index.md",
+    "sha256": "4d00ce390fd7a6e90a8f36968ef7c4445ad7bae8b42762737feab4735d5a32a2",
+    "glossary_sha256": "592b2b294323b0b0c1d7f92ae856f660b074cc9aec84b4c784d3f463e46ddb69",
+    "result": {
+      "accepted": true,
+      "issues": [],
+      "applied_fixes": 0,
+      "summary": {
+        "errors": 0,
+        "warnings": 0,
+        "info": 0
+      },
+      "gate": {
+        "enabled": true,
+        "max_errors": 0,
+        "residual_errors": 0,
+        "max_warnings": 0,
+        "residual_warnings": 0
+      },
+      "profile": "base",
+      "political_stance": "roc_centric",
+      "detected_script": "traditional",
+      "s2t_applied": false,
+      "trace": {
+        "trace_id": "e5993c93a6c7afefcb75aed0301986b7",
+        "ruleset_hash": "26311ae89342f9616e16547b814b0f02901ba3d857e14db8399b1be258ad1fae",
+        "input_hash": "3058d134077e30af1035c5a8e525fdf2be718e25972972de8348311a2775f362",
+        "timestamp": "2026-10-03T12:18:39.569Z",
+        "tool": "zhtw",
+        "issue_count": 0
+      },
+      "coverage": {
+        "rules_checked": 1761,
+        "rules_matched": 0
+      },
+      "oral_density": 0.002030457,
+      "ai_signature": {
+        "score": 0.0,
+        "markers": [],
+        "top_signals": [],
+        "sentence_variability": 102.45626,
+        "zero_width_count": 0,
+        "punctuation_profile": {
+          "comma": {
+            "count": 14,
+            "density": 6.200177,
+            "cv": 0.66605103
+          },
+          "period": {
+            "count": 36,
+            "density": 15.943314,
+            "cv": 3.4029908
+          },
+          "semicolon": {
+            "count": 4,
+            "density": 1.7714792
+          },
+          "dunhao": {
+            "count": 20,
+            "density": 8.857396,
+            "cv": 1.1519234
+          },
+          "dash": {
+            "count": 0,
+            "density": 0.0
+          }
+        }
+      },
+      "translationese_signature": {
+        "score": 0.0,
+        "markers": [
+          {
+            "signal": "被動語態",
+            "count": 0,
+            "density": 0.0,
+            "threshold": 6.0
+          },
+          {
+            "signal": "的字鏈",
+            "count": 1,
+            "density": 1.0,
+            "threshold": 5.0
+          },
+          {
+            "signal": "弱動詞分解",
+            "count": 0,
+            "density": 0.0,
+            "threshold": 4.0
+          },
+          {
+            "signal": "代詞密度",
+            "count": 1,
+            "density": 0.4428698,
+            "threshold": 6.0
+          },
+          {
+            "signal": "翻譯腔偵測",
+            "count": 0,
+            "density": 0.0,
+            "threshold": 7.0
+          }
+        ],
+        "top_signals": [],
+        "max_de_chain": 1,
+        "domain": "technical"
+      },
+      "style_scorecard": {
+        "style_scores": {
+          "ai": 0.0,
+          "translationese": 0.0,
+          "consistency": 0.0
+        },
+        "top_issues_per_axis": {
+          "ai": [],
+          "translationese": [],
+          "consistency": []
+        }
+      },
+      "summary_metrics": {
+        "deterministic_fixes": 0,
+        "heuristic_fixes": 0,
+        "llm_judged_fixes": 0,
+        "unresolved": 0,
+        "llm_calls": 0,
+        "llm_tokens": 0,
+        "confidence_distribution": {
+          "high": 0,
+          "medium": 0,
+          "low": 0
+        }
+      }
+    }
+  },
+  {
+    "file": "zh-TW/icu-and-mediamtx.md",
+    "sha256": "68274be4f090a316d7a8357d877c5e945bde07a71417601ce6d092c61887d325",
+    "glossary_sha256": "592b2b294323b0b0c1d7f92ae856f660b074cc9aec84b4c784d3f463e46ddb69",
+    "result": {
+      "accepted": true,
+      "issues": [],
+      "applied_fixes": 0,
+      "summary": {
+        "errors": 0,
+        "warnings": 0,
+        "info": 0
+      },
+      "gate": {
+        "enabled": true,
+        "max_errors": 0,
+        "residual_errors": 0,
+        "max_warnings": 0,
+        "residual_warnings": 0
+      },
+      "profile": "base",
+      "political_stance": "roc_centric",
+      "detected_script": "traditional",
+      "s2t_applied": false,
+      "trace": {
+        "trace_id": "5e1c5b97096e3e1d44d5d3819fad238c",
+        "ruleset_hash": "26311ae89342f9616e16547b814b0f02901ba3d857e14db8399b1be258ad1fae",
+        "input_hash": "21cd6d972ed633af4679b509e8dbbb81a3fc2cbe862aab5061ecf4a7db6b977c",
+        "timestamp": "2026-10-03T12:18:39.575Z",
+        "tool": "zhtw",
+        "issue_count": 0
+      },
+      "coverage": {
+        "rules_checked": 1761,
+        "rules_matched": 0
+      },
+      "oral_density": 0.0008107013,
+      "ai_signature": {
+        "score": 0.0,
+        "markers": [],
+        "top_signals": [],
+        "sentence_variability": 12.437802,
+        "zero_width_count": 0,
+        "punctuation_profile": {
+          "comma": {
+            "count": 47,
+            "density": 10.0234585,
+            "cv": 1.0356703
+          },
+          "period": {
+            "count": 171,
+            "density": 36.46833,
+            "cv": 0.67406267
+          },
+          "semicolon": {
+            "count": 0,
+            "density": 0.0
+          },
+          "dunhao": {
+            "count": 30,
+            "density": 6.3979526,
+            "cv": 1.1819804
+          },
+          "dash": {
+            "count": 0,
+            "density": 0.0
+          }
+        }
+      },
+      "translationese_signature": {
+        "score": 0.0,
+        "markers": [
+          {
+            "signal": "被動語態",
+            "count": 0,
+            "density": 0.0,
+            "threshold": 6.0
+          },
+          {
+            "signal": "的字鏈",
+            "count": 1,
+            "density": 1.0,
+            "threshold": 5.0
+          },
+          {
+            "signal": "弱動詞分解",
+            "count": 0,
+            "density": 0.0,
+            "threshold": 4.0
+          },
+          {
+            "signal": "代詞密度",
+            "count": 5,
+            "density": 1.0663254,
+            "threshold": 6.0
+          },
+          {
+            "signal": "翻譯腔偵測",
+            "count": 0,
+            "density": 0.0,
+            "threshold": 7.0
+          }
+        ],
+        "top_signals": [],
+        "max_de_chain": 1,
+        "domain": "technical"
+      },
+      "style_scorecard": {
+        "style_scores": {
+          "ai": 0.0,
+          "translationese": 0.0,
+          "consistency": 0.0
+        },
+        "top_issues_per_axis": {
+          "ai": [],
+          "translationese": [],
+          "consistency": []
+        }
+      },
+      "summary_metrics": {
+        "deterministic_fixes": 0,
+        "heuristic_fixes": 0,
+        "llm_judged_fixes": 0,
+        "unresolved": 0,
+        "llm_calls": 0,
+        "llm_tokens": 0,
+        "confidence_distribution": {
+          "high": 0,
+          "medium": 0,
+          "low": 0
+        }
+      }
+    }
+  },
+  {
+    "file": "zh-TW/sharing-and-troubleshooting.md",
+    "sha256": "9741a023f6e13c610edfe3743ada0946a46e0761a84799b5b7784774a5cd4982",
+    "glossary_sha256": "592b2b294323b0b0c1d7f92ae856f660b074cc9aec84b4c784d3f463e46ddb69",
+    "result": {
+      "accepted": true,
+      "issues": [],
+      "applied_fixes": 0,
+      "summary": {
+        "errors": 0,
+        "warnings": 0,
+        "info": 0
+      },
+      "gate": {
+        "enabled": true,
+        "max_errors": 0,
+        "residual_errors": 0,
+        "max_warnings": 0,
+        "residual_warnings": 0
+      },
+      "profile": "base",
+      "political_stance": "roc_centric",
+      "detected_script": "traditional",
+      "s2t_applied": false,
+      "trace": {
+        "trace_id": "29670ac41ed7cacfeea8cae2239dbf73",
+        "ruleset_hash": "26311ae89342f9616e16547b814b0f02901ba3d857e14db8399b1be258ad1fae",
+        "input_hash": "dea874d5cc706ec9e1c2d6f3991b98e0a08d767657f883636dd1ffbe7ba162be",
+        "timestamp": "2026-10-03T12:18:39.578Z",
+        "tool": "zhtw",
+        "issue_count": 0
+      },
+      "coverage": {
+        "rules_checked": 1761,
+        "rules_matched": 0
+      },
+      "oral_density": 0.0,
+      "ai_signature": {
+        "score": 0.0,
+        "markers": [],
+        "top_signals": [],
+        "sentence_variability": 17.842957,
+        "zero_width_count": 0,
+        "punctuation_profile": {
+          "comma": {
+            "count": 9,
+            "density": 8.078995
+          },
+          "period": {
+            "count": 41,
+            "density": 36.80431,
+            "cv": 0.74028236
+          },
+          "semicolon": {
+            "count": 0,
+            "density": 0.0
+          },
+          "dunhao": {
+            "count": 10,
+            "density": 8.976661,
+            "cv": 1.1276512
+          },
+          "dash": {
+            "count": 0,
+            "density": 0.0
+          }
+        }
+      },
+      "translationese_signature": {
+        "score": 0.0,
+        "markers": [
+          {
+            "signal": "被動語態",
+            "count": 0,
+            "density": 0.0,
+            "threshold": 6.0
+          },
+          {
+            "signal": "的字鏈",
+            "count": 1,
+            "density": 1.0,
+            "threshold": 5.0
+          },
+          {
+            "signal": "弱動詞分解",
+            "count": 0,
+            "density": 0.0,
+            "threshold": 4.0
+          },
+          {
+            "signal": "代詞密度",
+            "count": 0,
+            "density": 0.0,
+            "threshold": 6.0
+          },
+          {
+            "signal": "翻譯腔偵測",
+            "count": 0,
+            "density": 0.0,
+            "threshold": 7.0
+          }
+        ],
+        "top_signals": [],
+        "max_de_chain": 1,
+        "domain": "technical"
+      },
+      "style_scorecard": {
+        "style_scores": {
+          "ai": 0.0,
+          "translationese": 0.0,
+          "consistency": 0.0
+        },
+        "top_issues_per_axis": {
+          "ai": [],
+          "translationese": [],
+          "consistency": []
+        }
+      },
+      "summary_metrics": {
+        "deterministic_fixes": 0,
+        "heuristic_fixes": 0,
+        "llm_judged_fixes": 0,
+        "unresolved": 0,
+        "llm_calls": 0,
+        "llm_tokens": 0,
+        "confidence_distribution": {
+          "high": 0,
+          "medium": 0,
+          "low": 0
+        }
+      }
+    }
+  },
+  {
+    "file": "zh-TW/vx-and-mumble.md",
+    "sha256": "0ee6dc38770dbf7bead3728f98ed6dda4cf6ff1adf3df4cef57d4d2ca5a457e8",
+    "glossary_sha256": "592b2b294323b0b0c1d7f92ae856f660b074cc9aec84b4c784d3f463e46ddb69",
+    "result": {
+      "accepted": true,
+      "issues": [],
+      "applied_fixes": 0,
+      "summary": {
+        "errors": 0,
+        "warnings": 0,
+        "info": 0
+      },
+      "gate": {
+        "enabled": true,
+        "max_errors": 0,
+        "residual_errors": 0,
+        "max_warnings": 0,
+        "residual_warnings": 0
+      },
+      "profile": "base",
+      "political_stance": "roc_centric",
+      "detected_script": "traditional",
+      "s2t_applied": false,
+      "trace": {
+        "trace_id": "a3a7a663cc28df624f29a8342f1494dc",
+        "ruleset_hash": "26311ae89342f9616e16547b814b0f02901ba3d857e14db8399b1be258ad1fae",
+        "input_hash": "6d18282952f602b184a8fb0ea95f0f3c1450acd2d84756f8e0aca795904f9e0c",
+        "timestamp": "2026-10-03T12:18:39.581Z",
+        "tool": "zhtw",
+        "issue_count": 0
+      },
+      "coverage": {
+        "rules_checked": 1761,
+        "rules_matched": 0
+      },
+      "oral_density": 0.0,
+      "ai_signature": {
+        "score": 0.0,
+        "markers": [],
+        "top_signals": [],
+        "sentence_variability": 12.912076,
+        "zero_width_count": 0,
+        "punctuation_profile": {
+          "comma": {
+            "count": 9,
+            "density": 9.594883
+          },
+          "period": {
+            "count": 31,
+            "density": 33.049038,
+            "cv": 0.53296095
+          },
+          "semicolon": {
+            "count": 0,
+            "density": 0.0
+          },
+          "dunhao": {
+            "count": 5,
+            "density": 5.33049
+          },
+          "dash": {
+            "count": 0,
+            "density": 0.0
+          }
+        }
+      },
+      "translationese_signature": {
+        "score": 0.0,
+        "markers": [
+          {
+            "signal": "被動語態",
+            "count": 1,
+            "density": 1.0660981,
+            "threshold": 6.0
+          },
+          {
+            "signal": "的字鏈",
+            "count": 1,
+            "density": 1.0,
+            "threshold": 5.0
+          },
+          {
+            "signal": "弱動詞分解",
+            "count": 0,
+            "density": 0.0,
+            "threshold": 4.0
+          },
+          {
+            "signal": "代詞密度",
+            "count": 0,
+            "density": 0.0,
+            "threshold": 6.0
+          },
+          {
+            "signal": "翻譯腔偵測",
+            "count": 0,
+            "density": 0.0,
+            "threshold": 7.0
+          }
+        ],
+        "top_signals": [],
+        "max_de_chain": 1,
+        "domain": "technical"
+      },
+      "style_scorecard": {
+        "style_scores": {
+          "ai": 0.0,
+          "translationese": 0.0,
+          "consistency": 0.0
+        },
+        "top_issues_per_axis": {
+          "ai": [],
+          "translationese": [],
+          "consistency": []
+        }
+      },
+      "summary_metrics": {
+        "deterministic_fixes": 0,
+        "heuristic_fixes": 0,
+        "llm_judged_fixes": 0,
+        "unresolved": 0,
+        "llm_calls": 0,
+        "llm_tokens": 0,
+        "confidence_distribution": {
+          "high": 0,
+          "medium": 0,
+          "low": 0
+        }
+      }
+    }
+  },
+  {
+    "file": "README.md",
+    "sha256": "748adbb19f4ac7ad8a90fc9d7391d81981779985878193714d59862e2b246bc3",
+    "glossary_sha256": "592b2b294323b0b0c1d7f92ae856f660b074cc9aec84b4c784d3f463e46ddb69",
+    "result": {
+      "accepted": true,
+      "issues": [
+        {
+          "offset": 234,
+          "length": 24,
+          "line": 3,
+          "col": 93,
+          "found": "風險、數值、指令",
+          "suggestions": [],
+          "rule_type": "ai_style",
+          "severity": "info",
+          "context": "AI structural: 三連排比（tricolon）— 三個等長的、分隔片段，常見於 AI 生成文本",
+          "resolution": "deterministic"
+        },
+        {
+          "offset": 2091,
+          "length": 24,
+          "line": 25,
+          "col": 21,
+          "found": "數值、錨點、連結",
+          "suggestions": [],
+          "rule_type": "ai_style",
+          "severity": "info",
+          "context": "AI structural: 三連排比（tricolon）— 三個等長的、分隔片段，常見於 AI 生成文本",
+          "resolution": "deterministic"
+        },
+        {
+          "offset": 2311,
+          "length": 4,
+          "line": 31,
+          "col": 17,
+          "found": "json",
+          "suggestions": [
+            "JSON"
+          ],
+          "rule_type": "case",
+          "severity": "info",
+          "resolution": "deterministic"
+        },
+        {
+          "offset": 2329,
+          "length": 4,
+          "line": 31,
+          "col": 35,
+          "found": "json",
+          "suggestions": [
+            "JSON"
+          ],
+          "rule_type": "case",
+          "severity": "info",
+          "resolution": "deterministic"
+        },
+        {
+          "offset": 3104,
+          "length": 6,
+          "line": 48,
+          "col": 22,
+          "found": "透過",
+          "suggestions": [
+            "藉由",
+            "經由"
+          ],
+          "rule_type": "translationese",
+          "severity": "info",
+          "context": "dewesternise.V3: 透過 used with abstract means — prefer 藉由/經由",
+          "resolution": "deterministic"
+        },
+        {
+          "offset": 3316,
+          "length": 6,
+          "line": 54,
+          "col": 19,
+          "found": "透過",
+          "suggestions": [
+            "藉由",
+            "經由"
+          ],
+          "rule_type": "translationese",
+          "severity": "info",
+          "context": "dewesternise.V3: 透過 used with abstract means — prefer 藉由/經由",
+          "resolution": "deterministic"
+        },
+        {
+          "offset": 3993,
+          "length": 4,
+          "line": 62,
+          "col": 20,
+          "found": "json",
+          "suggestions": [
+            "JSON"
+          ],
+          "rule_type": "case",
+          "severity": "info",
+          "resolution": "deterministic"
+        }
+      ],
+      "applied_fixes": 0,
+      "summary": {
+        "errors": 0,
+        "warnings": 0,
+        "info": 7
+      },
+      "gate": {
+        "enabled": true,
+        "max_errors": 0,
+        "residual_errors": 0,
+        "max_warnings": 0,
+        "residual_warnings": 0
+      },
+      "profile": "base",
+      "political_stance": "roc_centric",
+      "detected_script": "traditional",
+      "s2t_applied": false,
+      "trace": {
+        "trace_id": "89c129d154ff8986a4e5bde89c5635c3",
+        "ruleset_hash": "26311ae89342f9616e16547b814b0f02901ba3d857e14db8399b1be258ad1fae",
+        "input_hash": "9e4ab2d50130b86aa213543e29dda44d2b61852741f1a60bc2191e5cfa588c66",
+        "timestamp": "2026-10-03T12:18:39.585Z",
+        "tool": "zhtw",
+        "issue_count": 7
+      },
+      "coverage": {
+        "rules_checked": 1761,
+        "rules_matched": 1
+      },
+      "oral_density": 0.0022727272,
+      "ai_signature": {
+        "score": 0.2,
+        "markers": [],
+        "top_signals": [
+          "2 個結構性 AI 特徵"
+        ],
+        "sentence_variability": 13.927064,
+        "zero_width_count": 0,
+        "punctuation_profile": {
+          "comma": {
+            "count": 18,
+            "density": 10.404624,
+            "cv": 0.9219478
+          },
+          "period": {
+            "count": 40,
+            "density": 23.121387,
+            "cv": 1.4960793
+          },
+          "semicolon": {
+            "count": 0,
+            "density": 0.0
+          },
+          "dunhao": {
+            "count": 21,
+            "density": 12.138728,
+            "cv": 1.7489802
+          },
+          "dash": {
+            "count": 0,
+            "density": 0.0
+          }
+        }
+      },
+      "translationese_signature": {
+        "score": 0.0,
+        "markers": [
+          {
+            "signal": "被動語態",
+            "count": 0,
+            "density": 0.0,
+            "threshold": 6.0
+          },
+          {
+            "signal": "的字鏈",
+            "count": 2,
+            "density": 2.0,
+            "threshold": 5.0
+          },
+          {
+            "signal": "弱動詞分解",
+            "count": 0,
+            "density": 0.0,
+            "threshold": 4.0
+          },
+          {
+            "signal": "代詞密度",
+            "count": 0,
+            "density": 0.0,
+            "threshold": 6.0
+          },
+          {
+            "signal": "翻譯腔偵測",
+            "count": 2,
+            "density": 1.1560694,
+            "threshold": 7.0
+          }
+        ],
+        "top_signals": [],
+        "max_de_chain": 2,
+        "domain": "technical"
+      },
+      "style_scorecard": {
+        "style_scores": {
+          "ai": 0.2,
+          "translationese": 0.0,
+          "consistency": 0.0
+        },
+        "top_issues_per_axis": {
+          "ai": [
+            {
+              "line": 3,
+              "col": 93,
+              "found": "風險、數值、指令",
+              "severity": "info",
+              "rule_type": "ai_style",
+              "context": "AI structural: 三連排比（tricolon）— 三個等長的、分隔片段，常見於 AI 生成文本"
+            },
+            {
+              "line": 25,
+              "col": 21,
+              "found": "數值、錨點、連結",
+              "severity": "info",
+              "rule_type": "ai_style",
+              "context": "AI structural: 三連排比（tricolon）— 三個等長的、分隔片段，常見於 AI 生成文本"
+            }
+          ],
+          "translationese": [
+            {
+              "line": 48,
+              "col": 22,
+              "found": "透過",
+              "severity": "info",
+              "rule_type": "translationese",
+              "context": "dewesternise.V3: 透過 used with abstract means — prefer 藉由/經由"
+            },
+            {
+              "line": 54,
+              "col": 19,
+              "found": "透過",
+              "severity": "info",
+              "rule_type": "translationese",
+              "context": "dewesternise.V3: 透過 used with abstract means — prefer 藉由/經由"
+            }
+          ],
+          "consistency": []
+        }
+      },
+      "summary_metrics": {
+        "deterministic_fixes": 7,
+        "heuristic_fixes": 0,
+        "llm_judged_fixes": 0,
+        "unresolved": 0,
+        "llm_calls": 0,
+        "llm_tokens": 0,
+        "confidence_distribution": {
+          "high": 7,
+          "medium": 0,
+          "low": 0
+        }
+      }
+    }
+  }
+]
