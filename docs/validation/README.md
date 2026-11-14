@@ -6,7 +6,9 @@
 
 | 項目 | 結果與界線 | 紀錄 |
 | --- | --- | --- |
-| OpenLDAP 導入第 0 階段 | 官方 LDAP 套件、唯讀服務帳號與 LDAPS 可讓 TAK 依憑證 CN 分配群組；`updateinterval` 單位是秒；目錄斷線時退回檔案群組；只用模擬用戶端，管理介面寫入與帳號密碼登入未測 | [2026-11-14](2026-11-14-openldap-phase0.md) |
+| OpenLDAP 補測批次 A、B、C | 目錄與檔案都設隔離群組後，目錄斷線仍隔離；兩個無群組使用者互相可見；`__ANON__` 與被隔離者拿不到其他群組的任務與檔案；TAK 40 分鐘內不會自行重新載入 CRL；強制斷線要用 `subscriptionUid`。隔離後仍會收到已訂閱任務的變更通知，要另外刪除任務訂閱；不重啟重新載入 CRL、LDAP 模式下的 B、C 與實體裝置未測 | [2026-11-14](2026-11-14-openldap-batch-abc.md) |
+| 撤銷時機、隔離群組與無群組憑證 | 撤銷要等 TAK 重啟才生效，重啟前新連線仍被接受（檔案與 LDAP 模式相同）；隔離群組不需重啟即可生效，但目錄與檔案兩邊都要改；無群組憑證進入 `__ANON__`；實體裝置與資料包範圍未測 | [2026-11-14](2026-11-14-revocation-quarantine-groupless.md) |
+| OpenLDAP 導入第 0 階段 | 官方 LDAP 套件、唯讀服務帳號與 LDAPS 可讓 TAK 依憑證 CN 分配群組；`updateinterval` 單位是秒；目錄斷線時退回檔案群組；模擬用戶端與 Android 模擬機的 ATAK 通過，實體裝置、管理介面寫入與帳號密碼登入未測 | [2026-11-14](2026-11-14-openldap-phase0.md) |
 | Windows Docker UDP RTSP | 經 Docker Desktop 發布通訊埠的 RTSP UDP 因來源通訊埠被改寫而逾時；本機改為 TCP-only，UDP 回 `461`、自動協商改用 TCP；ICU 實機待驗 | [2026-10-02](2026-10-02-windows-docker-udp-rtsp.md) |
 | NetBird TAK／影音／語音 | 同隊 ICU／ATAK RTSP 觀看通過；語音小隊政策與 Vx VPN 介面已修正，Vx 已確認連線，另回報行動網路可連 Mumble；雙向 PTT／音訊品質待驗 | [2026-10-01](2026-10-01-netbird-tak-media-voice.md) |
 | Windows mDNS | 主機與 Android 名稱解析曾通過；仍需在每個部署網段確認 | [2026-09-21](2026-09-21-windows-mdns.md) |

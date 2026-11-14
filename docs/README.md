@@ -26,6 +26,7 @@
 | 用控制台管理用戶端憑證、群組、DPK 與撤銷 | [用戶端憑證控制台](tak-server/certificate-console.md) |
 | 以 OpenLDAP／AD 群組管理 TAK 群組，了解對登入與既有憑證的影響 | [OpenLDAP 與 TAK Server 群組管理](tak-server/openldap-groups.md) |
 | 比較 TAK Server 接 LDAP 的方式，規劃把 OpenLDAP 加進本專案 | [OpenLDAP 導入計畫](plans/openldap.md) |
+| 查 OpenLDAP 還沒驗證的項目與補測的做法 | [OpenLDAP 補測計畫](plans/openldap-test-plan.md) |
 | 依畫面操作簽發、交付、群組與撤銷 | [憑證控制台使用手冊](tak-server/certificate-operator-guide.md) |
 | 依任務操作整套 TAK 控制台 | [任務操作手冊](tak-server/console-task-manual.md) |
 | 閱讀控制台手冊的 ASD-STE100 繁中與英文改寫，或逐段比對原文 | [ASD-STE100 中英文對照](asd-ste100/README.md) |

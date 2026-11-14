@@ -90,6 +90,8 @@ flowchart TB
 
 ![發布 Root CRL 與移除舊 CA 直接信任錨的結果](../images/ca-rotation-trust-anchor-comparison.png)
 
+**撤銷要等 TAK 重新啟動才生效。**2026-11-14 實測中，在 CA 撤銷葉憑證並發布 CRL 之後、TAK 重新啟動之前，既有的 8089 連線繼續運作，用同一張憑證建立的新連線也被接受；重新啟動後新連線才收到 `certificate revoked`。檔案驗證與 LDAP 群組兩種模式的結果相同。TAK 內建的 Client Certificates 撤銷不適用：它的憑證資料表不含外部 CA 簽發的憑證。TAK 不能立刻重新啟動時，先把該使用者的群組改成只有他自己的隔離群組（不需重新啟動），見[驗證紀錄](../validation/2026-11-14-revocation-quarantine-groupless.md)。
+
 此設定不會自動讓 Mumble 檢查 TAK CRL，也不會取消 Mumble 註冊身分。Mumble 權限另依[使用者管理](../mumble/users.md)處理。
 
 ## 更新 CRL
