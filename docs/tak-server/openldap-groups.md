@@ -185,8 +185,10 @@ GET https://<tak>:8443/Marti/api/subscriptions/all?page=-1&limit=-1
 
 未實測：
 
-- LDAPS、Active Directory（`style="AD"`）與巢狀群組。
-- 使用者名稱／密碼登入、WebTAK、`8446`、憑證註冊。
-- `adminGroup`、`readOnlyGroup` 等其他屬性，以及大量使用者時的效能。
+- Active Directory（`style="AD"`）與巢狀群組。
+- WebTAK 的畫面操作與憑證註冊。
+- `readOnlyGroup` 等其他屬性，以及大量使用者時的效能。
+
+LDAPS、`8446` 帳號密碼登入、`auth="ldap"` 輸入埠與 `adminGroup` 已在 2026-11-14 以官方 LDAP 套件另行實測，見 [OpenLDAP 補測 C2 與批次 D、E](../validation/2026-11-14-openldap-batch-cde.md)。
 
 依據：atak-manager 專案的 `docs/test-records/2026-11-13-tak-groups-lab.md`、[TAK Server 維運](operations.md)、[用戶端憑證控制台](certificate-console.md)。

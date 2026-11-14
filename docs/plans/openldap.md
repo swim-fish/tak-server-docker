@@ -113,6 +113,7 @@ TAK 另外發布一個只有設定腳本的小套件，用來建出 5.8 管理�
       timeout: 10s
       retries: 3
       start_period: 60s
+    command: ["-u", "openldap", "-g", "openldap"]
     security_opt:
       - no-new-privileges:true
     restart: unless-stopped
@@ -121,7 +122,10 @@ TAK 另外發布一個只有設定腳本的小套件，用來建出 5.8 管理�
 - 只接 `tak-backend`（`internal: true`），不發布任何通訊埠到主機。管理操作用 `docker exec` 或 TAK 的管理介面。
 - `tak-server` 加上 `depends_on: tak-ldap: condition: service_healthy`。
 - 新增具名 volume `tak-ldap-config`、`tak-ldap-data`、`tak-ldap-audit`，以及 `runtime/secrets/tak-ldap.env`（`LDAP_BASE_DN`、`LDAP_ADMIN`、`LDAP_ADMIN_PASSWORD`）。
-- 套件的 entrypoint 會對憑證目錄執行 `chown`；唯讀掛載時這一步會失敗但不中斷，要實測 `slapd` 仍讀得到金鑰。
+- `command` 讓 `slapd` 以 `openldap` 使用者執行（已實測，bootstrap 與 `636` 都正常）。
+- 套件的 entrypoint 會對憑證目錄執行 `chown`；唯讀掛載時這一步會失敗但不中斷。Windows Docker Desktop 上實測 `slapd` 讀得到金鑰；Linux 主機要讓金鑰對容器內的 UID 100 可讀。
+- LDAP 設定錯誤（例如信任憑證庫不含正確的 CA）不會讓 TAK 啟動失敗，而是靜默退回檔案群組。啟用後要以訂閱 API 確認群組來自目錄。
+- 備份與還原的做法已實測，注意事項見[補測 C2 與批次 D、E](../validation/2026-11-14-openldap-batch-cde.md)。
 
 ### 初始化腳本（`scripts/init_tak_ldap.py`）
 
@@ -169,12 +173,14 @@ TAK 另外發布一個只有設定腳本的小套件，用來建出 5.8 管理�
 
 ## 6. 停權與隔離
 
-2026-11-14 的兩份驗證紀錄（[撤銷、隔離與無群組](../validation/2026-11-14-revocation-quarantine-groupless.md)、[補測批次 A、B、C](../validation/2026-11-14-openldap-batch-abc.md)）確認了下列事項，導入時要寫進操作流程：
+2026-11-14 的三份驗證紀錄（[撤銷、隔離與無群組](../validation/2026-11-14-revocation-quarantine-groupless.md)、[補測批次 A、B、C](../validation/2026-11-14-openldap-batch-abc.md)、[補測 C2 與批次 D、E](../validation/2026-11-14-openldap-batch-cde.md)）確認了下列事項，導入時要寫進操作流程：
 
 - **LDAP 不能拒絕憑證連線。**方式 A 的連線由憑證鏈與 CRL 決定；LDAP 只在連線建立後決定群組。已撤銷的憑證在 TAK 重啟前仍會拿到 LDAP 群組。
 - **撤銷要等 TAK 重啟才生效。**重啟前，既有連線與新連線都被接受；實測 40 分鐘內 TAK 不會自行重新載入 CRL。TAK 內建的 Client Certificates 撤銷不適用於外部 CA 簽發的憑證。
 - **不能立刻重啟時用隔離群組減災。**把使用者移到只有他自己的群組，不需重啟：檔案模式 1 秒內、LDAP 模式 14–22 秒內生效，位置等事件隨即停止。
 - **隔離不會停止任務變更通知。**他在隔離前訂閱的任務仍會推送變更通知，要另外刪除他的任務訂閱。
+- **重建輸入埠可以讓 `8089` 不重啟就重新載入 CRL。**經管理 API 刪除再重建 TLS 輸入埠後，已撤銷的憑證無法建立新的串流連線；既有連線不受影響。`8443` 不在此列，仍要等重啟。
+- **目錄端鎖定帳號對憑證連線沒有作用。**它只擋得住帳號密碼登入（`8446` 與 `auth="ldap"` 輸入埠）。
 - **LDAP 啟用且目錄正常時，隔離一定要改目錄。**只改檔案內的群組沒有作用；檔案內的修改是為了目錄斷線時不退回舊群組。目錄與檔案都改之後，實測目錄斷線期間仍然隔離。
 
 操作順序：
@@ -184,7 +190,9 @@ TAK 另外發布一個只有設定腳本的小套件，用來建出 5.8 管理�
 3. 以訂閱 API 確認群組已改變。
 4. 刪除他在各任務的訂閱（`DELETE /Marti/api/missions/{name}/subscription?uid=<用戶端 UID>`）。
 5. 視需要以 `DELETE /Marti/api/subscriptions/delete/{subscriptionUid}` 踢掉他的連線；他可以立刻重連，但重連後仍在隔離群組。
-6. 撤銷憑證並發布 CRL；可以重啟時重啟 TAK。
+6. 撤銷憑證並發布 CRL。
+7. 不能重啟時，重建 `8089` 的輸入埠（`DELETE /Marti/api/inputs/{name}` 後以原設定 `POST /Marti/api/inputs`），讓新的串流連線被拒絕。TAK 會改寫 `CoreConfig.xml` 內的輸入埠屬性。
+8. 可以重啟時重啟 TAK；`8443` 要到這一步才會拒絕該憑證。
 
 設計上的要求：
 
@@ -207,9 +215,10 @@ TAK 另外發布一個只有設定腳本的小套件，用來建出 5.8 管理�
 
 各項的測試做法與通過條件見 [OpenLDAP 補測計畫](openldap-test-plan.md)。
 
-- LDAP 管理介面判定「支援的 LDAP 容器」的條件。服務帳號唯讀時，`isLdapTakComplient` 回 `false`，但讀取使用者與群組的 API 可用；要在第 2 階段用可寫入的帳號對照。
+- 要不要採用 LDAP 管理介面。已實測它需要可寫入的服務帳號（檢查方式是建立再刪除一筆測試使用者）；可寫入帳號的 ACL 限縮到 `ou=People` 與 `ou=Group` 後是否仍可用，還沒有測。
 - 怎麼列出某位使用者訂閱的所有任務，以及任務變更通知帶了哪些內容。隔離流程需要逐一刪除他的任務訂閱。
-- 有沒有不重啟 TAK 就重新載入 CRL 的方式。靜態分析沒有找到，尚未實測。
+- `8443` 有沒有不重啟就重新載入 CRL 的方式。`8089` 可以用重建輸入埠解決（已實測）；`8443` 沒有找到。
+- `adminGroup` 的成員以帳號密碼登入就是 TAK 管理員。開啟 `8446` 前要決定用不用這個屬性，並調整套件預設的密碼政策（連續 5 次錯誤密碼會鎖定帳號 15 分鐘）。
 - 裝置設定檔在 `__ANON__` 與隔離狀態下的範圍。
 - 使用者條目在目錄內但沒有任何 `tak_` 群組時會落入 `__ANON__`（已實測）。要不要為這類帳號建立一個沒有其他成員的隔離群組，需要決定。
-- 服務帳號給寫入權會讓 `CoreConfig.xml` 的明文密碼風險變高。替代做法是管理介面不用、改由控制台以另一個帳號寫入目錄。
+- 服務帳號給寫入權會讓 `CoreConfig.xml` 的明文密碼風險變高：實測對整個目錄樹有寫入權的帳號能讀取所有密碼雜湊、修改其他服務帳號與密碼政策。替代做法是管理介面不用、改由控制台以另一個帳號寫入目錄。

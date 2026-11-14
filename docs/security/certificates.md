@@ -92,6 +92,8 @@ flowchart TB
 
 **撤銷要等 TAK 重新啟動才生效。**2026-11-14 實測中，在 CA 撤銷葉憑證並發布 CRL 之後、TAK 重新啟動之前，既有的 8089 連線繼續運作，用同一張憑證建立的新連線也被接受；重新啟動後新連線才收到 `certificate revoked`。檔案驗證與 LDAP 群組兩種模式的結果相同。TAK 內建的 Client Certificates 撤銷不適用：它的憑證資料表不含外部 CA 簽發的憑證。TAK 不能立刻重新啟動時，先把該使用者的群組改成只有他自己的隔離群組（不需重新啟動），見[驗證紀錄](../validation/2026-11-14-revocation-quarantine-groupless.md)。
 
+TAK 不能立刻重新啟動時有一個局部的替代做法：發布 CRL 後，經管理 API 刪除再重建 `8089` 的 TLS 輸入埠（`DELETE /Marti/api/inputs/{name}`，再以原設定 `POST /Marti/api/inputs`）。2026-11-14 實測中，重建後已撤銷的憑證無法在 8089 建立新連線，既有連線與其他憑證不受影響；但 8443 仍接受該憑證，TAK 也會改寫 `CoreConfig.xml` 內的輸入埠屬性。這不能取代重新啟動，紀錄見 [OpenLDAP 補測 C2 與批次 D、E](../validation/2026-11-14-openldap-batch-cde.md)。
+
 此設定不會自動讓 Mumble 檢查 TAK CRL，也不會取消 Mumble 註冊身分。Mumble 權限另依[使用者管理](../mumble/users.md)處理。
 
 ## 更新 CRL
