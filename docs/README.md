@@ -24,6 +24,7 @@
 | 規劃 TAK Server、FedHub 與 ATAK 的連線、通訊埠及互信設定 | [Federation Hub 串接](tak-server/federation-hub.md) |
 | 管理跨網域 Data Sync Mission、Data Feed、VBM 與斷線補送 | [Mission 與 Data Feed federation](tak-server/mission-data-feed-federation.md) |
 | 用控制台管理用戶端憑證、群組、DPK 與撤銷 | [用戶端憑證控制台](tak-server/certificate-console.md) |
+| TAK 不能立刻重新啟動時，先把疑似外洩的使用者和其他人隔開 | [隔離使用者](tak-server/quarantine.md) |
 | 以 OpenLDAP／AD 群組管理 TAK 群組，了解對登入與既有憑證的影響 | [OpenLDAP 與 TAK Server 群組管理](tak-server/openldap-groups.md) |
 | 比較 TAK Server 接 LDAP 的方式，規劃把 OpenLDAP 加進本專案 | [OpenLDAP 導入計畫](plans/openldap.md) |
 | 查 OpenLDAP 還沒驗證的項目與補測的做法 | [OpenLDAP 補測計畫](plans/openldap-test-plan.md) |

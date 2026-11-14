@@ -1,6 +1,6 @@
 # OpenLDAP 補測計畫
 
-> 狀態：批次 A、B、C 已於 2026-11-14 執行，結果見[補測批次 A、B、C 紀錄](../validation/2026-11-14-openldap-batch-abc.md)；B4 不通過（隔離流程已加上刪除任務訂閱）。C2 與批次 D、E 也已執行，結果見[補測 C2 與批次 D、E 紀錄](../validation/2026-11-14-openldap-batch-cde.md)；D9 要等實作，其餘遺留項目列在下方「已執行批次的遺留項目」。批次 F 尚未執行。本計畫補足 [OpenLDAP 導入第 0 階段](../validation/2026-11-14-openldap-phase0.md)與[撤銷時機、隔離群組與無群組憑證](../validation/2026-11-14-revocation-quarantine-groupless.md)兩份紀錄列為「未測試」的項目。導入設計見 [OpenLDAP 導入計畫](openldap.md)。
+> 狀態：批次 A、B、C 已於 2026-11-14 執行，結果見[補測批次 A、B、C 紀錄](../validation/2026-11-14-openldap-batch-abc.md)；B4 不通過（隔離流程已加上刪除任務訂閱）。C2 與批次 D、E 也已執行，結果見[補測 C2 與批次 D、E 紀錄](../validation/2026-11-14-openldap-batch-cde.md)；D9 要等實作，其餘遺留項目列在下方「已執行批次的遺留項目」。隔離流程另以 LDAP 模式與 Android 裝置重做，結果見[隔離流程：LDAP 模式與 Android 裝置](../validation/2026-11-14-quarantine-ldap-devices.md)，涵蓋 F2、F3、F4，以及 LDAP 模式下的 B3、B4、C3、C4；F1 的人員調動與 F5 尚未以實體裝置重做。本計畫補足 [OpenLDAP 導入第 0 階段](../validation/2026-11-14-openldap-phase0.md)與[撤銷時機、隔離群組與無群組憑證](../validation/2026-11-14-revocation-quarantine-groupless.md)兩份紀錄列為「未測試」的項目。導入設計見 [OpenLDAP 導入計畫](openldap.md)。
 
 ## 範圍與順序
 
@@ -135,7 +135,8 @@ F 批次開始前要確認主機有 `.env` 的 `TAK_BIND_IP` 位址，並重建 
 | E4-2 | 限縮可寫入帳號的 ACL 後管理介面是否可用 | 寫入範圍只給 `ou=People` 與 `ou=Group`，排除服務帳號與密碼政策 | `isLdapTakComplient` 回 `true`；該帳號改不了其他服務帳號 |
 | E5-2 | 鎖定後既有權杖與 WebSocket 的行為 | 鎖定後持續以舊權杖呼叫 API 到權杖到期；WebTAK 保持連線 | 記錄失效時間 |
 | E7-2 | ATAK 與 WebTAK 對密碼到期、鎖定的提示 | 以模擬機與瀏覽器操作 | 記錄畫面提示，判斷預設政策是否可用 |
-| BC-L | 批次 B、C 在 LDAP 模式下的行為 | 以 LDAP 模式重做 B3、B4、C3、C4 | 結果與檔案模式一致，或記錄差異 |
+| F2-3 | 任務內檔案以外的內容在隔離後的通知 | 隊友在任務內新增地圖物件與紀錄，觀察被隔離的 ATAK | 記錄洩漏了哪些內容。檔案的情況已測：看得到檔名，下載不到內容 |
+| B4-4 | 刪除任務訂閱後，清單仍列出該用戶端的原因 | 比對刪除前後的訂閱清單與資料庫 | 找到可用來確認訂閱已刪除的方式 |
 
 ## 另行追查的項目
 
