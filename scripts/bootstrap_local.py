@@ -21,7 +21,7 @@ from atak_package_identity import write_identity
 
 
 PROJECT = Path(__file__).resolve().parents[1]
-UPSTREAM = PROJECT / "vendor" / "takserver-docker-hardened-5.8-RELEASE-84"
+UPSTREAM = PROJECT / "vendor" / "takserver-docker-hardened-5.8-RELEASE-92"
 RUNTIME = PROJECT / "runtime"
 SECRETS = RUNTIME / "secrets"
 PRIVATE = RUNTIME / "pki" / "private"

@@ -2,7 +2,7 @@
 
 本頁說明如何讓 TAK Server 依 OpenLDAP（或 Active Directory）的群組成員資格決定 TAK 群組、啟用後各種登入方式的變化，以及對既有用戶端憑證的影響。內容以 2026-11-13 的實驗為準：TAK Server `5.8-RELEASE-84`、`osixia/openldap:1.5.0`、ATAK 5.7.0.17 手機與 5.7.0.15 模擬器，加上以 X509 憑證連 `8089` 的模擬 CoT 用戶端。
 
-**目前狀態：**現行部署仍使用檔案驗證（`UserAuthenticationFile.xml`）。實驗用的 LDAP 容器、設定與憑證都已移除或撤銷；`compose.yaml` 沒有 LDAP 服務。本頁的設定片段是驗證過的範本，正式導入前應改用 LDAPS 並另做備份與回復規劃。
+**目前狀態：**2026-11-15 起，本專案提供選用的 `tak-ldap` 服務（官方 LDAP 套件、LDAPS、`groupOfNames`），以 `scripts/manage_tak_ldap.py` 操作，見[第 10 節](#10-本專案的部署方式)。第 1 到 9 節是 2026-11-13 以 `osixia/openldap` 做的實驗，運作方式與群組規則仍然適用，但目錄結構不同：實驗用 `cn=<帳號>,ou=users` 與 `groupOfUniqueNames`，現行部署用 `uid=<帳號>,ou=People` 與 `groupOfNames`。
 
 ```mermaid
 flowchart LR
@@ -190,5 +190,35 @@ GET https://<tak>:8443/Marti/api/subscriptions/all?page=-1&limit=-1
 - `readOnlyGroup` 等其他屬性，以及大量使用者時的效能。
 
 LDAPS、`8446` 帳號密碼登入、`auth="ldap"` 輸入埠與 `adminGroup` 已在 2026-11-14 以官方 LDAP 套件另行實測，見 [OpenLDAP 補測 C2 與批次 D、E](../validation/2026-11-14-openldap-batch-cde.md)。
+
+## 10. 本專案的部署方式
+
+`compose.yaml` 的 `tak-ldap` 服務屬於 `ldap` profile，預設不啟動。目錄只接內部網路 `tak-backend`，TAK 經 `ldaps://tak-ldap:636/` 以唯讀帳號 `cn=takbind` 查詢。首次啟用的完整步驟見[升級與 OpenLDAP 導入計畫](../plans/takserver-5.8-release-92-upgrade.md#3-導入-openldap)。
+
+| 指令 | 作用 |
+| --- | --- |
+| `python scripts/manage_tak_ldap.py prepare` | 產生 `runtime/secrets/` 內的兩個密碼與 env 檔，並以本專案的中繼 CA 簽發 LDAPS 憑證到 `runtime/pki/ldap/` |
+| `python scripts/manage_tak_ldap.py init` | 建立唯讀帳號與它的密碼政策、關閉匿名讀取，再驗證；可重複執行 |
+| `python scripts/manage_tak_ldap.py sync [--dry-run]` | 依 `UserAuthenticationFile.xml` 建立使用者與群組；只處理憑證仍有效、且有群組的使用者 |
+| `python scripts/manage_tak_ldap.py enable` | `<auth>` 改成 LDAP 群組並重啟 `tak-server` |
+| `python scripts/manage_tak_ldap.py disable` | `<auth>` 改回檔案群組並重啟 `tak-server` |
+| `python scripts/manage_tak_ldap.py status` | 顯示目前模式、容器狀態、使用者與群組數量 |
+| `python scripts/manage_tak_ldap.py backup` | 以 `slapcat` 匯出設定與資料到 `runtime/backups/ldap/` |
+
+檔案群組與目錄群組的對應：
+
+| `UserAuthenticationFile.xml` | 目錄群組 | TAK 群組與方向 |
+| --- | --- | --- |
+| `<groupList>X</groupList>` | `cn=tak_X` | `tak_X`：IN＋OUT |
+| `<groupListIN>X</groupListIN>` | `cn=tak_X_WRITE` | `tak_X`：IN |
+| `<groupListOUT>X</groupListOUT>` | `cn=tak_X_READ` | `tak_X`：OUT |
+
+日常操作要注意：
+
+- `sync` 以檔案為準覆寫同名群組的成員；只存在於目錄的群組不會被動到。在目錄內直接調整過成員的群組，再執行 `sync` 會被改回檔案的內容。
+- 新簽發的憑證要再執行一次 `sync`。沒有同步的 CN 不在目錄內，會退回檔案群組，名稱沒有 `tak_` 前綴，和已同步的隊友互相看不到。
+- 直接修改目錄時，在容器內用管理者帳號操作，例如 `docker compose --profile ldap exec tak-ldap bash`，再執行 `ldapmodify -x -D "cn=$LDAP_ADMIN,$LDAP_BASE_DN" -W -H ldapi:///`。異動約 1 分鐘內生效，連線不必重建。
+- 控制台的群組頁仍只改檔案。緊急隔離要兩邊都改，見[隔離使用者](quarantine.md)。
+- 匯出的 `data.ldif` 含密碼雜湊，和 `runtime/` 其他內容一樣不進 Git。
 
 依據：atak-manager 專案的 `docs/test-records/2026-11-13-tak-groups-lab.md`、[TAK Server 維運](operations.md)、[用戶端憑證控制台](certificate-console.md)。

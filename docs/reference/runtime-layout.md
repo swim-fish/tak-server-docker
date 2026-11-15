@@ -8,7 +8,7 @@
 
 各目錄的責任：
 
-- `vendor/takserver-docker-hardened-5.8-RELEASE-84/tak/` 是 Docker build context 的一部分，包含 TAK Server WAR、JAR、schema、啟動腳本、資料庫工具及安全性套件。
+- `vendor/takserver-docker-hardened-5.8-RELEASE-92/tak/` 是 Docker build context 的一部分，包含 TAK Server WAR、JAR、schema、啟動腳本、資料庫工具及安全性套件。
 - `docker/Dockerfile.hardened-takserver` 會把官方 `tak/` 複製到 image 的 `/opt/tak`。
 - `runtime/tak/` 只保存這一套部署的設定、keystore、truststore、CRL 與管理憑證，再由 Compose bind mount 覆蓋 `/opt/tak` 的對應位置。
 - `scripts/bootstrap_local.py` 只讀取官方 `tak/CoreConfig.example.xml` 當設定範本，其餘 `runtime/tak` 檔案由腳本產生。
@@ -94,3 +94,17 @@ Get-Content .\runtime\secrets\mumble_server_password
 ```
 
 此命令會把密碼顯示在目前終端機。不要把輸出貼入文件、issue、聊天、螢幕截圖或 shell transcript。這個密碼和 `mumble_superuser_password`、`tak_store_password`、ATAK client certificate 都不同。
+
+## OpenLDAP（選用）
+
+啟用 `ldap` profile 時多出下列檔案，全部由 `scripts/manage_tak_ldap.py prepare` 產生，不進 Git。操作見 [OpenLDAP 與 TAK Server 群組管理](../tak-server/openldap-groups.md#10-本專案的部署方式)。
+
+| 位置 | 用途 |
+| --- | --- |
+| `vendor/takserver-ldap-5.8-RELEASE-92/` | 官方 LDAP 套件，`tak-ldap` 映像的 build context |
+| `runtime/secrets/ldap_admin_password`、`ldap_bind_password` | 目錄管理者與唯讀服務帳號 `cn=takbind` 的密碼 |
+| `runtime/secrets/tak-ldap.env` | 容器的 `LDAP_BASE_DN`、`LDAP_ADMIN`、`LDAP_ADMIN_PASSWORD` |
+| `runtime/pki/ldap/` | `server.crt`、`server.key`（未加密，`slapd` 無法輸入密碼）與 `root-ca.pem`（憑證鏈） |
+| `runtime/backups/ldap/` | `slapcat` 匯出與 `CoreConfig.xml` 切換前的複本；含密碼雜湊與明文密碼 |
+
+啟用後 `CoreConfig.xml` 的 `<ldap>` 元素含服務帳號密碼與 truststore 密碼的明文，紀錄與螢幕輸出不可包含這一段。

@@ -12,7 +12,7 @@ $ErrorActionPreference = 'Stop'
 
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $vendorRoot = Join-Path $projectRoot 'vendor'
-$upstreamName = 'takserver-docker-hardened-5.8-RELEASE-84'
+$upstreamName = 'takserver-docker-hardened-5.8-RELEASE-92'
 $upstreamRoot = Join-Path $vendorRoot $upstreamName
 $runtimeRoot = Join-Path $projectRoot 'runtime'
 $networkConfig = & (Join-Path $PSScriptRoot 'Local-NetworkConfig.ps1')
@@ -180,7 +180,7 @@ try {
         throw 'ExpectedZipSha256 requires ZipPath.'
     } elseif (-not $upstreamReady) {
         if ($CheckOnly) { throw 'Specify -ZipPath for a new deployment.' }
-        $entered = Read-Host 'Official takserver-docker-hardened-5.8-RELEASE-84.zip path'
+        $entered = Read-Host 'Official takserver-docker-hardened-5.8-RELEASE-92.zip path'
         if (-not $entered) { throw 'ZipPath is required when vendor is empty.' }
         $ZipPath = (Resolve-Path -LiteralPath $entered -ErrorAction Stop).Path
         Assert-Zip $ZipPath

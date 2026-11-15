@@ -2,9 +2,9 @@ name: tak-local
 
 services:
   tak-db:
-    image: takserver-db-hardened:5.8-release-84
+    image: takserver-db-hardened:5.8-release-92
     build:
-      context: ./vendor/takserver-docker-hardened-5.8-RELEASE-84
+      context: ./vendor/takserver-docker-hardened-5.8-RELEASE-92
       dockerfile: docker/Dockerfile.hardened-takserver-db
     entrypoint: ["/bin/bash", "/opt/local/db-entrypoint.sh"]
     volumes:
@@ -28,10 +28,44 @@ services:
         max-size: 20m
         max-file: "3"
 
-  tak-server:
-    image: takserver-hardened:5.8-release-84
+  tak-ldap:
+    # Optional directory for TAK groups; see docs/tak-server/openldap-groups.md.
+    image: takserver-ldap:5.8-release-92
     build:
-      context: ./vendor/takserver-docker-hardened-5.8-RELEASE-84
+      context: ./vendor/takserver-ldap-5.8-RELEASE-92
+      dockerfile: Dockerfile.takserver-ldap
+    profiles: ["ldap"]
+    # The upstream entrypoint starts slapd as root unless these flags are passed.
+    command: ["-u", "openldap", "-g", "openldap"]
+    env_file:
+      - ./runtime/secrets/tak-ldap.env
+    volumes:
+      - tak-ldap-config:/etc/ldap/slapd.d
+      - tak-ldap-data:/var/lib/ldap
+      - tak-ldap-audit:/var/log/ldap/audit
+      - ./runtime/pki/ldap:/etc/ldap/certs:ro
+    networks:
+      tak-backend:
+        ipv4_address: 172.28.0.4
+    healthcheck:
+      test: ["CMD", "ldapsearch", "-x", "-H", "ldap://localhost", "-b", "", "-s", "base", "(objectclass=*)"]
+      start_period: 60s
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    logging:
+      driver: local
+      options:
+        max-size: 10m
+        max-file: "3"
+
+  tak-server:
+    image: takserver-hardened:5.8-release-92
+    build:
+      context: ./vendor/takserver-docker-hardened-5.8-RELEASE-92
       dockerfile: docker/Dockerfile.hardened-takserver
     environment:
       ADMIN_CERT_NAME: admin
@@ -57,6 +91,9 @@ services:
     depends_on:
       tak-db:
         condition: service_healthy
+      tak-ldap:
+        condition: service_healthy
+        required: false
     healthcheck:
       test:
         - CMD-SHELL
@@ -323,6 +360,9 @@ networks:
 volumes:
   tak-db-data: {}
   tak-logs: {}
+  tak-ldap-config: {}
+  tak-ldap-data: {}
+  tak-ldap-audit: {}
   mumble-data: {}
   share-state: {}
   share-files: {}

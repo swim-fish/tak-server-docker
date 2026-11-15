@@ -6,14 +6,15 @@
 
 | 元件 | 版本或依據 |
 | --- | --- |
-| 官方套件 | `takserver-docker-hardened-5.8-RELEASE-84.zip` |
-| TAK／資料庫映像標籤 | `takserver-hardened:5.8-release-84`／`takserver-db-hardened:5.8-release-84` |
+| 官方套件 | `takserver-docker-hardened-5.8-RELEASE-92.zip` |
+| TAK／資料庫映像標籤 | `takserver-hardened:5.8-release-92`／`takserver-db-hardened:5.8-release-92` |
+| OpenLDAP（選用，`ldap` profile） | 官方套件 `takserver-ldap-5.8-RELEASE-92.zip`；映像標籤 `takserver-ldap:5.8-release-92`；只接內部網路，不發布通訊埠 |
 | TAK 執行環境 | Java 17；資料庫套件為 PostgreSQL 18／PostGIS 3.6 |
 | Mumble 映像 | `mumblevoip/mumble-server:v1.5.915-1` |
 | MediaMTX 映像 | `bluenviron/mediamtx:1.21.1`；測試使用 `1.21.1-ffmpeg` |
 | Android 實測 | ATAK-CIV `5.7.0.15` release；Vx `2.1.0 (20251122) - [5.6.0]` |
 
-Vx 標籤中的 `[5.6.0]` 是套件標示；與 ATAK 5.7 的可用性以本次實測為限，不保證其他版本組合。官方一般版、hardened 版或既有 5.7 資料庫間的升級，不在本次全新建置驗收範圍。
+Vx 標籤中的 `[5.6.0]` 是套件標示；與 ATAK 5.7 的可用性以本次實測為限，不保證其他版本組合。官方一般版、hardened 版或既有 5.7 資料庫間的升級，不在全新建置驗收範圍。`5.8-RELEASE-84` 升到 `5.8-RELEASE-92` 的步驟與結果見[升級計畫](../plans/takserver-5.8-release-92-upgrade.md)。
 
 ## 網路預設值
 

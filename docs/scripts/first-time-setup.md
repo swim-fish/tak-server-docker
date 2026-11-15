@@ -4,7 +4,7 @@
 
 ## 準備資料
 
-必須準備官方 `takserver-docker-hardened-5.8-RELEASE-84.zip`，或事先將它完整解壓至 `vendor/takserver-docker-hardened-5.8-RELEASE-84/`。不需另行複製 WAR、JAR、`makeCert.sh` 或設定檔到 `runtime/tak/`；腳本會使用官方 ZIP 的 Docker build context，並以 `bootstrap_local.py` 產生本機設定。
+必須準備官方 `takserver-docker-hardened-5.8-RELEASE-92.zip`，或事先將它完整解壓至 `vendor/takserver-docker-hardened-5.8-RELEASE-92/`。不需另行複製 WAR、JAR、`makeCert.sh` 或設定檔到 `runtime/tak/`；腳本會使用官方 ZIP 的 Docker build context，並以 `bootstrap_local.py` 產生本機設定。
 
 主機先安裝並確認 Docker Desktop（Linux containers）、Python、OpenSSL、JDK 17 的 `keytool`。Python 必須能匯入 `cryptography`；Windows mDNS 安裝另要求 `C:\Python314\python.exe`。若缺少主機 Python 相依套件，可先執行：
 
@@ -20,11 +20,11 @@ python -m pip install -r .\scripts\requirements-tak-certificate-host.txt
 
 ```powershell
 .\scripts\Initialize-LocalStack.ps1 `
-  -ZipPath 'D:\Downloads\takserver-docker-hardened-5.8-RELEASE-84.zip' `
+  -ZipPath 'D:\Downloads\takserver-docker-hardened-5.8-RELEASE-92.zip' `
   -CheckOnly
 
 .\scripts\Initialize-LocalStack.ps1 `
-  -ZipPath 'D:\Downloads\takserver-docker-hardened-5.8-RELEASE-84.zip'
+  -ZipPath 'D:\Downloads\takserver-docker-hardened-5.8-RELEASE-92.zip'
 ```
 
 請替換為 ZIP 的實際位置。如果官方套件已完整解壓在 `vendor/`，可省略 `-ZipPath`；未解壓又未指定時，腳本會在正式執行時詢問位置。若已知可信的官方 SHA-256，也可與 `-ZipPath` 同時指定 `-ExpectedZipSha256 <64 位十六進位值>`，在解壓前核對。`-ClientName` 可變更最初 ATAK DPK 的憑證 CN，預設為 `atak-client`。

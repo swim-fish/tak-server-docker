@@ -19,7 +19,7 @@ openssl version
 keytool -help
 ```
 
-準備官方 `takserver-docker-hardened-5.8-RELEASE-84.zip`。讓 Windows 主機與 Android 連到相同的 Wi-Fi 或行動熱點。在專案根目錄將 `.env.example` 複製為 `.env`，設定 `TAK_BIND_IP` 為主機目前的 IPv4 位址、`TAK_ALLOWED_SUBNET` 為裝置所在網段；Compose、mDNS 與防火牆腳本會讀取這兩個值。預設範例為 Windows 熱點 `192.168.137.1/24`。詳細步驟見[網路調整說明](network/mdns.md#變更名稱或網段)。
+準備官方 `takserver-docker-hardened-5.8-RELEASE-92.zip`。讓 Windows 主機與 Android 連到相同的 Wi-Fi 或行動熱點。在專案根目錄將 `.env.example` 複製為 `.env`，設定 `TAK_BIND_IP` 為主機目前的 IPv4 位址、`TAK_ALLOWED_SUBNET` 為裝置所在網段；Compose、mDNS 與防火牆腳本會讀取這兩個值。預設範例為 Windows 熱點 `192.168.137.1/24`。詳細步驟見[網路調整說明](network/mdns.md#變更名稱或網段)。
 
 以下為全新部署。已有 `runtime/` 或資料庫時，請改讀[維運](tak-server/operations.md)，不要用 `bootstrap_local.py --force` 解決一般連線問題。
 
@@ -28,11 +28,11 @@ keytool -help
 將 `$zip` 換成實際檔案位置：
 
 ```powershell
-$zip = 'C:/path/to/takserver-docker-hardened-5.8-RELEASE-84.zip'
+$zip = 'C:/path/to/takserver-docker-hardened-5.8-RELEASE-92.zip'
 New-Item -ItemType Directory -Path ./vendor -Force | Out-Null
 Expand-Archive -LiteralPath $zip -DestinationPath ./vendor
-Test-Path ./vendor/takserver-docker-hardened-5.8-RELEASE-84/tak/CoreConfig.example.xml
-Test-Path ./vendor/takserver-docker-hardened-5.8-RELEASE-84/docker/Dockerfile.hardened-takserver
+Test-Path ./vendor/takserver-docker-hardened-5.8-RELEASE-92/tak/CoreConfig.example.xml
+Test-Path ./vendor/takserver-docker-hardened-5.8-RELEASE-92/docker/Dockerfile.hardened-takserver
 ```
 
 兩項應回傳 `True`。完整套件留在 `vendor/`；`runtime/tak/` 由下一步產生，不必複製整個官方 `tak/`。各檔案用途見[目錄參考](reference/runtime-layout.md)。

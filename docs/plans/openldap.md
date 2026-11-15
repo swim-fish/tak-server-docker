@@ -1,6 +1,6 @@
 # OpenLDAP 導入計畫
 
-> 狀態：規劃草稿（2026-11-14）；第 0 階段已完成，結果見[驗證紀錄](../validation/2026-11-14-openldap-phase0.md)。現行部署仍使用檔案驗證，`compose.yaml` 沒有 LDAP 服務。2026-11-13 的實驗結果見 [OpenLDAP 與 TAK Server 群組管理](../tak-server/openldap-groups.md)；本計畫說明要選哪一種接法，以及怎麼把 OpenLDAP 正式加進這個專案。
+> 狀態：第 0 階段與第 1 階段已完成。第 1 階段在 2026-11-15 隨 5.8-RELEASE-92 升級執行，步驟見[升級與 OpenLDAP 導入計畫](takserver-5.8-release-92-upgrade.md)，結果見[驗證紀錄](../validation/2026-11-15-release-92-upgrade-ldap.md)。`compose.yaml` 的 `tak-ldap` 服務屬於 `ldap` profile，預設不啟動。2026-11-13 的實驗結果見 [OpenLDAP 與 TAK Server 群組管理](../tak-server/openldap-groups.md)；本計畫說明要選哪一種接法，以及怎麼把 OpenLDAP 正式加進這個專案。
 
 依據：官方套件 `takserver-ldap-5.8-RELEASE-92.zip`、`TAK_Server_Configuration_Guide_5.8.pdf` 第 9.3–9.7、10、12、16–19 節，`Federation_Hub_Configuration_Guide_5.8.pdf` 第 4、5 節，以及套件內的 `CoreConfig.xsd`、`CoreConfig.example.xml` 與 `takserver.war`（5.8-RELEASE-84）。標示「推論」的項目來自程式內的字串或 XSD 預設值，還沒有實測。官方套件的內容見第 3 節。
 
@@ -97,6 +97,7 @@ TAK 另外發布一個只有設定腳本的小套件，用來建出 5.8 管理�
     build:
       context: ./vendor/takserver-ldap-5.8-RELEASE-92
       dockerfile: Dockerfile.takserver-ldap
+    profiles: ["ldap"]
     env_file:
       - ./runtime/secrets/tak-ldap.env
     volumes:
@@ -120,16 +121,16 @@ TAK 另外發布一個只有設定腳本的小套件，用來建出 5.8 管理�
 ```
 
 - 只接 `tak-backend`（`internal: true`），不發布任何通訊埠到主機。管理操作用 `docker exec` 或 TAK 的管理介面。
-- `tak-server` 加上 `depends_on: tak-ldap: condition: service_healthy`。
+- 服務屬於 `ldap` profile。`tak-server` 的 `depends_on` 對 `tak-ldap` 設 `required: false`，沒有啟用 profile 時照常啟動。
 - 新增具名 volume `tak-ldap-config`、`tak-ldap-data`、`tak-ldap-audit`，以及 `runtime/secrets/tak-ldap.env`（`LDAP_BASE_DN`、`LDAP_ADMIN`、`LDAP_ADMIN_PASSWORD`）。
 - `command` 讓 `slapd` 以 `openldap` 使用者執行（已實測，bootstrap 與 `636` 都正常）。
 - 套件的 entrypoint 會對憑證目錄執行 `chown`；唯讀掛載時這一步會失敗但不中斷。Windows Docker Desktop 上實測 `slapd` 讀得到金鑰；Linux 主機要讓金鑰對容器內的 UID 100 可讀。
 - LDAP 設定錯誤（例如信任憑證庫不含正確的 CA）不會讓 TAK 啟動失敗，而是靜默退回檔案群組。啟用後要以訂閱 API 確認群組來自目錄。
 - 備份與還原的做法已實測，注意事項見[補測 C2 與批次 D、E](../validation/2026-11-14-openldap-batch-cde.md)。
 
-### 初始化腳本（`scripts/init_tak_ldap.py`）
+### 管理腳本（`scripts/manage_tak_ldap.py`）
 
-套件的 bootstrap 完成後執行一次：
+實作時把初始化、同步、切換與備份合成一支腳本。`init` 在套件的 bootstrap 完成後執行，可以重複執行：
 
 - 建立唯讀服務帳號 `cn=takbind`，密碼取自 `runtime/secrets/ldap_bind_password`。
 - 把 ACL 第二條改成：本人可讀、`ldapadm` 可寫、`takbind` 可讀、其他人不可讀。
@@ -156,7 +157,7 @@ TAK 另外發布一個只有設定腳本的小套件，用來建出 5.8 管理�
 </auth>
 ```
 
-- 由 `scripts/bootstrap_local.py` 產生這段設定，並新增開關（例如 `.env` 的 `TAK_AUTH_BACKEND=file|ldap`，預設 `file`）。TAK 啟動時會改寫 `CoreConfig.xml`，修改時要用 XML 解析，不能整行取代。
+- 由 `manage_tak_ldap.py enable` 寫入這段設定，`disable` 改回只有 `<File>`。實作沒有採用原先規劃的 `.env` 開關：既有部署不會重跑 `bootstrap_local.py`。TAK 啟動時會改寫 `CoreConfig.xml`，腳本以 XML 解析修改，並在 `tak-server` 停止時寫入。
 - `ldaps://` 的伺服器憑證由現有的本機 PKI 簽發，SAN 含 `tak-ldap`，檔名依套件要求為 `root-ca.pem`、`server.crt`、`server.key`。
 - 兩個密碼都會以明文留在 `runtime/tak/CoreConfig.xml`。這個檔案不進 Git，但紀錄與終端機輸出不可印出整段 `<ldap>`。
 
@@ -206,7 +207,7 @@ TAK 另外發布一個只有設定腳本的小套件，用來建出 5.8 管理�
 | 階段 | 內容 | 完成條件 |
 | --- | --- | --- |
 | 0. 驗證假設（已完成） | 用官方套件建拋棄式容器，確認群組分配、唯讀 `takbind`、LDAPS、`updateinterval` 單位與目錄斷線行為 | [2026-11-14 驗證紀錄](../validation/2026-11-14-openldap-phase0.md) |
-| 1. 服務與方式 A | 加入官方套件的 Compose 服務、初始化腳本、secrets、bootstrap 開關、備份與還原步驟 | 訂閱 API 顯示 LDAP 群組；切回 `file` 後行為與現在相同 |
+| 1. 服務與方式 A（已完成） | 加入官方套件的 Compose 服務、管理腳本、secrets、切換指令、備份步驟 | [2026-11-15 驗證紀錄](../validation/2026-11-15-release-92-upgrade-ldap.md) |
 | 2. LDAP 管理介面 | 試用 Manage LDAP Users，確認需要的 ACL、ppolicy 與 `adminGroup` | 能在介面建立使用者、調整群組、鎖定帳號；決定服務帳號要不要寫入權 |
 | 3. 控制台整合 | 簽發憑證時同步建立目錄帳號；群組頁改讀目錄；提供一次改好目錄與檔案、並刪除任務訂閱的「隔離」操作 | 控制台顯示的群組與訂閱 API 一致；隔離後讀回為隔離群組 |
 | 4. 帳號密碼登入 | 隨 `8446` 計畫評估方式 C 與憑證註冊 | 另立計畫 |
