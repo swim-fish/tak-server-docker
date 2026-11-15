@@ -720,7 +720,8 @@ class SharePortalTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn('class="card media-viewer-card live"', markup)
         self.assertIn('class="media-stream-card"', markup)
-        self.assertIn('data-thumbnail-url="/media/preview/live/alpha/3/VIDEO_1/', markup)
+        self.assertIn('data-thumbnail-image src="/media/thumbnail/live/alpha/3/VIDEO_1"', markup)
+        self.assertIn('data-preview-url="/media/preview/live/alpha/3/VIDEO_1/"', markup)
         self.assertIn("H264、KLV", markup)
         self.assertNotIn("H264、KLV、", markup)
 
